@@ -1013,6 +1013,7 @@ def run_harness_main(
 
     # Execute
     allow_dirty = getattr(args, "allow_dirty", False)
+    quiet = getattr(args, "quiet", False)
     verdicts = run_benchmark_matrix(
         repo_path,
         commits,
@@ -1021,6 +1022,7 @@ def run_harness_main(
         run_single_fn,
         benchmark_name,
         allow_dirty=allow_dirty,
+        quiet=quiet,
     )
 
     # Write aggregated outputs

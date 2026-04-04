@@ -23,8 +23,22 @@ Initial public release. Extracted from the ClawBio deep audit project (`clawbio_
 - **Contributing guide** for adding harnesses to audit new tools
 - Bumped to production-stable status after 6 rounds of multi-model review
 
+### Post-extraction multi-model review (Crush, Gemini, Codex, Kimi)
+11 issues identified and fixed:
+- `CORE_VERSION` aligned to package version (was 1.1.0, should be 1.0.0)
+- `harness_core.timezone.utc` AttributeError bug in metagenomics static path
+- CLI mode flags now mutually exclusive via argparse group
+- `resolve_commits` validates git rev-parse HEAD return code
+- `--regression-window` validates positive integer
+- `conftest.py` accepts git worktree repos (`.git` as file)
+- AST analysis handles aliased imports and additional shell-executing functions
+- Hostname PII replaced with SHA-256 hash in manifest/verdict output
+- Removed `Typing::Typed` classifier (no py.typed marker)
+- Pre-commit hook uses `python3` for portability
+- CI pins ClawBio to known ref, validates artifact generation not exit code
+
 ### Provenance
 - Developed during 16-task, 4-phase deep audit of ClawBio (github.com/manuelcorpas/ClawBio)
-- Reviewed by: Crush, Gemini, Codex, OpenCode, Kimi (6 rounds) + GPT-5.2-pro (architectural consultation)
+- Reviewed by: Crush, Gemini, Codex, OpenCode, Kimi (7 rounds) + GPT-5.2-pro (architectural consultation)
 - PGx heatmap renderer ported from `clawbio-pgx-benchmark/` (187-commit longitudinal sweep)
 - 0 harness errors across all 93 tests at HEAD

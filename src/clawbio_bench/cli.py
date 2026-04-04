@@ -318,14 +318,16 @@ def main():
         print("  (dry run — nothing executed)")
         return
 
+    quiet = getattr(args, "quiet", False)
     results = {}
     suite_start = time.monotonic()
 
     for name in harness_names:
         info = HARNESS_REGISTRY[name]
-        print(f"\n{'#' * 60}")
-        print(f"# HARNESS: {info['benchmark_name']} — {info['description']}")
-        print(f"{'#' * 60}")
+        if not quiet:
+            print(f"\n{'#' * 60}")
+            print(f"# HARNESS: {info['benchmark_name']} — {info['description']}")
+            print(f"{'#' * 60}")
 
         try:
             results[info["benchmark_name"]] = run_single_harness(
@@ -335,6 +337,7 @@ def main():
                 output_base,
                 allow_dirty=allow_dirty,
                 inputs_override=args.inputs,
+                quiet=quiet,
             )
         except Exception as e:
             print(f"HARNESS FAILED: {e}", file=sys.stderr)
