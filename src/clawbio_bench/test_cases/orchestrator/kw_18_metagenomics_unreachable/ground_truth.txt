@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# EXPECTED_EXIT_CODE: 1
+# QUERY_TEXT: profile the metagenomics of my gut microbiome sample
+# FINDING: M-3 metagenomics keyword missing from KEYWORD_MAP
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: metagenomics not in KEYWORD_MAP — claw-metagenomics unreachable by keyword
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

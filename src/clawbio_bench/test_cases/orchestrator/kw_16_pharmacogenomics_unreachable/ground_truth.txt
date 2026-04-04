@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# EXPECTED_EXIT_CODE: 1
+# QUERY_TEXT: run pharmacogenomics analysis on my 23andMe data
+# FINDING: M-3 pharmacogenomics keyword missing from KEYWORD_MAP
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: pharmacogenomics not in KEYWORD_MAP — most clinically relevant skill unreachable by keyword
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

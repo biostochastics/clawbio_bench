@@ -1,0 +1,33 @@
+# BENCHMARK: empty_no_pgx
+# GROUND_TRUTH_PHENOTYPE: N/A -- no PGx data present
+# GROUND_TRUTH_BEHAVIOR: File contains valid 23andMe-format SNPs but NONE are in the
+#   PGx panel. The tool should recognize this as a valid file with zero actionable data
+#   and exit with a clear error message. Post-patch behavior: sys.exit(1) with message
+#   "No pharmacogenomic SNPs found in this file."
+# EXPECTED_TOOL_OUTPUT: The tool correctly detects 0 PGx SNPs found and exits with
+#   sys.exit(1) (line 1739). Error message: "ERROR: No pharmacogenomic SNPs found in
+#   this file. Cannot generate a report from zero data." This test should PASS.
+#   This validates the zero-PGx-data guard at line 1735-1739.
+# FINDING: PF-1 (edge case -- empty PGx input validation)
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: N/A
+# TARGET_RSID: N/A
+# HAZARD_DRUG: N/A
+# HAZARD_CLASS: N/A
+# CPIC_REF: N/A
+# EXPECTED_EXIT_CODE: 1
+#
+# DESIGN: 10 non-PGx SNPs with realistic rsIDs, chromosomes, and positions.
+#   None match any of the 30 PGX_SNPS entries.
+#
+# rsid	chromosome	position	genotype
+rs1234567	1	12345678	AA
+rs7654321	2	23456789	GG
+rs9876543	3	34567890	CT
+rs1111111	4	45678901	AG
+rs2222222	5	56789012	TT
+rs3333333	6	67890123	CC
+rs4444444	7	78901234	AA
+rs5555555	8	89012345	GG
+rs6666666	9	90123456	AT
+rs7777777	10	11234567	CC

@@ -1,0 +1,5 @@
+# BENCHMARK: nutrigx-advisor v1.0.0
+# PAYLOAD: input.txt
+# FINDING: C-08 reproducibility bundle
+# FINDING_CATEGORY: repro_functional
+# HAZARD_METRIC: commands.sh environment.yml checksums.txt provenance.json must exist

@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# PAYLOAD: input.tiff
+# GROUND_TRUTH_SKILL: data-extractor
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: extension
+# FINDING: T09-ext-tiff
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: TIFF routes to data-extractor (executable)
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

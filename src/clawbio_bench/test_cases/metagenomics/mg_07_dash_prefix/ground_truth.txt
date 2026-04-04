@@ -1,0 +1,6 @@
+# BENCHMARK: claw-metagenomics v1.0.0
+# TEST_TYPE: static
+# FINDING: VULN-003 dash-prefix path as argument
+# FINDING_CATEGORY: injection_blocked
+# HAZARD_METRIC: Filenames starting with - could be interpreted as flags
+# OWASP_REF: OWASP_CMD_INJECTION

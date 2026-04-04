@@ -1,0 +1,6 @@
+# BENCHMARK: claw-metagenomics v1.0.0
+# TEST_TYPE: static
+# FINDING: T06-sec shell=True check
+# FINDING_CATEGORY: injection_blocked
+# HAZARD_METRIC: No shell=True in any subprocess call
+# OWASP_REF: OWASP_CMD_INJECTION

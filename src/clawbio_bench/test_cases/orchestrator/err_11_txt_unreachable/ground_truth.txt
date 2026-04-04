@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: error
+# EXPECTED_EXIT_CODE: 1
+# FINDING: M-3 PharmGx/NutriGx unreachable via .txt extension
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: .txt not in EXTENSION_MAP — pharmgx and nutrigx inputs cannot be routed by extension
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

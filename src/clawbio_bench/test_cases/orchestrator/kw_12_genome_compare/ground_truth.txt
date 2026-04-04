@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL: genome-compare
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: how much dna in common do I share with George Church
+# FINDING: T09-kw-compare
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: george church and dna in common route to genome-compare
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

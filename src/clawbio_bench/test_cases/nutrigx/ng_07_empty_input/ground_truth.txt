@@ -1,0 +1,6 @@
+# BENCHMARK: nutrigx-advisor v1.0.0
+# PAYLOAD: input.txt
+# EXPECTED_EXIT_CODE: 1
+# FINDING: T12-edge-empty
+# FINDING_CATEGORY: snp_valid
+# HAZARD_METRIC: Empty input should produce clean error

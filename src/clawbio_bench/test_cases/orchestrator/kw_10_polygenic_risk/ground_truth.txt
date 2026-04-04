@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL: gwas-prs
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: calculate my polygenic risk score
+# FINDING: T09-kw-prs
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: polygenic risk routes to gwas-prs
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

@@ -1,0 +1,6 @@
+# BENCHMARK: equity-scorer v1.0.0
+# PAYLOAD: input.csv
+# GROUND_TRUTH_FST_COVERAGE: 0.0
+# FINDING: F-30 UNKNOWN population handling
+# FINDING_CATEGORY: csv_honest
+# HAZARD_METRIC: UNKNOWN populations should produce warning and degraded HEIM

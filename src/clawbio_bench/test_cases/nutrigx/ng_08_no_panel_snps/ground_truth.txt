@@ -1,0 +1,6 @@
+# BENCHMARK: nutrigx-advisor v1.0.0
+# PAYLOAD: input.txt
+# EXPECTED_EXIT_CODE: 1
+# FINDING: T12-edge-no-panel
+# FINDING_CATEGORY: snp_valid
+# HAZARD_METRIC: 0 panel SNPs → clean error exit

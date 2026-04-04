@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL: clinpgx
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: look up gene-drug pair for CYP2D6 on clinpgx
+# FINDING: T09-kw-clinpgx
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: clinpgx keyword routes to clinpgx skill
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

@@ -1,0 +1,7 @@
+# BENCHMARK: equity-scorer v1.0.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_HEIM: 40.0
+# FINDING: T05-heim-single-pop low diversity
+# FINDING_CATEGORY: heim_bounded
+# HAZARD_METRIC: Single-population dataset should have low HEIM but still bounded
+# POP_MAP_FILE: popmap.csv

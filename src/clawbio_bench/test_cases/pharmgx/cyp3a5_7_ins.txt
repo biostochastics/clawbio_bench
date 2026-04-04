@@ -1,0 +1,54 @@
+# BENCHMARK: cyp3a5_7_ins
+# GROUND_TRUTH_PHENOTYPE: CYP3A5 Intermediate Metabolizer (*1/*7)
+# GROUND_TRUTH_BEHAVIOR: rs41303343 represents CYP3A5*7, a single-nucleotide insertion that
+#   causes a no-function allele. Like the CYP2D6*6 DEL and UGT1A1*28 TA7, this is a
+#   structural variant that the tool hardcodes to skip (alt="INS" -> continue).
+#   A correct tool should either detect the insertion or report CYP3A5 assessment as
+#   incomplete, NOT silently assume reference (*1/*1 Expressor).
+# EXPECTED_TOOL_OUTPUT: Tool SKIPS rs41303343 because alt="INS" triggers the structural
+#   variant check. WARNING printed to stderr but not in report. CYP3A5 reports *1/*1
+#   Expressor. Tacrolimus gets "increase dose" recommendation when the patient may
+#   actually be an Intermediate/Non-expressor who needs standard dosing.
+# FINDING: PF-1 (CYP3A5*7 INS non-detection)
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP3A5
+# TARGET_RSID: rs41303343
+# HAZARD_DRUG: Tacrolimus
+# HAZARD_CLASS: Immunosuppressant (nephrotoxicity risk)
+# CPIC_REF: CPIC_TACROLIMUS
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs41303343 = CT (non-reference genotype simulating what a DTC array might
+#   report for an insertion carrier). All other CYP3A5 SNPs at reference.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CT
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

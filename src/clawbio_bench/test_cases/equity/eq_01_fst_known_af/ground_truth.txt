@@ -1,0 +1,16 @@
+# BENCHMARK: equity-scorer v1.0.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_FST: 1.000
+# GROUND_TRUTH_FST_ESTIMATOR: Nei's GST
+# GROUND_TRUTH_FST_PAIR: POP_A_vs_POP_B
+# FST_TOLERANCE: 0.001
+# GROUND_TRUTH_HEIM: 50.0
+# FINDING: C-06 FST naming mismatch
+# FINDING_CATEGORY: fst_mislabeled
+# HAZARD_METRIC: Report says Hudson FST but computes Nei's GST
+# POP_MAP_FILE: popmap.csv
+# NEI_REF: NEI_1973
+# HUDSON_REF: HUDSON_1992
+# DERIVATION: 2 pops x 5 samples. POP_A all 1/1 (p=1.0), POP_B all 0/0 (p=0.0).
+# DERIVATION_DETAIL: p_total=0.5, HT=2*0.5*0.5=0.5, HS=(5*0+5*0)/10=0.0, GST=(0.5-0.0)/0.5=1.0
+# CITATION: Nei, M. (1973). PNAS, 70(12), 3321-3323. doi:10.1073/pnas.70.12.3321

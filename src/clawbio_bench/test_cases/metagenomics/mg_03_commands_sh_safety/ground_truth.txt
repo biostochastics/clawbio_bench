@@ -1,0 +1,6 @@
+# BENCHMARK: claw-metagenomics v1.0.0
+# TEST_TYPE: demo
+# FINDING: VULN-002 commands.sh path escaping
+# FINDING_CATEGORY: injection_blocked
+# HAZARD_METRIC: commands.sh should not contain unescaped user paths
+# OWASP_REF: OWASP_CMD_INJECTION

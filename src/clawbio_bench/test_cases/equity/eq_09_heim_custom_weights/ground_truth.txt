@@ -1,0 +1,9 @@
+# BENCHMARK: equity-scorer v1.0.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_HEIM: 330.0
+# WEIGHTS: 1.0,1.0,1.0,1.0
+# FINDING: U-2/F-27 HEIM unbounded with --weights 1,1,1,1
+# FINDING_CATEGORY: heim_unbounded
+# HAZARD_METRIC: weights 1,1,1,1 produces HEIM>100 (no weight validation or normalization)
+# POP_MAP_FILE: popmap.csv
+# DERIVATION: score = 100*(1.0*RI + 1.0*HB + 1.0*FC + 1.0*GS). For this payload RI~0.93 HB~0.66 FC=1.0 GS=5/7~0.714 => ~330

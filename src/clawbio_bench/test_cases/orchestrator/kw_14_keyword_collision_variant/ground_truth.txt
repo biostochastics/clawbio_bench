@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL: vcf-annotator
+# GROUND_TRUTH_EXECUTABLE: false
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: annotate variant rs1234 with diversity context
+# FINDING: T09-kw-collision variant+diversity
+# FINDING_CATEGORY: routed_wrong
+# HAZARD_ROUTING: keyword collision - variant and diversity both match different skills; first-match wins may give wrong result
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

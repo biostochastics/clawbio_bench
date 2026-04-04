@@ -1,0 +1,10 @@
+# BENCHMARK: nutrigx-advisor v1.0.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: folate
+# GROUND_TRUTH_SCORE: 5.0
+# GROUND_TRUTH_CATEGORY: Moderate
+# SCORE_TOLERANCE: 0.1
+# FINDING: T12-score-all-het midpoint
+# FINDING_CATEGORY: score_correct
+# HAZARD_METRIC: All het → risk_count=1 → raw=0.5 → score=5.0
+# DERIVATION: 28 SNPs het → raw=0.5 → score=5.0

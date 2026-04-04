@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v1.0.0
+# GROUND_TRUTH_SKILL: gwas-lookup
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: look up rs3798220 in gwas databases
+# FINDING: T09-kw-gwas-lookup
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: rsid lookup routes to gwas-lookup
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE
