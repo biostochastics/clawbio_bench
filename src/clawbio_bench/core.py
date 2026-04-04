@@ -32,7 +32,7 @@ from pathlib import Path
 # Constants & Exceptions
 # ---------------------------------------------------------------------------
 
-CORE_VERSION = "1.1.0"
+CORE_VERSION = "1.0.0"
 
 
 class BenchmarkConfigError(Exception):
@@ -457,7 +457,7 @@ def write_manifest(
         "environment": {
             "python_version": platform.python_version(),
             "platform": platform.platform(),
-            "hostname": platform.node(),
+            "hostname_hash": hashlib.sha256(platform.node().encode()).hexdigest()[:12],
         },
     }
     with open(output_base / "manifest.json", "w") as f:
@@ -609,6 +609,7 @@ def run_benchmark_matrix(
     benchmark_name: str,
     clean_between_commits: bool = True,
     allow_dirty: bool = False,
+    quiet: bool = False,
 ) -> list[dict]:
     """Run full benchmark matrix: commits x test_cases.
 
@@ -666,7 +667,8 @@ def run_benchmark_matrix(
             for tc in test_cases:
                 run_count += 1
                 tc_name = tc.stem if tc.is_file() else tc.name
-                print(f"  [{run_count}/{total_runs}] {tc_name}...", end=" ", flush=True)
+                if not quiet:
+                    print(f"  [{run_count}/{total_runs}] {tc_name}...", end=" ", flush=True)
 
                 try:
                     gt, payload = resolve_test_case(tc)
@@ -680,12 +682,14 @@ def run_benchmark_matrix(
                         commit_meta={"sha": commit_sha, "short": commit_short, **commit_meta},
                     )
                     cat = verdict.get("verdict", {}).get("category", "???")
-                    print(f"[{cat}]")
+                    if not quiet:
+                        print(f"[{cat}]")
                     all_verdicts.append(verdict)
                 except BaseException as e:
                     if isinstance(e, (KeyboardInterrupt, SystemExit)):
                         # Record partial result then re-raise (Crush review)
-                        print("INTERRUPTED")
+                        if not quiet:
+                            print("INTERRUPTED")
                         all_verdicts.append(
                             harness_error_verdict(
                                 tc_name,
@@ -695,7 +699,8 @@ def run_benchmark_matrix(
                             )
                         )
                         raise
-                    print(f"HARNESS_ERROR: {e}")
+                    if not quiet:
+                        print(f"HARNESS_ERROR: {e}")
                     all_verdicts.append(
                         harness_error_verdict(
                             tc_name,
@@ -726,28 +731,35 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         default=Path.cwd(),
         help="Path to ClawBio repo (default: current directory)",
     )
-    parser.add_argument(
+    mode_group = parser.add_mutually_exclusive_group(required=False)
+    mode_group.add_argument(
         "--commits",
         type=str,
         default=None,
         help="Comma-separated commit SHAs (use HEAD for current)",
     )
-    parser.add_argument(
+    mode_group.add_argument(
         "--all-commits",
         action="store_true",
         help="Run against ALL commits (longitudinal sweep)",
     )
-    parser.add_argument(
+    mode_group.add_argument(
         "--smoke",
         action="store_true",
         help="Run against HEAD only (quick CI gate)",
     )
-    parser.add_argument(
+    mode_group.add_argument(
         "--regression-window",
         type=int,
         default=None,
         metavar="N",
-        help="Run against last N commits",
+        help="Run against last N commits (must be > 0)",
+    )
+    parser.add_argument(
+        "--branch",
+        type=str,
+        default="main",
+        help="Git branch for --all-commits and --regression-window (default: main)",
     )
     parser.add_argument(
         "--inputs",
@@ -766,6 +778,12 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Allow running against a repo with uncommitted changes (destructive!)",
     )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress per-test-case output (show only commit and final summary)",
+    )
 
 
 def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
@@ -777,18 +795,24 @@ def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
             text=True,
             timeout=10,
         )
+        if result.returncode != 0 or not result.stdout.strip():
+            raise BenchmarkConfigError(f"Failed to resolve HEAD: {result.stderr.strip()}")
         return [result.stdout.strip()]
 
+    branch = getattr(args, "branch", "main") or "main"
+
     if args.all_commits:
-        commits = get_all_commits(repo_path)
-        print(f"Longitudinal sweep: {len(commits)} commits")
+        commits = get_all_commits(repo_path, branch=branch)
+        print(f"Longitudinal sweep: {len(commits)} commits (branch: {branch})")
         return commits
 
     if args.regression_window:
-        all_commits = get_all_commits(repo_path)
+        if args.regression_window < 1:
+            raise BenchmarkConfigError("--regression-window must be a positive integer")
+        all_commits = get_all_commits(repo_path, branch=branch)
         n = min(args.regression_window, len(all_commits))
         commits = all_commits[-n:]
-        print(f"Regression window: last {n} commits")
+        print(f"Regression window: last {n} commits (branch: {branch})")
         return commits
 
     if args.commits:
@@ -896,7 +920,7 @@ def build_verdict_doc(
         "environment": {
             "python_version": platform.python_version(),
             "platform": platform.platform(),
-            "hostname": platform.node(),
+            "hostname_hash": hashlib.sha256(platform.node().encode()).hexdigest()[:12],
         },
     }
     return doc

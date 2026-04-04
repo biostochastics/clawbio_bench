@@ -73,7 +73,8 @@ def clawbio_repo(request):
 
     if not repo.exists():
         pytest.skip(f"Repository path does not exist: {repo}")
-    if not (repo / ".git").is_dir():
+    git_path = repo / ".git"
+    if not (git_path.is_dir() or git_path.is_file()):
         pytest.skip(f"Not a git repository: {repo}")
 
     allow_dirty = request.config.getoption("--allow-dirty")

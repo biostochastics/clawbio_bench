@@ -12,7 +12,7 @@ repos:
     hooks:
       - id: pytest-smoke
         name: pytest unit tests
-        entry: python -m pytest tests/ -x -q -k "not test_harness_smoke"
+        entry: python3 -m pytest tests/ -x -q -k "not test_harness_smoke"
         language: system
         pass_filenames: false
         always_run: true

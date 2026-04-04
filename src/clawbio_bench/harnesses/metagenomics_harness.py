@@ -77,32 +77,86 @@ CATEGORY_LEGEND = {
 # ---------------------------------------------------------------------------
 
 
+def _resolve_import_aliases(tree: ast.Module) -> dict[str, str]:
+    """Build a mapping of local names to their module origins.
+
+    Handles aliased imports like `import subprocess as sp` and
+    direct imports like `from subprocess import run`.
+    """
+    aliases = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local_name = alias.asname or alias.name
+                aliases[local_name] = alias.name
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            for alias in node.names:
+                local_name = alias.asname or alias.name
+                aliases[local_name] = f"{module}.{alias.name}"
+    return aliases
+
+
+# Shell-executing os functions to detect
+_OS_SHELL_FUNCS = frozenset({"system", "popen"})
+
+
 def _find_shell_true_ast(tree: ast.Module) -> list[dict]:
     """Walk AST to find subprocess calls with shell=True.
 
-    More robust than grep — handles multi-line calls, aliased imports,
-    and avoids false positives from comments or strings.
+    Handles aliased imports (import subprocess as sp), direct imports
+    (from subprocess import run), and os shell functions.
     """
     findings = []
     subprocess_funcs = {"run", "call", "Popen", "check_call", "check_output"}
+    aliases = _resolve_import_aliases(tree)
+
+    subprocess_aliases = {name for name, origin in aliases.items() if origin == "subprocess"}
+    direct_subprocess_funcs = {}
+    for local_name, origin in aliases.items():
+        parts = origin.split(".")
+        if len(parts) == 2 and parts[0] == "subprocess" and parts[1] in subprocess_funcs:
+            direct_subprocess_funcs[local_name] = origin
+
+    os_aliases = {name for name, origin in aliases.items() if origin == "os"}
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
-        # Match subprocess.run(...), subprocess.call(...), etc.
+
         func = node.func
         is_subprocess_call = False
         func_name = ""
 
+        # Pattern 1: module.func() — subprocess.run(), sp.run()
         if isinstance(func, ast.Attribute) and func.attr in subprocess_funcs:
-            if isinstance(func.value, ast.Name) and func.value.id == "subprocess":
-                is_subprocess_call = True
-                func_name = f"subprocess.{func.attr}"
+            if isinstance(func.value, ast.Name):
+                if func.value.id in subprocess_aliases or func.value.id == "subprocess":
+                    is_subprocess_call = True
+                    func_name = f"subprocess.{func.attr}"
+
+        # Pattern 2: direct import — run() from "from subprocess import run"
+        if isinstance(func, ast.Name) and func.id in direct_subprocess_funcs:
+            is_subprocess_call = True
+            func_name = direct_subprocess_funcs[func.id]
+
+        # Pattern 3: os shell functions — always shell execution
+        if isinstance(func, ast.Attribute) and func.attr in _OS_SHELL_FUNCS:
+            if isinstance(func.value, ast.Name):
+                if func.value.id in os_aliases or func.value.id == "os":
+                    findings.append(
+                        {
+                            "line": node.lineno,
+                            "end_line": node.end_lineno,
+                            "func": f"os.{func.attr}",
+                            "shell_true": True,
+                        }
+                    )
+                    continue
 
         if not is_subprocess_call:
             continue
 
-        # Check for shell=True in keyword arguments
         for kw in node.keywords:
             if kw.arg == "shell":
                 if isinstance(kw.value, ast.Constant) and kw.value.value is True:
@@ -115,7 +169,6 @@ def _find_shell_true_ast(tree: ast.Module) -> list[dict]:
                         }
                     )
                 elif isinstance(kw.value, ast.Name):
-                    # shell=some_variable — flag as suspicious
                     findings.append(
                         {
                             "line": node.lineno,
@@ -129,34 +182,55 @@ def _find_shell_true_ast(tree: ast.Module) -> list[dict]:
 
 
 def _count_subprocess_calls_ast(tree: ast.Module) -> list[dict]:
-    """Count all subprocess invocations via AST."""
+    """Count all subprocess invocations via AST, including aliased imports."""
     calls = []
     subprocess_funcs = {"run", "call", "Popen", "check_call", "check_output"}
+    aliases = _resolve_import_aliases(tree)
+
+    subprocess_aliases = {name for name, origin in aliases.items() if origin == "subprocess"}
+    direct_subprocess_funcs = {}
+    for local_name, origin in aliases.items():
+        parts = origin.split(".")
+        if len(parts) == 2 and parts[0] == "subprocess" and parts[1] in subprocess_funcs:
+            direct_subprocess_funcs[local_name] = origin
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
         func = node.func
-        if isinstance(func, ast.Attribute) and func.attr in subprocess_funcs:
-            if isinstance(func.value, ast.Name) and func.value.id == "subprocess":
-                # Check if first positional arg is a list (safe) or string (risky)
-                arg_type = "unknown"
-                if node.args:
-                    first_arg = node.args[0]
-                    if isinstance(first_arg, ast.List):
-                        arg_type = "list"
-                    elif isinstance(first_arg, (ast.Constant, ast.JoinedStr)):
-                        arg_type = "string"
-                    elif isinstance(first_arg, ast.Name):
-                        arg_type = f"variable:{first_arg.id}"
+        matched = False
+        func_name = ""
 
-                calls.append(
-                    {
-                        "line": node.lineno,
-                        "func": f"subprocess.{func.attr}",
-                        "first_arg_type": arg_type,
-                    }
-                )
+        if isinstance(func, ast.Attribute) and func.attr in subprocess_funcs:
+            if isinstance(func.value, ast.Name):
+                if func.value.id in subprocess_aliases or func.value.id == "subprocess":
+                    matched = True
+                    func_name = f"subprocess.{func.attr}"
+
+        if isinstance(func, ast.Name) and func.id in direct_subprocess_funcs:
+            matched = True
+            func_name = direct_subprocess_funcs[func.id]
+
+        if not matched:
+            continue
+
+        arg_type = "unknown"
+        if node.args:
+            first_arg = node.args[0]
+            if isinstance(first_arg, ast.List):
+                arg_type = "list"
+            elif isinstance(first_arg, (ast.Constant, ast.JoinedStr)):
+                arg_type = "string"
+            elif isinstance(first_arg, ast.Name):
+                arg_type = f"variable:{first_arg.id}"
+
+        calls.append(
+            {
+                "line": node.lineno,
+                "func": func_name,
+                "first_arg_type": arg_type,
+            }
+        )
 
     return calls
 
@@ -484,8 +558,8 @@ def run_single_metagenomics(
             stdout="",
             stderr="",
             wall_seconds=0.0,
-            start_time=harness_core.datetime.now(harness_core.timezone.utc),
-            end_time=harness_core.datetime.now(harness_core.timezone.utc),
+            start_time=harness_core.datetime.now(harness_core.UTC),
+            end_time=harness_core.datetime.now(harness_core.UTC),
             used_fallback=False,
             cmd=["static-analysis"],
             cwd=str(repo_path),

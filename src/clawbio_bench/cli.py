@@ -22,6 +22,7 @@ from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 
+from clawbio_bench import __version__
 from clawbio_bench import core as harness_core
 
 # ---------------------------------------------------------------------------
@@ -78,12 +79,14 @@ def run_single_harness(
     commits: list[str],
     output_base: Path,
     allow_dirty: bool = False,
+    inputs_override: Path | None = None,
+    quiet: bool = False,
 ) -> dict:
     """Run one harness and return its summary."""
     mod = load_harness(name)
     info = HARNESS_REGISTRY[name]
 
-    inputs_path = TEST_CASES_ROOT / info["default_inputs_dir"]
+    inputs_path = inputs_override or (TEST_CASES_ROOT / info["default_inputs_dir"])
     test_cases = harness_core.resolve_test_cases(inputs_path)
 
     harness_output = output_base / info["benchmark_name"]
@@ -111,6 +114,7 @@ def run_single_harness(
         run_fn,
         mod.BENCHMARK_NAME,
         allow_dirty=allow_dirty,
+        quiet=quiet,
     )
 
     heatmap = harness_core.build_heatmap_data(verdicts, mod.CATEGORY_LEGEND)
@@ -160,10 +164,43 @@ def run_single_harness(
     }
 
 
+def _harness_summary() -> str:
+    """Build a summary of registered harnesses for --list output."""
+    lines = []
+    for name, info in HARNESS_REGISTRY.items():
+        inputs_path = TEST_CASES_ROOT / info["default_inputs_dir"]
+        if inputs_path.is_dir():
+            count = sum(
+                1
+                for p in inputs_path.iterdir()
+                if p.is_file() or (p.is_dir() and (p / "ground_truth.txt").exists())
+            )
+        else:
+            count = 0
+        lines.append(f"  {name:<16} {count:>3} tests   {info['description']}")
+    return "\n".join(lines)
+
+
 def main():
+    epilog = (
+        "examples:\n"
+        "  clawbio-bench --smoke --repo /path/to/ClawBio\n"
+        "  clawbio-bench --smoke --harness equity --repo /path/to/ClawBio\n"
+        "  clawbio-bench --regression-window 10 --repo /path/to/ClawBio\n"
+        "  clawbio-bench --all-commits --repo /path/to/ClawBio\n"
+        "  clawbio-bench --heatmap results/suite/20260404_120000/\n"
+        "  clawbio-bench --list\n"
+    )
     parser = argparse.ArgumentParser(
-        description="ClawBio Benchmark Suite",
+        description="ClawBio Benchmark Suite — safety and correctness harnesses "
+        "for computational biology tools",
+        epilog=epilog,
         formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__} (core {harness_core.CORE_VERSION})",
     )
     harness_core.add_common_args(parser)
     parser.add_argument(
@@ -172,6 +209,17 @@ def main():
         default=None,
         choices=list(HARNESS_REGISTRY.keys()),
         help="Run a specific harness only (default: all)",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_harnesses",
+        help="List available harnesses and test case counts, then exit",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would run (commits, test cases) without executing",
     )
     parser.add_argument(
         "--heatmap",
@@ -188,6 +236,22 @@ def main():
         help="Output path for heatmap PNG (default: RESULTS_DIR/heatmap.png)",
     )
     args = parser.parse_args()
+
+    # List-only mode
+    if args.list_harnesses:
+        print(f"clawbio-bench {__version__} — registered harnesses:\n")
+        print(_harness_summary())
+        total = sum(
+            sum(
+                1
+                for p in (TEST_CASES_ROOT / info["default_inputs_dir"]).iterdir()
+                if p.is_file() or (p.is_dir() and (p / "ground_truth.txt").exists())
+            )
+            for info in HARNESS_REGISTRY.values()
+            if (TEST_CASES_ROOT / info["default_inputs_dir"]).is_dir()
+        )
+        print(f"\n  {'total':<16} {total:>3} tests")
+        return
 
     # Heatmap-only mode
     if args.heatmap:
@@ -221,13 +285,38 @@ def main():
 
     harness_names = [args.harness] if args.harness else list(HARNESS_REGISTRY.keys())
 
-    print(f"\nClawBio Benchmark Suite v{harness_core.CORE_VERSION}")
+    print(f"\nClawBio Benchmark Suite v{__version__}")
     print(f"  Repo: {repo_path}")
     print(f"  Commits: {len(commits)}")
     print(f"  Mode: {mode}")
     print(f"  Harnesses: {', '.join(harness_names)}")
     print(f"  Output: {output_base}")
     print()
+
+    # Dry-run mode: show plan and exit
+    if args.dry_run:
+        for name in harness_names:
+            info = HARNESS_REGISTRY[name]
+            inputs_path = args.inputs or (TEST_CASES_ROOT / info["default_inputs_dir"])
+            try:
+                test_cases = harness_core.resolve_test_cases(inputs_path)
+            except harness_core.BenchmarkConfigError:
+                test_cases = []
+            print(f"  {info['benchmark_name']}: {len(test_cases)} test cases")
+            for tc in test_cases:
+                tc_name = tc.stem if tc.is_file() else tc.name
+                print(f"    - {tc_name}")
+        total_runs = sum(
+            len(
+                harness_core.resolve_test_cases(
+                    args.inputs or (TEST_CASES_ROOT / HARNESS_REGISTRY[n]["default_inputs_dir"])
+                )
+            )
+            for n in harness_names
+        ) * len(commits)
+        print(f"\n  Total runs: {total_runs} ({len(commits)} commits x test cases)")
+        print("  (dry run — nothing executed)")
+        return
 
     results = {}
     suite_start = time.monotonic()
@@ -245,6 +334,7 @@ def main():
                 commits,
                 output_base,
                 allow_dirty=allow_dirty,
+                inputs_override=args.inputs,
             )
         except Exception as e:
             print(f"HARNESS FAILED: {e}", file=sys.stderr)

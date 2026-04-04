@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# Pin ClawBio to a known commit so CI is deterministic.
+# Benchmark exit code 1 means "findings exist" (expected), not "harness broken".
+# We verify harness health by checking artifact generation, not benchmark pass/fail.
+env:
+  CLAWBIO_REF: "3c9383b1"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -45,10 +51,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - name: Clone ClawBio
-        run: git clone --depth=50 https://github.com/manuelcorpas/ClawBio.git /tmp/ClawBio
+      - name: Clone ClawBio (pinned ref)
+        run: |
+          git clone https://github.com/manuelcorpas/ClawBio.git /tmp/ClawBio
+          git -C /tmp/ClawBio checkout $CLAWBIO_REF
       - name: Run smoke benchmarks
-        run: clawbio-bench --smoke --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+        # Exit 0 or 1 are both valid (1 = findings exist, expected for ClawBio)
+        # Only exit >= 2 indicates a harness crash
+        run: |
+          clawbio-bench --smoke --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+          exit_code=$?
+          if [ $exit_code -ge 2 ]; then exit $exit_code; fi
+          exit 0
+      - name: Verify artifacts generated
+        run: |
+          test -f /tmp/results/bio-orchestrator/manifest.json
+          test -f /tmp/results/equity-scorer/manifest.json
+          test -f /tmp/results/pharmgx-reporter/manifest.json
+          test -f /tmp/results/nutrigx-advisor/manifest.json
+          test -f /tmp/results/claw-metagenomics/manifest.json
       - name: Upload verdict artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -69,7 +90,11 @@ jobs:
       - name: Clone ClawBio (full history)
         run: git clone https://github.com/manuelcorpas/ClawBio.git /tmp/ClawBio
       - name: Run regression sweep (last 20 commits)
-        run: clawbio-bench --regression-window 20 --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+        run: |
+          clawbio-bench --regression-window 20 --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+          exit_code=$?
+          if [ $exit_code -ge 2 ]; then exit $exit_code; fi
+          exit 0
         timeout-minutes: 15
       - name: Upload regression artifacts
         uses: actions/upload-artifact@v4
