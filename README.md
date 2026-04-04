@@ -194,6 +194,14 @@ See [docs/ground-truth-derivation.md](docs/ground-truth-derivation.md) for detai
 - CPIC Guidelines (2017-2024). cpicpgx.org
 - OWASP Command Injection Prevention Cheat Sheet (2024). owasp.org
 
+## Roadmap
+
+- **Shared AST security utilities**: The metagenomics harness has AST-based static analysis for subprocess and shell injection detection (handles aliased imports, OS-level shell functions). Currently harness-local — planned to extract into `core.py` as a reusable utility for any harness auditing tools that invoke external processes.
+- **Entry-point harness discovery**: Plugin architecture via `[project.entry-points]` so third-party harnesses can register without modifying core code.
+- **Parallel execution**: `--jobs/-j` flag for concurrent test case execution within a commit.
+- **Config file support**: YAML/TOML for complex benchmark configurations.
+- **Benchmark diff tool**: Compare two longitudinal runs to identify regressions.
+
 ## License
 
 MIT
