@@ -1,4 +1,4 @@
-# BENCHMARK: claw-metagenomics v1.0.0
+# BENCHMARK: claw-metagenomics v0.1.0
 # TEST_TYPE: static
 # FINDING: NF-4 KRAKEN2_DB/HUMANN_DB env var injection
 # FINDING_CATEGORY: injection_blocked

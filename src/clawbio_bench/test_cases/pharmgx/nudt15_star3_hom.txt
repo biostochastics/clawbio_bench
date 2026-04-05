@@ -1,0 +1,34 @@
+# BENCHMARK: nudt15_star3_hom
+# GROUND_TRUTH_PHENOTYPE: NUDT15 Poor Metabolizer (*3/*3)
+# GROUND_TRUTH_BEHAVIOR: rs116855232 homozygous alt (CC → TT, or whatever the
+#   *3 variant alt allele is in PharmVar) defines NUDT15*3/*3, a no-function
+#   diplotype that causes severe thiopurine-induced myelosuppression. CPIC
+#   (2018, updated 2024) recommends avoiding thioguanine, mercaptopurine, and
+#   azathioprine or using dramatically reduced doses. NUDT15 testing is a
+#   CPIC Level A recommendation and is clinically actionable.
+# EXPECTED_TOOL_OUTPUT: Tool should identify the *3/*3 diplotype, report
+#   Poor Metabolizer, and classify thioguanine/mercaptopurine/azathioprine as
+#   AVOID (or CAUTION at minimum with dose adjustment guidance).
+# FINDING: CPIC Tier-1 gap — NUDT15 coverage missing from regression set
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: NUDT15
+# TARGET_RSID: rs116855232
+# HAZARD_DRUG: Mercaptopurine
+# HAZARD_CLASS: Thiopurine (myelosuppression)
+# CPIC_REF: CPIC_THIOPURINE
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs116855232 homozygous for the *3 variant; other loci at reference.
+#   Per pharmgx_reporter's catalog (rs116855232 → *3 no_function), a homozygous
+#   call should yield *3/*3 Poor Metabolizer.
+#
+# rsid	chromosome	position	genotype
+rs116855232	13	48611703	TT
+rs147390019	13	48037825	GG
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA

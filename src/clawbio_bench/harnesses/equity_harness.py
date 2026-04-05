@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 ClawBio Equity Scorer Benchmark Harness
 =========================================
@@ -27,6 +28,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from clawbio_bench import core as harness_core
 
@@ -35,7 +37,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "equity-scorer"
-BENCHMARK_VERSION = "1.0.0"
+BENCHMARK_VERSION = "0.1.0"
 
 RUBRIC_CATEGORIES = [
     "fst_correct",
@@ -131,9 +133,9 @@ def analyze_equity_report(
     result_json_path: Path,
     stdout: str,
     stderr: str,
-) -> dict:
+) -> dict[str, Any]:
     """Parse equity scorer outputs to extract FST, HEIM, and labels."""
-    analysis = {
+    analysis: dict[str, Any] = {
         "report_exists": False,
         "result_json_exists": False,
         "result_json_valid": False,
@@ -167,12 +169,12 @@ def analyze_equity_report(
     if result_json_path.exists():
         analysis["result_json_exists"] = True
         try:
-            with open(result_json_path) as f:
+            with open(result_json_path, encoding="utf-8") as f:
                 data = json.load(f)
             analysis["result_json_valid"] = True
 
             # Extract from result.json data section
-            # Schema validation (Codex review: handle unexpected shapes)
+            # Schema validation: handle unexpected shapes
             if not isinstance(data, dict):
                 analysis["errors"].append(
                     f"result.json top-level is {type(data).__name__}, expected dict"
@@ -316,8 +318,8 @@ def score_equity_verdict(
     # ── Expected crash/edge cases ──
     if expected_exit != 0:
         if exit_code != 0:
-            # Check for genuine crash even when exit code matches expected
-            # (Crush review: traceback with expected exit code is still a crash)
+            # Check for genuine crash even when exit code matches expected:
+            # a traceback with expected exit code is still a crash.
             if "Traceback" in execution.stderr:
                 return {
                     "category": "edge_crash",
@@ -343,15 +345,31 @@ def score_equity_verdict(
         expected_estimator = ground_truth.get("GROUND_TRUTH_FST_ESTIMATOR", "Nei's GST")
         tolerance = float(ground_truth.get("FST_TOLERANCE", "0.02"))
 
-        # Get observed FST — use specific pair key if provided (Gemini/OpenCode review)
+        # Get observed FST — use specific pair key if provided.
+        # With multiple pairs, require exact match; falling back to the first
+        # pair can silently score the wrong comparison.
         observed_fst = None
         fst_values = analysis.get("fst_values", {})
         expected_pair = ground_truth.get("GROUND_TRUTH_FST_PAIR", "")
-        if expected_pair and expected_pair in fst_values:
-            observed_fst = fst_values[expected_pair]
-        elif fst_values:
-            # Fallback: first pair (safe for 2-population tests)
+        if expected_pair:
+            if expected_pair in fst_values:
+                observed_fst = fst_values[expected_pair]
+            # else: explicit mismatch — fall through with observed_fst=None
+        elif len(fst_values) == 1:
+            # Only safe to guess the pair when exactly one exists
             observed_fst = next(iter(fst_values.values()))
+        elif len(fst_values) > 1:
+            # Ambiguous: ground truth didn't specify which pair to check
+            details["expected_fst"] = expected_fst_str
+            details["fst_values"] = fst_values
+            return {
+                "category": "harness_error",
+                "rationale": (
+                    "Multiple FST pairs present but GROUND_TRUTH_FST_PAIR not "
+                    f"specified; cannot disambiguate among {list(fst_values)}"
+                ),
+                "details": details,
+            }
 
         observed_label = analysis.get("fst_table_header", "")
 
@@ -381,11 +399,25 @@ def score_equity_verdict(
                     "details": details,
                 }
 
-            # Value correct — now check label
-            label_correct = expected_estimator.lower() in (observed_label or "").lower()
+            # Value correct — now check label. A MISSING label is NOT the same
+            # as a correct label: the tool cannot be credited for labeling
+            # when no label was emitted at all.
+            if not observed_label:
+                details["label_correct"] = False
+                return {
+                    "category": "fst_mislabeled",
+                    "rationale": (
+                        f"FST value {observed_fst:.4f} correct, but no "
+                        f"estimator label was emitted (expected "
+                        f"'{expected_estimator}')"
+                    ),
+                    "details": details,
+                }
+
+            label_correct = expected_estimator.lower() in observed_label.lower()
             details["label_correct"] = label_correct
 
-            if not label_correct and observed_label:
+            if not label_correct:
                 return {
                     "category": "fst_mislabeled",
                     "rationale": (
@@ -401,7 +433,7 @@ def score_equity_verdict(
                 "details": details,
             }
 
-        # No FST data available (Crush review: use fst_incorrect, not edge_crash)
+        # No FST data available — use fst_incorrect, not edge_crash
         if not analysis.get("report_exists"):
             return {
                 "category": "fst_incorrect",
@@ -456,6 +488,7 @@ def score_equity_verdict(
         if fst_coverage is not None:
             # CSV mode should report fst_coverage = 0.0 since no VCF data
             expected_coverage = float(ground_truth.get("GROUND_TRUTH_FST_COVERAGE", "0.0"))
+            # 0.01 epsilon: floating-point tolerance for coverage (distinct from FST_TOLERANCE)
             if fst_coverage <= expected_coverage + 0.01:
                 return {
                     "category": "csv_honest",
@@ -531,18 +564,21 @@ def run_single_equity(
 ) -> dict:
     """Execute equity_scorer.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
-    commit_short = commit_sha[:8]
-    run_output_dir = output_base / commit_short / tc_name
+    run_output_dir = output_base / commit_sha / tc_name
     tool_output_dir = run_output_dir / "tool_output"
     tool_output_dir.mkdir(parents=True, exist_ok=True)
 
     tool_path = repo_path / "skills" / "equity-scorer" / "equity_scorer.py"
-    timeout = int(ground_truth.get("TIMEOUT", "60"))
+    timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     # Build command
     if not payload_path:
-        # No payload — this shouldn't happen for equity, emit error
-        raise ValueError(f"Equity test case {tc_name} has no payload file")
+        return harness_core.harness_error_verdict(
+            tc_name,
+            commit_meta,
+            ValueError(f"Equity test case {tc_name} has no payload file"),
+            ground_truth=ground_truth,
+        )
 
     cmd = [
         sys.executable,
@@ -557,12 +593,13 @@ def run_single_equity(
     # Add custom weights if specified (U-2 unbounded test)
     weights = ground_truth.get("WEIGHTS")
     if weights:
+        harness_core.validate_weights(weights)
         cmd.extend(["--weights", weights])
 
-    # Add population map if specified
+    # Add population map if specified — with path traversal check
     pop_map_file = ground_truth.get("POP_MAP_FILE")
     if pop_map_file:
-        pop_map_path = test_case_path / pop_map_file
+        pop_map_path = harness_core.validate_payload_path(pop_map_file, test_case_path)
         if pop_map_path.exists():
             cmd.extend(["--pop-map", str(pop_map_path)])
 
@@ -578,7 +615,7 @@ def run_single_equity(
     if weights:
         fallback_cmd.extend(["--weights", weights])
     if pop_map_file:
-        pop_map_path = test_case_path / pop_map_file
+        pop_map_path = harness_core.validate_payload_path(pop_map_file, test_case_path)
         if pop_map_path.exists():
             fallback_cmd.extend(["--pop-map", str(pop_map_path)])
 
@@ -588,6 +625,7 @@ def run_single_equity(
         cwd=repo_path,
         timeout=timeout,
         fallback_cmd=fallback_cmd,
+        fallback_flag="--no-figures",
     )
 
     # Save logs
@@ -641,7 +679,7 @@ def run_single_equity(
 # ---------------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
     harness_core.run_harness_main(
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,

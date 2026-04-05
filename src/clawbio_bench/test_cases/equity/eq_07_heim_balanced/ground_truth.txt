@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf
 # GROUND_TRUTH_HEIM: 85.0
 # FINDING: T05-heim-balanced high diversity

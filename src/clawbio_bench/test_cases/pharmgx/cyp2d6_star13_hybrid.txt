@@ -1,0 +1,38 @@
+# BENCHMARK: cyp2d6_star13_hybrid
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Intermediate Metabolizer (*1/*13 CYP2D7-CYP2D6 hybrid)
+# GROUND_TRUTH_BEHAVIOR: Patient carries a CYP2D6*13 hybrid allele — a
+#   chimeric gene where the 5' portion derives from the CYP2D7 pseudogene and
+#   the 3' portion from CYP2D6, producing no functional enzyme. Hybrid alleles
+#   at the CYP2D6/CYP2D7 locus are a canonical homolog-confusion failure class
+#   (A-HOMOLOG): short-read SNP callers misalign reads across the highly
+#   similar paralogs and silently miscall the diplotype. The correct tool
+#   behavior is to disclose that hybrid allele detection is out of scope for
+#   SNP-only panels and return Indeterminate.
+# EXPECTED_TOOL_OUTPUT: Tool cannot detect the CYP2D7/CYP2D6 fusion boundary
+#   from panel SNPs and reports *1/*1 Normal Metabolizer with Standard codeine
+#   guidance. No hybrid-allele limitation is disclosed.
+# FINDING: A-HOMOLOG CYP2D6*13 hybrid non-detection (CYP2D6/CYP2D7 confusion)
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic
+# CPIC_REF: CPIC_OPIOID
+# PHARMVAR_REF: PHARMVAR_CYP2D6
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Reference at every CYP2D6 panel SNP. The *13 hybrid's 5' CYP2D7
+#   sequence produces reads that map to CYP2D7 rather than CYP2D6 under
+#   standard alignment, so CYP2D6 coverage appears normal and no aberrant
+#   SNP is called.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	CC
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC

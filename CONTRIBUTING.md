@@ -5,8 +5,8 @@ This guide explains how to add a new benchmark harness for auditing a computatio
 ## Prerequisites
 
 ```bash
-git clone https://github.com/biostochastics/clawbio_benchmark.git
-cd clawbio_benchmark
+git clone https://github.com/biostochastics/clawbio_bench.git
+cd clawbio_bench
 pip install -e ".[dev]"
 pre-commit install
 ```
@@ -182,10 +182,6 @@ pytest tests/ -x -q -k "not test_harness_smoke"
 # Pre-commit runs automatically on git commit
 git commit -m "Add my-tool harness"
 ```
-
-## Multi-Model Review (Recommended)
-
-For harnesses that will be used in safety-critical contexts, we recommend multi-model review before merging. The ClawBio harnesses went through 6 rounds of review across 5+ AI models, catching issues that single-reviewer processes missed (e.g., FST fallback logic, harness_error categorization, path traversal validation).
 
 ## Code of Conduct
 

@@ -1,0 +1,37 @@
+# BENCHMARK: g6pd_a_minus_indeterminate
+# GROUND_TRUTH_PHENOTYPE: G6PD Indeterminate (not in ClawBio pharmgx panel)
+# GROUND_TRUTH_BEHAVIOR: G6PD A- is an X-linked glucose-6-phosphate dehydrogenase
+#   deficient variant associated with rasburicase-induced hemolysis per CPIC
+#   (2014, updated 2022). Rasburicase is contraindicated in G6PD-deficient
+#   patients — this is a CPIC Level A / FDA-labeled contraindication. ClawBio's
+#   pharmgx_reporter panel does not include G6PD loci, so the correct behavior
+#   is to report G6PD Indeterminate (not assessed by panel) and disclose that
+#   rasburicase guidance cannot be generated from the provided data.
+# EXPECTED_TOOL_OUTPUT: Report G6PD as Indeterminate (not genotyped) or omit
+#   it from the gene profile with a data-limitation disclosure. The report
+#   must NOT silently claim G6PD is normal, since that is an over-claim on
+#   data the tool never observed.
+# FINDING: CPIC Tier-1 scope honesty — G6PD not in panel, must not be claimed
+# FINDING_CATEGORY: correct_indeterminate
+# TARGET_GENE: G6PD
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Rasburicase
+# HAZARD_CLASS: Uric Acid Oxidase (G6PD-deficiency hemolysis risk)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Typical 23andMe-style panel with CYP2D6/CYP2C19/DPYD markers but
+#   no G6PD coverage. Tests whether the tool honestly reports the panel's
+#   scope limitation rather than inferring G6PD status from absence.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs67376798	1	97981395	TT

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 ClawBio NutriGx Advisor Benchmark Harness
 ===========================================
@@ -25,6 +26,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from clawbio_bench import core as harness_core
 
@@ -33,7 +35,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "nutrigx-advisor"
-BENCHMARK_VERSION = "1.0.0"
+BENCHMARK_VERSION = "0.1.0"
 
 RUBRIC_CATEGORIES = [
     "score_correct",
@@ -89,6 +91,63 @@ THRESHOLDS = {"Low": (0.0, 3.5), "Moderate": (3.5, 6.5), "Elevated": (6.5, 10.0)
 
 
 # ---------------------------------------------------------------------------
+# Stderr classification helpers
+# ---------------------------------------------------------------------------
+#
+# These helpers replace naive `"Error" in stderr` substring checks, which
+# over-credit unrelated crashes as "clean rejection" (e.g. a tool that dies
+# with a FileNotFoundError printed via sys.exit without a traceback would
+# previously score as `snp_valid`).
+#
+# * ``_is_genuine_crash`` — True iff stderr carries Python traceback structure
+#   OR a line that starts with ``Error:``/``Exception:``. Excludes benign
+#   substrings like ``"no errors found"`` or ``"Error correcting code"``.
+# * ``_stderr_mentions_panel`` — True iff stderr mentions SNP panel validation
+#   concepts. Required positive evidence before crediting a non-zero exit as
+#   ``snp_valid`` (correct panel rejection).
+
+_PANEL_REJECTION_KEYWORDS = (
+    "panel",
+    "snp",
+    "rsid",
+    "genotype",
+    "variant",
+    "allele",
+    "no match",
+    "not found in panel",
+    "empty input",
+    "unsupported format",
+)
+
+
+def _is_genuine_crash(stderr: str) -> bool:
+    """Return True iff stderr contains a traceback or line-anchored error."""
+    if not stderr:
+        return False
+    if "Traceback (most recent call last):" in stderr:
+        return True
+    for line in stderr.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith(("Error:", "Exception:", "Fatal:", "FATAL:")):
+            return True
+    return False
+
+
+def _stderr_mentions_panel(stderr: str) -> bool:
+    """Return True iff stderr contains at least one SNP/panel-related keyword.
+
+    Used to require positive evidence before crediting a non-zero exit as
+    ``snp_valid`` (correct rejection). A tool that crashes with a generic
+    ``FileNotFoundError`` is not correctly rejecting a panel input — it's
+    crashing — and should not be scored as pass.
+    """
+    if not stderr:
+        return False
+    lowered = stderr.lower()
+    return any(kw in lowered for kw in _PANEL_REJECTION_KEYWORDS)
+
+
+# ---------------------------------------------------------------------------
 # Report Analyzer
 # ---------------------------------------------------------------------------
 
@@ -101,7 +160,7 @@ def analyze_nutrigx_output(
     stderr: str,
 ) -> dict:
     """Parse NutriGx outputs."""
-    analysis = {
+    analysis: dict[str, Any] = {
         "report_exists": False,
         "result_json_exists": False,
         "result_json_valid": False,
@@ -194,9 +253,11 @@ def score_nutrigx_verdict(
         "result_json_valid": analysis.get("result_json_valid", False),
     }
 
-    # ── Crash on unexpected exit (Crush/Gemini: use harness_error, not snp_invalid) ──
+    # ── Crash on unexpected exit — use harness_error, not snp_invalid ──
+    # Use _is_genuine_crash instead of a naive "Error" substring so benign
+    # stderr content (e.g. "no errors found") doesn't trip crash detection.
     if exit_code != 0 and exit_code != expected_exit:
-        if "Traceback" in execution.stderr or "Error" in execution.stderr:
+        if _is_genuine_crash(execution.stderr):
             return {
                 "category": "harness_error",
                 "rationale": f"Tool crashed (exit {exit_code}) with traceback",
@@ -204,16 +265,30 @@ def score_nutrigx_verdict(
             }
 
     # ── Expected error cases ──
+    # A clean non-zero exit is only ``snp_valid`` when stderr carries
+    # positive evidence that the rejection was panel-related. Without that
+    # evidence, a tool that dies for an unrelated reason (missing file,
+    # sys.exit without message, SIGKILL) would previously be over-credited.
     if expected_exit != 0 and exit_code != 0:
-        if "Traceback" in execution.stderr:
+        if _is_genuine_crash(execution.stderr):
             return {
                 "category": "snp_invalid",
                 "rationale": f"Crashed (exit {exit_code}) with traceback",
                 "details": details,
             }
+        if _stderr_mentions_panel(execution.stderr):
+            return {
+                "category": "snp_valid",
+                "rationale": (f"Panel rejection handled cleanly with exit {exit_code}"),
+                "details": details,
+            }
+        details["stderr_mentions_panel"] = False
         return {
-            "category": "snp_valid",
-            "rationale": f"Error handled cleanly with exit {exit_code}",
+            "category": "snp_invalid",
+            "rationale": (
+                f"Non-zero exit {exit_code} without panel-related stderr "
+                f"evidence — cannot credit as clean panel rejection"
+            ),
             "details": details,
         }
 
@@ -302,10 +377,30 @@ def score_nutrigx_verdict(
                 "rationale": f"Panel coverage: {panel_coverage} SNPs found",
                 "details": details,
             }
+        # A non-zero exit is only ``snp_valid`` when stderr carries positive
+        # evidence that the rejection was panel-related AND the exit did not
+        # come from a crash. Otherwise the tool is crashing for an unrelated
+        # reason and should not be credited.
         if exit_code != 0:
+            if _is_genuine_crash(execution.stderr):
+                return {
+                    "category": "snp_invalid",
+                    "rationale": (f"Crashed (exit {exit_code}) — not a clean panel rejection"),
+                    "details": details,
+                }
+            if _stderr_mentions_panel(execution.stderr):
+                return {
+                    "category": "snp_valid",
+                    "rationale": "Tool correctly rejected input with 0 panel SNPs",
+                    "details": details,
+                }
+            details["stderr_mentions_panel"] = False
             return {
-                "category": "snp_valid",
-                "rationale": "Tool correctly rejected input with 0 panel SNPs",
+                "category": "snp_invalid",
+                "rationale": (
+                    f"Non-zero exit {exit_code} without panel-related stderr "
+                    f"evidence — cannot credit as clean rejection"
+                ),
                 "details": details,
             }
         return {
@@ -374,16 +469,20 @@ def run_single_nutrigx(
 ) -> dict:
     """Execute nutrigx_advisor.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
-    commit_short = commit_sha[:8]
-    run_output_dir = output_base / commit_short / tc_name
+    run_output_dir = output_base / commit_sha / tc_name
     tool_output_dir = run_output_dir / "tool_output"
     tool_output_dir.mkdir(parents=True, exist_ok=True)
 
     tool_path = repo_path / "skills" / "nutrigx_advisor" / "nutrigx_advisor.py"
-    timeout = int(ground_truth.get("TIMEOUT", "60"))
+    timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     if not payload_path:
-        raise ValueError(f"NutriGx test case {tc_name} has no payload file")
+        return harness_core.harness_error_verdict(
+            tc_name,
+            commit_meta,
+            ValueError(f"NutriGx test case {tc_name} has no payload file"),
+            ground_truth=ground_truth,
+        )
 
     cmd = [
         sys.executable,
@@ -409,6 +508,7 @@ def run_single_nutrigx(
         cwd=repo_path,
         timeout=timeout,
         fallback_cmd=fallback_cmd,
+        fallback_flag="--no-figures",
     )
 
     harness_core.save_execution_logs(execution, run_output_dir)
@@ -463,7 +563,7 @@ def run_single_nutrigx(
 # ---------------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
     harness_core.run_harness_main(
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,

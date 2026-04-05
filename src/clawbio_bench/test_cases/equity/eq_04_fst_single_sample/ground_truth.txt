@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf
 # FINDING: T05-single-sample edge
 # FINDING_CATEGORY: edge_handled

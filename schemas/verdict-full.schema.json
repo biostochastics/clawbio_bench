@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "FullTestCaseInfo": {
+      "additionalProperties": false,
+      "description": "Test case metadata inside a fully-populated verdict.\n\nFields match what ``core.build_verdict_doc()`` writes: ``name`` is always\npresent, and the driver/payload SHA-256 pairs appear iff the corresponding\nfiles existed at build time.",
+      "properties": {
+        "driver": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "driver_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "type": "string"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "payload_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "FullTestCaseInfo",
+      "type": "object"
+    },
+    "FullVerdictDoc": {
+      "additionalProperties": false,
+      "description": "The complete shape emitted by ``core.build_verdict_doc()``.\n\n``forbid_unknown_fields=True`` means unknown keys raise\n``msgspec.ValidationError``, catching schema drift immediately. Harness-\nspecific data lives inside the flexible dict fields (``ground_truth``,\n``outputs``, ``report_analysis``, ``environment``).",
+      "properties": {
+        "benchmark_name": {
+          "type": "string"
+        },
+        "benchmark_version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "object"
+        },
+        "environment": {
+          "type": "object"
+        },
+        "execution": {
+          "type": "object"
+        },
+        "ground_truth": {
+          "type": "object"
+        },
+        "ground_truth_references": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "outputs": {
+          "type": "object"
+        },
+        "reference_genome": {
+          "type": "string"
+        },
+        "report_analysis": {
+          "type": "object"
+        },
+        "start_time_utc": {
+          "type": "string"
+        },
+        "test_case": {
+          "$ref": "#/$defs/FullTestCaseInfo"
+        },
+        "timestamp_utc": {
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/$defs/VerdictInfo"
+        },
+        "wall_clock_seconds": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "benchmark_version",
+        "benchmark_name",
+        "start_time_utc",
+        "timestamp_utc",
+        "wall_clock_seconds",
+        "commit",
+        "test_case",
+        "ground_truth",
+        "ground_truth_references",
+        "reference_genome",
+        "execution",
+        "outputs",
+        "report_analysis",
+        "verdict",
+        "environment"
+      ],
+      "title": "FullVerdictDoc",
+      "type": "object"
+    },
+    "VerdictInfo": {
+      "description": "The ``verdict`` sub-document.\n\nCategory is a free-form string at this layer; allowlist enforcement lives\nin ``core.validate_verdict_schema`` because the allowed set depends on\nwhich harness emitted the verdict. ``details`` is an open dict because\nharnesses embed heterogeneous scoring data here.",
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "details": {
+          "default": {},
+          "type": "object"
+        },
+        "rationale": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "category",
+        "rationale"
+      ],
+      "title": "VerdictInfo",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/FullVerdictDoc"
+}

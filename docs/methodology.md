@@ -68,36 +68,6 @@ SHA-256 hashing at every step ensures tamper evidence:
 
 This creates an auditable chain: given a verdict JSON, you can verify that the inputs haven't been modified since the benchmark was run, and that the outputs match what the tool actually produced.
 
-## Multi-Model Review Process
-
-The ClawBio benchmark harnesses were reviewed by multiple AI models across 6 rounds:
-
-| Round | Models | Key Fixes |
-|-------|--------|-----------|
-| 1 | Crush, Gemini, Codex, OpenCode, Kimi | data-extractor classification, FST fallback, list-skills category |
-| 2 | Crush, Gemini, Codex, OpenCode, Kimi | dirty repo safety gate, sys.exit removal, BaseException handling |
-| 3 | Crush, Gemini, Codex, OpenCode, Kimi | output dir fix, LICENSE/.gitignore, eq_09/eq_04 math corrections |
-| 4 | Crush, Gemini, Codex, Kimi | NutriGx weights, crash-to-harness_error categorization |
-| 5 | Crush, Gemini, Codex, OpenCode, Kimi | PGx body extraction, metagenomics filenames, 5/5 imports |
-| Consult | GPT-5.2-pro | src/ layout, pyproject.toml, CLI entry points, pytest worktree |
-
-### Why Multi-Model Review?
-
-Single-reviewer processes have blind spots. Each model brought different strengths:
-- **Crush**: aggressive about edge cases and exception handling
-- **Gemini**: careful about mathematical correctness (caught FST formula issues)
-- **Codex**: focused on Python packaging and CI best practices
-- **OpenCode**: thorough inventory checking (verified 93/93 test cases)
-- **Kimi**: security-focused (identified VULN-001 path traversal, rated security grade A)
-- **GPT-5.2-pro**: architectural guidance (src/ layout, CLI design patterns)
-
-### Consensus Process
-
-Findings from all models were synthesized into a consensus document. Conflicts were resolved by:
-1. If a safety concern was raised by any model, it was investigated
-2. If models disagreed on severity, the higher severity was adopted
-3. Mathematical claims were verified analytically regardless of model agreement
-
 ## CI Integration
 
 ### Smoke Mode (PR gate)

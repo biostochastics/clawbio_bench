@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 ClawBio PharmGx Reporter Benchmark Harness
 ============================================
 Ported from standalone clawbio-pgx-benchmark/run_benchmark.py.
-Tests pharmgx_reporter.py with 18 synthetic 23andMe-format inputs.
+Tests pharmgx_reporter.py with 24 synthetic 23andMe-format inputs covering
+CPIC Level 1A gene-drug pairs: CYP2D6/codeine, CYP2C19/clopidogrel, DPYD/
+fluoropyrimidines, SLCO1B1/statins, HLA-B*57:01/abacavir, TPMT/thiopurines,
+UGT1A1/irinotecan, CYP3A5/tacrolimus, VKORC1+CYP2C9/warfarin, and phasing
+ambiguity + GRCh37 reference-mismatch negative controls.
 
-Uses Model A: self-contained .txt files with # KEY: value headers.
+Uses Model A: self-contained .txt files with # KEY: value headers (or YAML
+frontmatter in `# ---` fences).
 
-Rubric (6 categories):
+Rubric (6 categories + harness_error):
   correct_determinate      — Right phenotype, right drug classification
   correct_indeterminate    — Correctly returns indeterminate
   incorrect_determinate    — Wrong phenotype (false Normal)
@@ -22,6 +28,9 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
+
+import regex  # third-party: variable-length lookbehind + Unicode-aware boundaries
 
 from clawbio_bench import core as harness_core
 
@@ -30,7 +39,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "pharmgx-reporter"
-BENCHMARK_VERSION = "1.1.0"
+BENCHMARK_VERSION = "0.1.0"
 
 RUBRIC_CATEGORIES = [
     "correct_determinate",
@@ -57,8 +66,13 @@ GROUND_TRUTH_REFS = {
     "CPIC_WARFARIN": "CPIC Guideline for CYP2C9/VKORC1 and Warfarin, v2.0 (2017)",
     "CPIC_TACROLIMUS": "CPIC Guideline for CYP3A5 and Tacrolimus, v2.0 (2015, updated 2021)",
     "CPIC_THIOPURINE": "CPIC Guideline for TPMT/NUDT15 and Thiopurines, v2.0 (2018, updated 2024)",
+    "CPIC_CLOPIDOGREL": "CPIC Guideline for CYP2C19 and Clopidogrel, v2.0 (2022)",
+    "CPIC_VORICONAZOLE": "CPIC Guideline for CYP2C19 and Voriconazole, v1.0 (2017)",
+    "CPIC_STATINS": "CPIC Guideline for SLCO1B1, ABCG2, CYP2C9 and Statin-Associated Musculoskeletal Symptoms, v2.0 (2022)",
+    "CPIC_ABACAVIR": "CPIC Guideline for HLA-B and Abacavir, v1.0 (2014, updated 2020)",
     "FDA_CODEINE": "FDA Boxed Warning: Codeine in CYP2D6 Ultra-rapid Metabolizers (2017)",
     "PHARMVAR_CYP2D6": "PharmVar CYP2D6 Allele Definitions (accessed 2026-04-03)",
+    "PHARMVAR_CYP2C19": "PharmVar CYP2C19 Allele Definitions (accessed 2026-04-04)",
 }
 
 CATEGORY_LEGEND = {
@@ -77,9 +91,9 @@ CATEGORY_LEGEND = {
 # ---------------------------------------------------------------------------
 
 
-def analyze_report(report_path):
+def analyze_report(report_path: Path) -> dict[str, Any]:
     """Parse report.md for gene profiles, drug classifications, warnings."""
-    analysis = {
+    analysis: dict[str, Any] = {
         "gene_profiles": {},
         "drug_classifications": {},
         "warnings_in_report": [],
@@ -96,7 +110,7 @@ def analyze_report(report_path):
 
     # Gene profiles table
     in_gene_table = False
-    gene_header_indices = {}
+    gene_header_indices: dict[str, int] = {}
     for line in text.split("\n"):
         if "Gene" in line and "Diplotype" in line and "Phenotype" in line and "|" in line:
             raw_headers = line.split("|")
@@ -160,7 +174,7 @@ def analyze_report(report_path):
     elif "warfarin" in text.lower():
         analysis["warfarin_present"] = True
 
-    # Warnings — extract DQW body for disclosure_failure scoring (Crush/Gemini review)
+    # Warnings — extract DQW body for disclosure_failure scoring
     if "DATA QUALITY WARNING" in text:
         analysis["data_quality_warning_present"] = True
         dqw_match = re.search(r"DATA QUALITY WARNING\s*\n\n(.*?)(?=\n---|\n##)", text, re.DOTALL)
@@ -184,8 +198,8 @@ def analyze_report(report_path):
     return analysis
 
 
-def analyze_stderr(stderr_text):
-    warnings = []
+def analyze_stderr(stderr_text: str) -> list[str]:
+    warnings: list[str] = []
     for line in stderr_text.split("\n"):
         line = line.strip()
         if "WARNING" in line or "warning" in line:
@@ -193,8 +207,8 @@ def analyze_stderr(stderr_text):
     return warnings
 
 
-def analyze_result_json(result_json_path):
-    analysis = {
+def analyze_result_json(result_json_path: Path) -> dict:
+    analysis: dict = {
         "exists": False,
         "valid_json": False,
         "has_tuple_keys": False,
@@ -206,7 +220,7 @@ def analyze_result_json(result_json_path):
         return analysis
     analysis["exists"] = True
     try:
-        with open(result_json_path) as f:
+        with open(result_json_path, encoding="utf-8") as f:
             data = json.load(f)
         analysis["valid_json"] = True
         if "drug_results" in data:
@@ -231,44 +245,145 @@ def analyze_result_json(result_json_path):
 # ---------------------------------------------------------------------------
 
 
-def _phenotype_matches(observed, expected):
+# Pre-compiled phenotype matching patterns (avoid recompilation per call)
+_KEY_TERMS = [
+    "normal metabolizer",
+    "intermediate metabolizer",
+    "poor metabolizer",
+    "ultrarapid metabolizer",
+    "normal function",
+    "intermediate function",
+    "poor function",
+    "decreased function",
+    "non-expressor",
+    "expressor",
+    "indeterminate",
+    "not genotyped",
+    "not_tested",
+]
+# Phenotype term matching needs stronger boundary semantics than stdlib `re`
+# can express cleanly:
+#   1. Python's `\b` treats `-` as a word boundary, so plain `\b(expressor)\b`
+#      matches inside "non-expressor". We need to reject preceding `-` too.
+#   2. The "not <term>" negation must cover `not<ws>term` for any amount or
+#      kind of horizontal whitespace — stdlib lookbehind is fixed-width, so
+#      `(?<!\bnot\s)` only handles exactly one space character.
+#
+# The `regex` package (PyPI) supports variable-length lookbehind and
+# Unicode-aware character properties, which lets us express the rule honestly:
+#   - `(?<![\p{L}\p{N}_-])` — not preceded by a letter, digit, `_`, or `-`
+#   - `(?<!\bnot\h+)` — not preceded by the word "not" + one-or-more horizontal
+#     whitespace chars (handles tabs, multiple spaces, non-breaking space)
+#   - `(?V1)` pins regex-module version semantics for forward compatibility.
+_KEY_PATTERNS = [
+    regex.compile(
+        r"(?V1)(?<![\p{L}\p{N}_-])(?<!\bnot\h+)" + regex.escape(t),
+        flags=regex.IGNORECASE,
+    )
+    for t in _KEY_TERMS
+]
+
+# Prevent false-positive substring matches on long phenotype descriptions
+_MAX_SUBSTRING_MATCH_LEN = 40
+
+# Negation prefixes that invert a phenotype term. If one side uses a negation
+# the other does not, the phenotypes are opposite and must not match via the
+# substring fallback.
+#   "not " — handled via a regex with variable-length `\h+` so tabs and
+#            multiple spaces between "not" and the term still trip the check.
+#   "non-" and "non " — literal, no whitespace variation expected.
+_NEGATION_LITERAL_PREFIXES = ("non-", "non ")
+
+
+def _has_negated(text: str, term: str) -> bool:
+    """Return True if `term` appears in `text` preceded by a negation prefix.
+
+    Handles "not <term>" with any horizontal-whitespace separator (single/
+    multiple spaces, tabs, non-breaking space) via the regex package's `\\h+`
+    class. Literal "non-" and "non " variants are checked with simple
+    substring membership since they don't have whitespace ambiguity.
+
+    Case-insensitive via ``regex.IGNORECASE`` so raw (non-lowercased) text
+    containing "Not" or "NOT" is still detected — keeps this helper
+    self-consistent with ``_KEY_PATTERNS`` and robust if callers skip the
+    ``.lower()`` normalization.
+    """
+    if regex.search(r"\bnot\h+" + regex.escape(term), text, flags=regex.IGNORECASE):
+        return True
+    return any(f"{neg}{term}" in text for neg in _NEGATION_LITERAL_PREFIXES)
+
+
+def _substring_is_negated_in_context(needle: str, haystack: str) -> bool:
+    """Return True if ``needle`` appears in ``haystack`` preceded by a
+    negation marker (``not ``, ``non-``, ``non ``).
+
+    Used to reject substring-fallback matches where the candidate appears
+    inside a negated phrase. Without this guard, ``"normal"`` would match
+    inside ``"not normal metabolizer"`` via the substring fallback, crediting
+    opposite clinical phenotypes as equivalent.
+    """
+    idx = 0
+    while True:
+        idx = haystack.find(needle, idx)
+        if idx == -1:
+            return False
+        prefix = haystack[:idx]
+        # "not " with any horizontal whitespace
+        if regex.search(r"\bnot\h+$", prefix, flags=regex.IGNORECASE):
+            return True
+        # "non-" / "non " literal
+        if any(prefix.endswith(neg) for neg in _NEGATION_LITERAL_PREFIXES):
+            return True
+        idx += 1
+    # unreachable
+
+
+def _phenotype_matches(observed: str, expected: str) -> bool:
     obs = observed.lower().strip()
     exp = expected.lower().strip()
     if not obs or not exp:
         return False
-    _KEY_TERMS = [
-        "normal metabolizer",
-        "intermediate metabolizer",
-        "poor metabolizer",
-        "ultrarapid metabolizer",
-        "normal function",
-        "intermediate function",
-        "poor function",
-        "decreased function",
-        "non-expressor",
-        "expressor",
-        "indeterminate",
-        "not genotyped",
-        "not_tested",
-    ]
-    for term in _KEY_TERMS:
-        pattern = r"(?<!\bnot\s)" + re.escape(term)
-        if re.search(pattern, obs) and re.search(pattern, exp):
+    for pat in _KEY_PATTERNS:
+        if pat.search(obs) and pat.search(exp):
             return True
-    if len(obs) < 40 and obs in exp:
-        return True
-    return bool(len(exp) < 40 and exp in obs)
+    # Substring fallback — but reject when one side negates a key term the
+    # other side asserts (e.g. "not normal metabolizer" vs "normal metabolizer",
+    # "expressor" vs "non-expressor").
+    for term in _KEY_TERMS:
+        if term in obs and term in exp:
+            if _has_negated(obs, term) != _has_negated(exp, term):
+                return False
+    # Normalize horizontal whitespace before substring comparison so
+    # equivalent strings like "not normal metabolizer" and
+    # "not\tnormal metabolizer" are recognized as matches instead of
+    # tripping on tab-vs-space divergence.
+    obs_n = regex.sub(r"\h+", " ", obs)
+    exp_n = regex.sub(r"\h+", " ", exp)
+    # Second-pass negation guard: the same-term check above only catches cases
+    # where the negated word appears in _KEY_TERMS. For shorter substrings
+    # like "normal" inside "not normal metabolizer", the substring fallback
+    # must also reject any candidate whose match in the longer string lands
+    # inside a negated context.
+    if len(obs_n) < _MAX_SUBSTRING_MATCH_LEN and obs_n in exp_n:
+        return not _substring_is_negated_in_context(obs_n, exp_n)
+    if len(exp_n) < _MAX_SUBSTRING_MATCH_LEN and exp_n in obs_n:
+        return not _substring_is_negated_in_context(exp_n, obs_n)
+    return False
 
 
-def _gene_relevant_warnings(stderr_warnings, target_gene):
+def _gene_relevant_warnings(stderr_warnings: list[str], target_gene: str) -> list[str]:
     if not target_gene or target_gene == "N/A":
         return stderr_warnings
     return [w for w in stderr_warnings if target_gene.lower() in w.lower()]
 
 
 def score_pgx_verdict(
-    ground_truth, report_analysis, stderr_warnings, result_json_analysis, exit_code
-):
+    ground_truth: dict,
+    report_analysis: dict,
+    stderr_warnings: list[str],
+    result_json_analysis: dict,
+    exit_code: int,
+) -> dict:
     """Score a single (commit, input) pair against the 6-category rubric."""
     gt = ground_truth
     ra = report_analysis
@@ -314,6 +429,7 @@ def score_pgx_verdict(
             expected_category == "omission"
             and ra.get("report_exists")
             and hazard_drug == "warfarin"
+            and result_json_analysis.get("has_tuple_keys")
         ):
             return {
                 "category": "omission",
@@ -494,13 +610,13 @@ def run_single_pharmgx(
     # Model A: test_case_path IS the input file
     input_path = payload_path or test_case_path
     tc_name = input_path.stem
-    commit_short = commit_sha[:8]
-    run_output_dir = output_base / commit_short / tc_name
+    # Use full SHA as directory name to avoid short-SHA collisions on disk.
+    run_output_dir = output_base / commit_sha / tc_name
     report_dir = run_output_dir / "tool_output"
     report_dir.mkdir(parents=True, exist_ok=True)
 
     tool_path = repo_path / "skills" / "pharmgx-reporter" / "pharmgx_reporter.py"
-    timeout = int(ground_truth.get("TIMEOUT", "60"))
+    timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     cmd = [
         sys.executable,
@@ -526,6 +642,7 @@ def run_single_pharmgx(
         cwd=repo_path,
         timeout=timeout,
         fallback_cmd=fallback_cmd,
+        fallback_flag="--no-enrich",
     )
     harness_core.save_execution_logs(execution, run_output_dir)
 
@@ -572,7 +689,7 @@ def run_single_pharmgx(
 # ---------------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
     harness_core.run_harness_main(
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,

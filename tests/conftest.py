@@ -90,13 +90,15 @@ def clawbio_repo(request):
             timeout=60,
         )
         if result.returncode == 0:
-            yield worktree_path
-            subprocess.run(
-                ["git", "-C", str(repo), "worktree", "remove", "-f", str(worktree_path)],
-                capture_output=True,
-                timeout=60,
-            )
-            shutil.rmtree(tmpdir, ignore_errors=True)
+            try:
+                yield worktree_path
+            finally:
+                subprocess.run(
+                    ["git", "-C", str(repo), "worktree", "remove", "-f", str(worktree_path)],
+                    capture_output=True,
+                    timeout=60,
+                )
+                shutil.rmtree(tmpdir, ignore_errors=True)
             return
     except Exception:
         pass

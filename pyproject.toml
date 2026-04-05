@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clawbio-bench"
-version = "1.0.0"
-description = "SOTA benchmark harnesses for auditing open-source computational biology tools"
+version = "0.1.0"
+description = "ClawBio Benchmark Suite — machine-readable harnesses for auditing bioinformatics tools"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Sergey A. Kornilov", email = "biostochastics@users.noreply.github.com"},
+    {name = "Sergey A. Kornilov", email = "sergey@biostochastics.com"},
     {name = "ClawBio Audit Team"},
 ]
 keywords = [
@@ -18,23 +18,61 @@ keywords = [
     "population-genetics", "metagenomics", "safety",
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
+]
+# Core runtime dependencies. Every addition here expands the trusted computing
+# base of an audit tool, so each entry must justify itself:
+#   msgspec — verdict schema validation (msgspec.Struct) AND deterministic
+#             JSON serialization (msgspec.json.encode(order="sorted")) in a
+#             single C extension. Replaces both pydantic and orjson, shrinking
+#             the trusted surface for an audit tool. JSON Schema artifacts
+#             shipped under schemas/ are auto-generated via msgspec.json.schema
+#             and committed as the canonical external contract.
+#   regex   — variable-length lookbehind + Unicode-aware boundaries for pharmgx
+#             phenotype matching (stdlib `re` false-matches "expressor" inside
+#             "non-expressor" because `\b` treats `-` as a word boundary).
+#   ruamel.yaml — dual ground-truth parser for YAML frontmatter migration;
+#                 legacy `# KEY: value` format remains valid.
+dependencies = [
+    "msgspec>=0.18",
+    "regex>=2024.0.0",
+    "ruamel.yaml>=0.18",
 ]
 
 [project.urls]
-Homepage = "https://github.com/biostochastics/clawbio_benchmark"
-Repository = "https://github.com/biostochastics/clawbio_benchmark"
-Issues = "https://github.com/biostochastics/clawbio_benchmark/issues"
+Homepage = "https://github.com/biostochastics/clawbio_bench"
+Repository = "https://github.com/biostochastics/clawbio_bench"
+Issues = "https://github.com/biostochastics/clawbio_bench/issues"
+# The system under audit. Kept explicit so reviewers can pivot straight from
+# a verdict back to the target repository.
+"Audit Target" = "https://github.com/ClawBio/ClawBio"
 
 [project.optional-dependencies]
 viz = ["matplotlib>=3.8"]
-dev = ["pytest>=8.0", "ruff>=0.4", "pre-commit>=3.7"]
+ui = ["rich>=13.0"]
+# Numerical stack for the fine-mapping driver (src/clawbio_bench/drivers/
+# finemapping_driver.py). This is a subprocess-launched shim that runs in
+# its own interpreter, so numpy is ONLY required for users who run the
+# fine-mapping harness. clawbio_bench.* itself never imports numpy.
+finemapping = ["numpy>=1.26", "pandas>=2.0"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "pre-commit>=3.7",
+    "mypy>=1.10",
+    "rich>=13.0",
+    # Dev installs pull in the numerical stack so the finemapping driver
+    # can be exercised end-to-end in CI without a second install step.
+    "numpy>=1.26",
+    "pandas>=2.0",
+]
 
 [project.scripts]
 clawbio-bench = "clawbio_bench.cli:main"
@@ -67,6 +105,17 @@ ignore = [
     "E501",    # line too long (handled by formatter)
     "SIM102",  # nested ifs in scoring engines improve readability of multi-condition branches
 ]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
 
 [tool.ruff.format]
 quote-style = "double"

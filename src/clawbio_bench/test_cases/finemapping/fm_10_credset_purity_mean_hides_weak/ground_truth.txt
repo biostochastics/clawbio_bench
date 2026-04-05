@@ -1,0 +1,13 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: credset_susie
+# FINDING: FM-10 Purity filter uses mean absolute r, not minimum
+# FINDING_CATEGORY: credset_purity_mean_hides_weak
+# HAZARD_METRIC: Wang et al. 2020 and susieR define credible-set purity as the MINIMUM pairwise |r| among set members. Using the MEAN instead lets a credible set that contains two highly correlated variants plus one completely unlinked variant still pass a 0.5 purity threshold, promoting fine-mapping results that span independent LD blocks
+# REFERENCE_R: [[1.0, 0.9, 0.0], [0.9, 1.0, 0.9], [0.0, 0.9, 1.0]]
+# PURITY_MIN_THRESHOLD: 0.5
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: alpha=[[0.4, 0.35, 0.25]] (single effect row). coverage=0.95 forces all three variants into one credible set. The pairwise |r| values are |0.9|, |0.0|, |0.9| so min=0.0 and mean=0.6. ClawBio computes purity as the mean (0.6) and marks the set pure=True with min_purity=0.5. The true minimum 0.0 shows the set mixes two tightly linked variants (0,1 and 1,2) with an independent variant pair (0,2), which is exactly the pathology purity filters exist to catch.
+# REFERENCE_IMPLEMENTATION: susieR::susie_get_cs uses min_abs_corr (the minimum), not mean
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300, Section 3.2

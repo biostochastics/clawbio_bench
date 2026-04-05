@@ -1,0 +1,13 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: abf
+# FINDING: FM-01 Happy-path ABF single causal
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: Baseline correctness check — if this fails the whole skill is broken
+# EXPECTED_PIPS: [0.9999, 0.00005, 0.00005]
+# PIP_TOLERANCE: 0.01
+# EXPECTED_EXIT_STATUS: ok
+# WAKEFIELD_REF: WAKEFIELD_2009
+# DERIVATION: Wakefield 2009 eq. 3 with z=[5,0.5,0.5], se=[0.1,0.1,0.1], w=0.04.
+# DERIVATION_DETAIL: V_i=se_i^2=0.01, r=w/(V+w)=0.8. log_abf_i = 0.5*log(0.2) + 0.4*z_i^2 = -0.8047 + 0.4*z_i^2. After softmax normalisation PIP[0] dominates with >0.9999 mass.
+# CITATION: Wakefield, J. (2009). Genetic Epidemiology 33(1):79-86. doi:10.1002/gepi.20359

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 ClawBio Metagenomics Profiler Benchmark Harness
 =================================================
 Tests metagenomics_profiler.py in demo mode + static security analysis.
 
-Per CONSENSUS VULN-001: demo mode executes ZERO subprocess calls, so real
+Per VULN-001: demo mode executes ZERO subprocess calls, so real
 injection surfaces (run_kraken2, run_bracken, run_rgi, run_humann3) cannot
 be tested dynamically without the tools installed. Instead, we:
   1. Test demo mode functionality (report generation)
@@ -25,7 +26,9 @@ from __future__ import annotations
 
 import ast
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from clawbio_bench import core as harness_core
 
@@ -34,7 +37,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "claw-metagenomics"
-BENCHMARK_VERSION = "1.0.0"
+BENCHMARK_VERSION = "0.1.0"
 
 RUBRIC_CATEGORIES = [
     "injection_blocked",
@@ -55,8 +58,8 @@ GROUND_TRUTH_REFS = {
         "https://cheatsheetseries.owasp.org/cheatsheets/"
         "OS_Command_Injection_Defense_Cheat_Sheet.html"
     ),
-    "CONSENSUS_VULN001": (
-        "ClawBio audit meta-review CONSENSUS.md, M-2/VULN-001: "
+    "VULN001": (
+        "ClawBio audit M-2/VULN-001: "
         "demo mode executes zero subprocess calls, missing real attack surface"
     ),
 }
@@ -244,7 +247,63 @@ def _check_shlex_usage(tree: ast.Module) -> bool:
     return False
 
 
-def analyze_source_security(source_path: Path) -> dict:
+def _find_run_command_critical_default(tree: ast.Module) -> str | None:
+    """Return the default value of the ``critical`` parameter on any
+    ``run_command`` function definition found in the module.
+
+    Used to detect whether non-zero subprocess exits are suppressed to
+    warnings (``critical=False``) or raised as errors (``critical=True``).
+    Returns:
+      * ``"True"`` / ``"False"`` — literal default
+      * ``"<unknown>"`` — parameter exists but default is non-literal
+      * ``None``         — function or parameter not found (tool does not
+                           have the run_command indirection at this commit)
+
+    Walks both ``FunctionDef`` and ``AsyncFunctionDef`` so a future async
+    migration of the helper would still be analyzed correctly.
+    """
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if node.name != "run_command":
+            continue
+        args = node.args
+        # Map every arg name to its default. Defaults align to the TAIL of
+        # the positional-or-keyword args list, and kw-only defaults are a
+        # separate list aligned to kwonlyargs.
+        pos_args = args.args
+        pos_defaults = args.defaults
+        kwonly_args = args.kwonlyargs
+        kw_defaults = args.kw_defaults
+        # Build (arg_name, default_node) pairs for every arg that has one.
+        pairs: list[tuple[str, ast.expr | None]] = []
+        # Positional-or-keyword: defaults align to the last N.
+        n_pos_defaults = len(pos_defaults)
+        for i, arg in enumerate(pos_args):
+            default_idx = i - (len(pos_args) - n_pos_defaults)
+            if default_idx >= 0:
+                pairs.append((arg.arg, pos_defaults[default_idx]))
+        # Kw-only: one-to-one with kw_defaults (None means required).
+        for arg, default in zip(kwonly_args, kw_defaults, strict=False):
+            if default is not None:
+                pairs.append((arg.arg, default))
+
+        for name, default in pairs:
+            if name != "critical":
+                continue
+            if isinstance(default, ast.Constant):
+                if default.value is True:
+                    return "True"
+                if default.value is False:
+                    return "False"
+                return repr(default.value)
+            return "<unknown>"
+        # run_command exists but no critical parameter — nothing to report
+        return None
+    return None
+
+
+def analyze_source_security(source_path: Path) -> dict[str, Any]:
     """AST-based static analysis of metagenomics_profiler.py for security patterns.
 
     Uses Python's ast module instead of grep for robust detection of:
@@ -253,7 +312,7 @@ def analyze_source_security(source_path: Path) -> dict:
     - shlex.quote usage
     - os.environ / os.getenv reads
     """
-    analysis = {
+    analysis: dict[str, Any] = {
         "source_exists": False,
         "shell_true_count": 0,
         "shell_true_lines": [],
@@ -265,6 +324,10 @@ def analyze_source_security(source_path: Path) -> dict:
         "path_join_with_user_input": [],
         "env_var_reads": [],
         "run_command_uses_list": True,
+        # None when the tool does not define run_command at this commit;
+        # "True"/"False" or "<unknown>" otherwise. Consumed by the scoring
+        # engine to decide whether exits are suppressed or raised.
+        "run_command_critical_default": None,
         "ast_parse_success": False,
     }
 
@@ -298,6 +361,9 @@ def analyze_source_security(source_path: Path) -> dict:
 
         # shlex.quote
         analysis["shlex_quote_used"] = _check_shlex_usage(tree)
+
+        # run_command critical= default (None if run_command isn't defined)
+        analysis["run_command_critical_default"] = _find_run_command_critical_default(tree)
 
         # os.environ / os.getenv (AST-based)
         for node in ast.walk(tree):
@@ -341,10 +407,10 @@ def analyze_metagenomics_output(
     output_dir: Path,
     stdout: str,
     stderr: str,
-    source_analysis: dict,
-) -> dict:
+    source_analysis: dict[str, Any],
+) -> dict[str, Any]:
     """Parse metagenomics demo output."""
-    analysis = {
+    analysis: dict[str, Any] = {
         "report_exists": False,
         "tables_exist": False,
         "result_json_exists": False,
@@ -424,8 +490,19 @@ def score_metagenomics_verdict(
     }
 
     # ── Unexpected crash ──
+    # Match on the canonical Python traceback header and line-anchored error
+    # markers instead of a naive ``"Error" in stderr`` substring, which would
+    # false-match benign text like "no errors found".
     if exit_code != 0 and exit_code != expected_exit:
-        if "Traceback" in execution.stderr or "Error" in execution.stderr:
+        stderr = execution.stderr or ""
+        is_crash = "Traceback (most recent call last):" in stderr
+        if not is_crash:
+            for _line in stderr.split("\n"):
+                _stripped = _line.strip()
+                if _stripped.startswith(("Error:", "Exception:", "Fatal:", "FATAL:", "CRITICAL:")):
+                    is_crash = True
+                    break
+        if is_crash:
             return {
                 "category": "demo_broken",
                 "rationale": f"Tool crashed (exit {exit_code})",
@@ -490,19 +567,49 @@ def score_metagenomics_verdict(
         }
 
     # ── Exit handling tests ──
+    # Previously this branch hardcoded ``"False (suppressed to warning)"``
+    # without re-verifying per-commit. That meant the scorer would still
+    # report ``exit_suppressed`` even AFTER the audited tool fixed
+    # ``critical=True`` — a false finding that masks the fix.
+    #
+    # We now read the AST-derived default from ``source_security`` and
+    # score three distinct states:
+    #   * default == "True"        → exit_handled (tool raises on non-zero)
+    #   * default == "False"       → exit_suppressed (classic audit finding)
+    #   * default in (None,
+    #                 "<unknown>") → exit_handled-with-note (nothing to
+    #                                credit or debit; run_command is absent
+    #                                or the default is not a literal)
     if finding_category in ("exit_handled", "exit_suppressed"):
         sec = analysis.get("source_security", {})
-        # The run_command() function has a 'critical' parameter
-        # When critical=False (default), non-zero exits are WARNING only
-        details["run_command_critical_default"] = "False (suppressed to warning)"
+        critical_default = sec.get("run_command_critical_default")
+        details["run_command_critical_default"] = critical_default
 
-        # This is a known design issue: non-critical commands only log warnings
         if ground_truth.get("GROUND_TRUTH_EXIT_HANDLING") == "error":
+            if critical_default == "False":
+                return {
+                    "category": "exit_suppressed",
+                    "rationale": (
+                        "run_command(critical=False) suppresses non-zero exits to "
+                        "WARNING instead of raising error"
+                    ),
+                    "details": details,
+                }
+            if critical_default == "True":
+                return {
+                    "category": "exit_handled",
+                    "rationale": (
+                        "run_command(critical=True) — non-zero exits raise; "
+                        "tool fixed the exit_suppressed finding at this commit"
+                    ),
+                    "details": details,
+                }
+            # None / "<unknown>" — no basis to flag or credit
             return {
-                "category": "exit_suppressed",
+                "category": "exit_handled",
                 "rationale": (
-                    "run_command(critical=False) suppresses non-zero exits to "
-                    "WARNING instead of raising error"
+                    f"run_command indirection not found at this commit "
+                    f"(critical_default={critical_default!r}); nothing to score"
                 ),
                 "details": details,
             }
@@ -535,13 +642,12 @@ def run_single_metagenomics(
 ) -> dict:
     """Execute metagenomics_profiler.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
-    commit_short = commit_sha[:8]
-    run_output_dir = output_base / commit_short / tc_name
+    run_output_dir = output_base / commit_sha / tc_name
     tool_output_dir = run_output_dir / "tool_output"
     tool_output_dir.mkdir(parents=True, exist_ok=True)
 
     tool_path = repo_path / "skills" / "claw-metagenomics" / "metagenomics_profiler.py"
-    timeout = int(ground_truth.get("TIMEOUT", "60"))
+    timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     # Static analysis of the source at this commit
     source_analysis = analyze_source_security(tool_path)
@@ -558,8 +664,8 @@ def run_single_metagenomics(
             stdout="",
             stderr="",
             wall_seconds=0.0,
-            start_time=harness_core.datetime.now(harness_core.UTC),
-            end_time=harness_core.datetime.now(harness_core.UTC),
+            start_time=datetime.now(UTC),
+            end_time=datetime.now(UTC),
             used_fallback=False,
             cmd=["static-analysis"],
             cwd=str(repo_path),
@@ -592,7 +698,12 @@ def run_single_metagenomics(
         harness_core.save_verdict(verdict_doc, run_output_dir)
         return verdict_doc
     else:
-        raise ValueError(f"Unknown TEST_TYPE: {test_type}")
+        return harness_core.harness_error_verdict(
+            tc_name,
+            commit_meta,
+            ValueError(f"Unknown TEST_TYPE: {test_type}"),
+            ground_truth=ground_truth,
+        )
 
     execution = harness_core.capture_execution(
         cmd=cmd,
@@ -646,7 +757,7 @@ def run_single_metagenomics(
 # ---------------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
     harness_core.run_harness_main(
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,

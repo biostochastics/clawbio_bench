@@ -1,0 +1,38 @@
+# BENCHMARK: cyp2d6_star5_deletion
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Intermediate Metabolizer (*1/*5 whole-gene deletion)
+# GROUND_TRUTH_BEHAVIOR: Patient carries a CYP2D6*5 whole-gene deletion on one
+#   allele (no-function) paired with *1. The heterozygous deletion reduces
+#   CYP2D6 activity and shifts the diplotype to Intermediate Metabolizer per
+#   PharmVar. The correct tool behavior is Indeterminate with a CNV-limitation
+#   disclosure, since SNP-only panels cannot detect whole-gene deletions and
+#   the *1/*1 call would be a false negative.
+# EXPECTED_TOOL_OUTPUT: Tool observes all CYP2D6 SNPs at reference (because
+#   the deletion allele contributes no signal to SNP calls, and the remaining
+#   *1 allele is reference) and reports *1/*1 Normal Metabolizer with no CNV
+#   caveat. The resulting codeine guidance is overconfident.
+# FINDING: A-CNV CYP2D6*5 whole-gene deletion non-detection
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic
+# CPIC_REF: CPIC_OPIOID
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Reference at every CYP2D6 SNP. On a real *1/*5 sample, the *5 allele
+#   contributes no reads, and the remaining *1 homolog produces all-reference
+#   SNP calls, indistinguishable from homozygous *1/*1 without CNV-aware
+#   genotyping.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	CC
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG

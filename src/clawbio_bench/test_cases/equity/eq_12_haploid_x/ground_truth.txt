@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf
 # FINDING: F-29 haploid genotype crash
 # FINDING_CATEGORY: edge_handled

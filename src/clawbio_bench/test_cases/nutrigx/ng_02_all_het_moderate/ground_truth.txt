@@ -1,4 +1,4 @@
-# BENCHMARK: nutrigx-advisor v1.0.0
+# BENCHMARK: nutrigx-advisor v0.1.0
 # PAYLOAD: input.txt
 # GROUND_TRUTH_DOMAIN: folate
 # GROUND_TRUTH_SCORE: 5.0

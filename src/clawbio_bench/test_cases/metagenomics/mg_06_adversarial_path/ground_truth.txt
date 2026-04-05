@@ -1,4 +1,4 @@
-# BENCHMARK: claw-metagenomics v1.0.0
+# BENCHMARK: claw-metagenomics v0.1.0
 # TEST_TYPE: demo
 # FINDING: T06-sec adversarial output path
 # FINDING_CATEGORY: demo_functional

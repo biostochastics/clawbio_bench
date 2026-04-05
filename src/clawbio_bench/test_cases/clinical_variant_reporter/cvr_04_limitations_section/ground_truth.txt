@@ -1,0 +1,15 @@
+# BENCHMARK: clinical-variant-reporter v0.1.0
+# MODE: demo
+# REQUIRE_ASSEMBLY: any
+# REQUIRE_TRANSCRIPT: false
+# REQUIRE_CLINVAR_VERSION: false
+# REQUIRE_GNOMAD_VERSION: false
+# REQUIRE_DISCLAIMER: false
+# REQUIRE_LIMITATIONS: true
+# REQUIRE_EVIDENCE_TRAIL: false
+# REQUIRE_DISEASE_CONTEXT: false
+# FINDING: CVR Phase 1 — Limitations section MUST name at least one out-of-scope class
+# FINDING_CATEGORY: report_structure_complete
+# HAZARD_METRIC: A clinical variant report that does not name its limitations (CNVs, repeat expansions, mosaic variants, structural variants, mitochondrial variants, etc.) will be read by downstream clinicians as comprehensive when it is not. This is a Rehm et al. 2013 laboratory reporting standards requirement.
+# REFERENCE: REHM_2013
+# EXPECTED_EXIT_CODE: 0

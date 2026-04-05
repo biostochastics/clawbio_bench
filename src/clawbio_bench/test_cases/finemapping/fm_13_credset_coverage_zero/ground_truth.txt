@@ -1,0 +1,11 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: credset_abf
+# FINDING: FM-13 Credible-set builder silently accepts coverage=0
+# FINDING_CATEGORY: input_validation_missing
+# HAZARD_METRIC: _greedy_credible_set appends the first variant BEFORE checking cumsum >= coverage, so coverage=0 produces a non-empty set of size 1. A 0% credible set is semantically meaningless and the skill should refuse to build it. The same path accepts negative coverage and degenerate inputs without complaint
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: pips=[0.6, 0.4] (skill's ABF-derived posterior), coverage=0.0. Inside _greedy_credible_set: sort descending → [0,1], append idx 0 (cumsum=0.6), check 0.6 >= 0 → True, return [0]. Size-1 credible set reports coverage=0.6 (not the requested 0.0 — so the 'coverage' field lies too). A correct implementation raises ValueError for coverage <= 0 or returns an empty credible set.
+# REFERENCE_IMPLEMENTATION: susieR enforces 0 < coverage < 1 via stopifnot; coloc::finemap.abf similarly
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Keep the GitHub Actions used in CI and the reusable audit workflow
+  # up to date. Downstream repos that consume audit-reusable.yml should
+  # add an equivalent block that watches the reusable workflow pin itself.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"

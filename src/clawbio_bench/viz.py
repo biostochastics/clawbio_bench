@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 Heatmap visualization for ClawBio benchmark results.
 
@@ -13,6 +14,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 # Default color palette for categories across all harnesses.
 # Harness-specific category_legend colors override these when available.
@@ -59,7 +61,7 @@ DEFAULT_COLORS = {
 }
 
 
-def _check_matplotlib():
+def _check_matplotlib() -> tuple[Any, ...]:
     """Import matplotlib or exit with helpful message."""
     try:
         import matplotlib
@@ -109,7 +111,7 @@ def render_heatmap(
     seen_commits = set()
 
     for hf in heatmap_files:
-        with open(hf) as f:
+        with open(hf, encoding="utf-8") as f:
             data = json.load(f)
 
         # Prefix test case names with harness name for multi-harness view
@@ -227,7 +229,7 @@ def render_heatmap(
     fig.text(
         0.5,
         0.005,
-        "clawbio-bench · github.com/biostochastics/clawbio_benchmark",
+        "clawbio-bench · github.com/biostochastics/clawbio_bench",
         ha="center",
         fontsize=7,
         color="#64748b",

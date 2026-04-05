@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.csv
 # GROUND_TRUTH_FST_COVERAGE: 0.0
 # FINDING: F-26 CSV mode FST inflation

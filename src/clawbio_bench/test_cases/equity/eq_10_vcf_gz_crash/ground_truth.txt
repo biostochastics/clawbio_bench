@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf.gz
 # FINDING: C-07 gzip incompatibility
 # FINDING_CATEGORY: edge_crash

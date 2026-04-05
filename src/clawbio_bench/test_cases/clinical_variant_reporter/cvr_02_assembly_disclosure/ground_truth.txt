@@ -1,0 +1,15 @@
+# BENCHMARK: clinical-variant-reporter v0.1.0
+# MODE: demo
+# REQUIRE_ASSEMBLY: GRCh38
+# REQUIRE_TRANSCRIPT: false
+# REQUIRE_CLINVAR_VERSION: false
+# REQUIRE_GNOMAD_VERSION: false
+# REQUIRE_DISCLAIMER: false
+# REQUIRE_LIMITATIONS: false
+# REQUIRE_EVIDENCE_TRAIL: false
+# REQUIRE_DISEASE_CONTEXT: false
+# FINDING: CVR Phase 1 — reference genome assembly MUST be disclosed
+# FINDING_CATEGORY: report_structure_complete
+# HAZARD_METRIC: Narrow assembly-only check. ACMG classifications are coordinate-space specific — a report that does not state GRCh37 vs GRCh38 cannot be safely re-evaluated against an updated evidence set, because variant coordinates may have liftover conflicts.
+# REFERENCE: CLINGEN_SVI_PVS1
+# EXPECTED_EXIT_CODE: 0

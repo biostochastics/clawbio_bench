@@ -1,0 +1,11 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: clinical-trial-finder
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: user-specified
+# EXPECTED_EXIT_CODE: 0
+# SKILL_OVERRIDE: clinical-trial-finder
+# INPUT_ARG: BRCA1
+# FINDING: force-03 --skill direct invocation for clinical-trial-finder
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: clinical-trial-finder produces FHIR R4 eligibility output for a gene/variant/condition. No keyword/extension routes to it; clinicians can only reach it via `--skill NAME`. Broken pass-through would silently block eligibility matching for real patients.
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

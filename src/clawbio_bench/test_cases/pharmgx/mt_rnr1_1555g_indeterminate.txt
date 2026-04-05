@@ -1,0 +1,34 @@
+# BENCHMARK: mt_rnr1_1555g_indeterminate
+# GROUND_TRUTH_PHENOTYPE: MT-RNR1 Indeterminate (mitochondrial DNA, not in panel)
+# GROUND_TRUTH_BEHAVIOR: MT-RNR1 m.1555A>G is a mitochondrial 12S rRNA variant
+#   that confers aminoglycoside-induced ototoxicity. CPIC (2022) recommends
+#   avoiding aminoglycosides (gentamicin, tobramycin, amikacin) in carriers
+#   unless the infection is life-threatening and no alternatives exist.
+#   Mitochondrial variants are not detectable from nuclear-chromosome
+#   23andMe-format panels — the correct behavior is to report MT-RNR1 as
+#   Indeterminate and disclose that mitochondrial PGx is out of scope.
+# EXPECTED_TOOL_OUTPUT: Report MT-RNR1 as Indeterminate (not assessed by
+#   panel) or omit it with a mitochondrial-coverage disclosure. The report
+#   must NOT silently assume normal mitochondrial function.
+# FINDING: CPIC Tier-1 scope honesty — mitochondrial PGx out of panel scope
+# FINDING_CATEGORY: correct_indeterminate
+# TARGET_GENE: MT-RNR1
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Gentamicin
+# HAZARD_CLASS: Aminoglycoside (ototoxicity in m.1555A>G carriers)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Nuclear-only 23andMe-style input. Tests whether the tool surfaces
+#   the mitochondrial-panel-scope limitation rather than silently dropping
+#   MT-RNR1 from the report.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT

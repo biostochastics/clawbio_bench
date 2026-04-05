@@ -1,0 +1,13 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie
+# FINDING: FM-02 Happy-path SuSiE single causal with L=1
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: L=1 avoids the forced-null-component pathology; any failure here means the single-effect IBSS itself is broken
+# EXPECTED_PIPS: [0.9999, 0.00001, 0.00001, 0.00001, 0.00001]
+# PIP_TOLERANCE: 0.01
+# EXPECTED_CONVERGED: true
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: 5 variants, R=I, n=5000, L=1. With a single strong signal at variant 0 (z=5) and noise at others (z<=0.4), the single SuSiE effect row concentrates >99.99% of posterior mass on variant 0 via the SER update (Wang 2020 eq. 6-7). With L=1 there is no secondary-row artefact so PIP = alpha_0.
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300. doi:10.1111/rssb.12388

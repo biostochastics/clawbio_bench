@@ -1,0 +1,16 @@
+# BENCHMARK: clinical-variant-reporter v0.1.0
+# MODE: demo
+# REQUIRE_ASSEMBLY: GRCh38
+# REQUIRE_TRANSCRIPT: true
+# REQUIRE_CLINVAR_VERSION: true
+# REQUIRE_GNOMAD_VERSION: true
+# REQUIRE_DISCLAIMER: true
+# REQUIRE_LIMITATIONS: true
+# REQUIRE_EVIDENCE_TRAIL: true
+# REQUIRE_DISEASE_CONTEXT: true
+# FINDING: CVR Phase 1 baseline — demo mode must produce a structurally complete report
+# FINDING_CATEGORY: report_structure_complete
+# HAZARD_METRIC: An ACMG classification report missing any of reference build, transcript, data source versions, limitations, disclaimer, evidence trail, or disease context is unreviewable by a clinical auditor and must not be credited as a passing run.
+# REFERENCE: RICHARDS_2015
+# REPORTING_STANDARD: REHM_2013
+# EXPECTED_EXIT_CODE: 0

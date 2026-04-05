@@ -1,4 +1,4 @@
-# BENCHMARK: claw-metagenomics v1.0.0
+# BENCHMARK: claw-metagenomics v0.1.0
 # TEST_TYPE: demo
 # FINDING: VULN-002 commands.sh path escaping
 # FINDING_CATEGORY: injection_blocked

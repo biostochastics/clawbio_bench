@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: abf
+# FINDING: FM-06 ABF returns NaN PIPs silently when SE column is all zeros
+# FINDING_CATEGORY: pip_nan_silent
+# HAZARD_METRIC: A zero-SE column (accidentally from a broken ETL step or a monomorphic-variant filter bug) causes V=0, log(1-w/w)=log(0)=-inf for every variant, softmax produces NaN, and the function returns garbage with no exception raised
+# EXPECTED_EXIT_STATUS: raise
+# EXPECTED_EXCEPTION_CLASS: ValueError
+# WAKEFIELD_REF: WAKEFIELD_2009
+# DERIVATION: With se=[0,0,0], V=[0,0,0], w=0.04, r_i = 0.04/0.04 = 1.0; log(1-1.0) = log(0) = -inf. All log_abf = -inf. log_abf_shifted = -inf - (-inf) = NaN. softmax = NaN/NaN = NaN. A correct implementation should detect the degenerate input at validation time and raise ValueError before computing.
+# REFERENCE_IMPLEMENTATION: coloc::finemap.abf refuses se<=0 with an assert
+# CITATION: Wakefield, J. (2009). Genetic Epidemiology 33(1):79-86.

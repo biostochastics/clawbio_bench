@@ -1,4 +1,4 @@
-# BENCHMARK: claw-metagenomics v1.0.0
+# BENCHMARK: claw-metagenomics v0.1.0
 # TEST_TYPE: static
 # FINDING: T06-sec shell=True check
 # FINDING_CATEGORY: injection_blocked

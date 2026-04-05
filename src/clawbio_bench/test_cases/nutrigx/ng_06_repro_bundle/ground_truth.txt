@@ -1,4 +1,4 @@
-# BENCHMARK: nutrigx-advisor v1.0.0
+# BENCHMARK: nutrigx-advisor v0.1.0
 # PAYLOAD: input.txt
 # FINDING: C-08 reproducibility bundle
 # FINDING_CATEGORY: repro_functional

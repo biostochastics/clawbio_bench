@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: credset_susie
+# FINDING: FM-09 Credible-set 'pip' field is single-effect alpha, not true PIP
+# FINDING_CATEGORY: credset_pip_is_alpha_mismatch
+# HAZARD_METRIC: Downstream code reading variants[i]['pip'] expects posterior-inclusion probability across ALL L effects, defined as PIP_i = 1 - prod_l(1 - alpha[l][i]). ClawBio's _collect_variants instead stores alpha[l][i] for the l-th credible set, so a variant that appears in two credible sets gets two different 'pip' values and neither matches the true PIP
+# PIP_TOLERANCE: 0.05
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: Synthetic alpha = [[0.5, 0.3, 0.2], [0.4, 0.4, 0.2]] directly fed to build_credible_sets_susie. True PIPs computed by the harness: PIP = 1 - prod_l(1 - alpha[l]) = [1-0.3, 1-0.42, 1-0.64] = [0.7, 0.58, 0.36]. The credible-set L1 for alpha row 0 contains variant 0 with alpha=0.5 → reported as 'pip': 0.5, but the true PIP is 0.7. The harness recomputes the true PIPs from alpha and flags the mismatch.
+# REFERENCE_IMPLEMENTATION: susieR::susie_get_cs reports per-effect 'prob' and the top-level susie$pip for overall PIP — two distinct fields, never conflated
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

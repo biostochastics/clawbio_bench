@@ -1,0 +1,11 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: methylation-clock
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: user-specified
+# EXPECTED_EXIT_CODE: 0
+# SKILL_OVERRIDE: methylation-clock
+# INPUT_ARG: GSE139307
+# FINDING: force-05 --skill direct invocation for methylation-clock
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: methylation-clock implements PyAging clocks (Horvath, GrimAge, DunedinPACE, AltumAge) that make epigenetic-age claims tied to disease prediction. Keyword "methylation" does route to it, but this test pins the --skill override path so the force-skill code path is explicitly exercised.
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

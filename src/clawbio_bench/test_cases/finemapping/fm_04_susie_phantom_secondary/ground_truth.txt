@@ -1,0 +1,14 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie
+# FINDING: FM-04 Phantom secondary signal on single-causal locus
+# FINDING_CATEGORY: susie_spurious_secondary_signal
+# HAZARD_METRIC: With L>1 effects but only one real signal, the extra effect rows are forced to place mass somewhere, producing phantom secondary PIPs that an analyst would mistake for independent signals
+# SECONDARY_PIP_THRESHOLD: 0.05
+# EXPECTED_PIPS: [0.99995, 0.00005]
+# PIP_TOLERANCE: 0.01
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: Single causal at variant 0 (z=5), null at variant 1 (z=0), R=I, n=100, L=2. After the first IBSS sweep alpha_0 ≈ [1.0, ~0]; the residual seen by effect row 2 is z - R @ (alpha_0*mu_0) ≈ [5 - 4*0.99998, 0] ≈ [1e-4, 0], which is essentially null for variant 0 but the SER still has to put unit mass SOMEWHERE on that row. ClawBio's implementation lets alpha[1] drift into a ~0.7/~0.3 split, producing PIP[1] ≈ 1 - (1-0)*(1-0.298) ≈ 0.298. susieR::susie_rss with `null_weight >= 0.1` suppresses this by adding an explicit null alternative to each SER prior, so the second effect row's posterior mass lands on "no effect" instead of being forced onto a real variant. susieR without null_weight (default) produces similar raw PIPs but then prunes the impure credible set via susie_get_cs(min_abs_corr=0.5). ClawBio does neither. The auditable criterion: on a one-signal locus with L>1, any secondary PIP > 0.05 is a published-value red flag, regardless of credible-set handling.
+# REFERENCE_IMPLEMENTATION: susieR::susie_rss with null_weight=0.5 returns PIP[1] < 0.001; default susieR returns inflated PIP[1] but removes it via credible-set pruning
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

@@ -1,4 +1,4 @@
-# BENCHMARK: equity-scorer v1.0.0
+# BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf
 # GROUND_TRUTH_HEIM: 330.0
 # WEIGHTS: 1.0,1.0,1.0,1.0

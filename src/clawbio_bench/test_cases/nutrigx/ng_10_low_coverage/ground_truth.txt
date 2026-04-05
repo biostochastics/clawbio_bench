@@ -1,4 +1,4 @@
-# BENCHMARK: nutrigx-advisor v1.0.0
+# BENCHMARK: nutrigx-advisor v0.1.0
 # PAYLOAD: input.txt
 # FINDING: T12-coverage-low 7/28 SNPs
 # FINDING_CATEGORY: snp_valid

@@ -1,0 +1,15 @@
+# BENCHMARK: clinical-variant-reporter v0.1.0
+# MODE: demo
+# REQUIRE_ASSEMBLY: any
+# REQUIRE_TRANSCRIPT: false
+# REQUIRE_CLINVAR_VERSION: false
+# REQUIRE_GNOMAD_VERSION: false
+# REQUIRE_DISCLAIMER: false
+# REQUIRE_LIMITATIONS: false
+# REQUIRE_EVIDENCE_TRAIL: true
+# REQUIRE_DISEASE_CONTEXT: false
+# FINDING: CVR Phase 1 — per-variant ACMG criterion audit trail required
+# FINDING_CATEGORY: report_structure_complete
+# HAZARD_METRIC: Every variant assigned P/LP/VUS/LB/B must be accompanied by the list of ACMG criteria that triggered (PVS1, PS1-4, PM1-6, PP1-5, BA1, BS1-4, BP1-7). Without this trail a reviewer cannot reproduce or contest the classification, and ClinGen SVI audit requirements are not met. Pass threshold is 50% of classification lines citing a criterion code.
+# REFERENCE: CLINGEN_SVI_PVS1
+# EXPECTED_EXIT_CODE: 0

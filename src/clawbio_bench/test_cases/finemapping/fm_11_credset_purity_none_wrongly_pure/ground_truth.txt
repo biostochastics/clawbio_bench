@@ -1,0 +1,11 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: credset_susie
+# FINDING: FM-11 purity=None silently becomes pure=True when R is missing
+# FINDING_CATEGORY: credset_purity_none_wrongly_pure
+# HAZARD_METRIC: build_credible_sets_susie sets `pure = purity is None or purity >= min_purity`. When R is None the code cannot compute purity at all, but the credible set is still marked pure=True — claiming a property it has no evidence for. A correct implementation either (a) refuses to return without LD, or (b) reports pure=None with a clear caveat
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: alpha=[[0.5, 0.3, 0.2]], R=None, coverage=0.95, min_purity=0.5. Credible set contains all three variants. _purity() is skipped because R is None, so purity=None. The `or` short-circuit in `pure = purity is None or purity >= min_purity` makes pure=True unconditionally. An auditor reading variants[i]['pip'] and cs['pure'] would interpret this as "we checked linkage and the set is tight"; the truth is the LD matrix was never provided.
+# REFERENCE_IMPLEMENTATION: susieR requires R as a mandatory argument; no path to pure=True without evidence
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

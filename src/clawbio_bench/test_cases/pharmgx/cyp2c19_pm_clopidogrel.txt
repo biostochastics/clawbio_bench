@@ -1,0 +1,54 @@
+# BENCHMARK: cyp2c19_pm_clopidogrel
+# GROUND_TRUTH_PHENOTYPE: CYP2C19 Poor Metabolizer (*2/*2)
+# GROUND_TRUTH_BEHAVIOR: Homozygous CYP2C19*2 (rs4244285 AA). Tool should report Poor
+#   Metabolizer. Clopidogrel: AVOID (stent thrombosis risk — CPIC strongly recommends
+#   alternative antiplatelet therapy, e.g. prasugrel or ticagrelor). This is a Tier 1
+#   cardiology finding affecting ~2% of Europeans, ~15% of East Asians homozygous PM.
+# EXPECTED_TOOL_OUTPUT: Tool detects rs4244285 alt="A", genotype "AA" -> gt.count("A")=2
+#   -> diplotype *2/*2 -> Poor Metabolizer. Clopidogrel: avoid. Voriconazole: caution
+#   (alternate dose). SSRIs (sertraline, citalopram, escitalopram): standard/reduced.
+# FINDING: S-2 (CPIC Level 1A CYP2C19/clopidogrel coverage gap)
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2C19
+# TARGET_RSID: rs4244285
+# HAZARD_DRUG: Clopidogrel
+# HAZARD_CLASS: Antiplatelet
+# CPIC_REF: CPIC_CLOPIDOGREL
+# REFERENCE_GENOME: GRCh38
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs4244285 = AA (homozygous *2). rs12248560 at CC (no *17 gain of function).
+#   rs4986893 at GG (no *3). This is a canonical CYP2C19 PM that should trigger
+#   clopidogrel avoidance per CPIC guideline for CYP2C19 and clopidogrel (2022).
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	AA
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

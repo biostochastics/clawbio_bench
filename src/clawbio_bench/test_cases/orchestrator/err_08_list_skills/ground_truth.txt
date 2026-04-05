@@ -1,4 +1,4 @@
-# BENCHMARK: bio-orchestrator v1.0.0
+# BENCHMARK: bio-orchestrator v0.1.0
 # GROUND_TRUTH_SKILL:
 # GROUND_TRUTH_ROUTING_METHOD: list_skills
 # EXPECTED_EXIT_CODE: 0
