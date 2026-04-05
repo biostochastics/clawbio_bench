@@ -71,7 +71,7 @@ jobs:
           test -f /tmp/results/nutrigx-advisor/manifest.json
           test -f /tmp/results/claw-metagenomics/manifest.json
       - name: Upload verdict artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-results-py${{ matrix.python-version }}
           path: /tmp/results/
@@ -97,7 +97,7 @@ jobs:
           exit 0
         timeout-minutes: 15
       - name: Upload regression artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: regression-results
           path: /tmp/results/

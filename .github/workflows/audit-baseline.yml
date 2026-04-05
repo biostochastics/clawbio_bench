@@ -111,7 +111,7 @@ jobs:
           gh release edit "${TAG}" --notes "${NOTES}"
 
       - name: Upload workflow artifact (fallback)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: baseline-main
           path: /tmp/results/
