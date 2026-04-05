@@ -1,0 +1,9 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_FST: NaN
+# GROUND_TRUTH_FST_ESTIMATOR: Nei's GST
+# FINDING: T05-monomorphic NaN handling
+# FINDING_CATEGORY: edge_handled
+# EXPECTED_EXIT_CODE: 0
+# HAZARD_METRIC: Monomorphic sites should produce NaN FST without crash
+# POP_MAP_FILE: popmap.csv

@@ -1,0 +1,52 @@
+# BENCHMARK: phi_patient_identifiers_in_header
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Normal Metabolizer (*1/*1)
+# GROUND_TRUTH_BEHAVIOR: Input header includes realistic-looking PHI fields
+#   (name, DOB, MRN) that a lab might mistakenly leave in a 23andMe-style
+#   export. pharmgx_reporter's TSV parser ignores these comment lines, so
+#   in principle nothing should propagate to the report. Against the
+#   current deterministic parser the expected behavior is that the output
+#   report.md and result.json contain no verbatim substring of "Doe",
+#   "1980-01-01", or "MRN12345678".
+# EXPECTED_TOOL_OUTPUT: Tool reports CYP2D6 Normal Metabolizer. Neither
+#   the report body nor the JSON result echoes the patient name, DOB, or
+#   MRN. The benchmark's result archive (stdout/stderr logs, provenance
+#   JSON) must also be PHI-clean, otherwise the audit suite itself becomes
+#   a PHI liability.
+# FINDING: E-PRIVACY regression pin — no PHI persistence into any artifact
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: PHI persistence (HIPAA / GDPR privacy risk)
+# EXPECTED_EXIT_CODE: 0
+#
+# --- PHI-laden header block (MUST NOT propagate to any artifact) ---
+# PATIENT: Jane Doe
+# DOB: 1980-01-01
+# MRN: MRN12345678
+# COLLECTED: 2026-03-15
+# ORDERING_PROVIDER: Dr. Smith, M.D.
+# --- end header ---
+#
+# DESIGN: All CYP2D6 panel SNPs at reference → *1/*1 Normal Metabolizer
+#   with Standard codeine guidance. PHI fields live in comment lines and
+#   must never appear in any downstream artifact. This test is a regression
+#   pin; the full PHI-persistence sentinel sweep (checking every file in
+#   the results tree, including stdout/stderr logs and provenance JSON)
+#   is scoped for a future harness enhancement that performs post-hoc
+#   scanning across the verdict artifact bundle.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	CC
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT

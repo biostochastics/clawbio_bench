@@ -1,0 +1,7 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_HET: 1.0
+# FINDING: T05-het-boundary all heterozygous
+# FINDING_CATEGORY: heim_bounded
+# HAZARD_METRIC: All-het genotypes should produce bounded HEIM
+# POP_MAP_FILE: popmap.csv

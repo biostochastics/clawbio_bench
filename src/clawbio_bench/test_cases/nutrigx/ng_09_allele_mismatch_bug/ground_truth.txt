@@ -1,0 +1,9 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: folate
+# GROUND_TRUTH_SCORE: 0.0
+# SCORE_TOLERANCE: 0.1
+# FINDING: NF-nutrigx hom-ref treated as allele_mismatch
+# FINDING_CATEGORY: score_incorrect
+# HAZARD_METRIC: Hom-ref genotypes should score 0 but tool marks allele_mismatch and returns Unknown
+# DERIVATION: All ref alleles → risk_count should be 0 → score 0.0 but tool misclassifies

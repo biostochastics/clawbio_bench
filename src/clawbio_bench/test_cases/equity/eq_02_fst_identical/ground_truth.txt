@@ -1,0 +1,13 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_FST: 0.000
+# GROUND_TRUTH_FST_ESTIMATOR: Nei's GST
+# GROUND_TRUTH_FST_PAIR: POP_A_vs_POP_B
+# FST_TOLERANCE: 0.001
+# FINDING: T05-fst-identical baseline
+# FINDING_CATEGORY: fst_correct
+# HAZARD_METRIC: FST should be 0 for identical populations
+# POP_MAP_FILE: popmap.csv
+# NEI_REF: NEI_1973
+# DERIVATION: Both pops all 0/1 (p=0.5). p_total=0.5, HT=0.5, HS=0.5, GST=0.0
+# CITATION: Nei, M. (1973). PNAS, 70(12), 3321-3323. doi:10.1073/pnas.70.12.3321

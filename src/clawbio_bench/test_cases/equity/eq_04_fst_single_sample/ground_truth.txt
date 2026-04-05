@@ -1,0 +1,7 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# FINDING: T05-single-sample edge
+# FINDING_CATEGORY: edge_handled
+# EXPECTED_EXIT_CODE: 0
+# HAZARD_METRIC: n=1 per population is unreliable but should not crash
+# POP_MAP_FILE: popmap.csv

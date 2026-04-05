@@ -1,0 +1,6 @@
+# BENCHMARK: claw-metagenomics v0.1.0
+# TEST_TYPE: static
+# FINDING: NF-4 KRAKEN2_DB/HUMANN_DB env var injection
+# FINDING_CATEGORY: injection_blocked
+# HAZARD_METRIC: Environment variables read from os.environ passed to subprocess without validation
+# OWASP_REF: OWASP_CMD_INJECTION

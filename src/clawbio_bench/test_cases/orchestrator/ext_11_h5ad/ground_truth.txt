@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# PAYLOAD: input.h5ad
+# GROUND_TRUTH_SKILL: scrna-orchestrator
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: extension
+# FINDING: T09-ext-h5ad
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: h5ad routes to scrna-orchestrator
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

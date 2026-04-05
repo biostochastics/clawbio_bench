@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL_LIST: equity,profile
+# GROUND_TRUTH_ROUTING_METHOD: multi-skill
+# EXPECTED_EXIT_CODE: 0
+# INPUT_ARG: placeholder
+# FINDING: comp-02 multi-skill composition equity + profile-report
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: Composed equity + profile-report is a realistic patient-report workflow. This test validates that the orchestrator's SKILL_REGISTRY_MAP has entries for both and that `--skills` dispatches each to its correct registry name. Regression here would break any patient-report pipeline that composes these skills.
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

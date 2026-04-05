@@ -1,0 +1,13 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: abf
+# FINDING: FM-15 Log-space ABF handles extreme z-scores correctly (verified as PASS)
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: Wakefield ABF with z=50 and se=0.01 produces log-space values >1200, which would overflow a naive exp() normalisation to inf. Review flagged this as a potential numerical-stability bug; direct verification shows compute_abf handles it correctly via max-shift normalisation before exp — this test pins that behaviour so a future refactor cannot regress into naive exp()
+# EXPECTED_PIPS: [1.0, 0.0, 0.0]
+# PIP_TOLERANCE: 0.001
+# EXPECTED_EXIT_STATUS: ok
+# WAKEFIELD_REF: WAKEFIELD_2009
+# DERIVATION: z=[50, 0.1, 0.1], se=[0.01, 0.01, 0.01]. V = 1e-4, w = 0.04, r = 0.04/0.0401 ≈ 0.99751. log_abf_0 = 0.5*log(0.00249) + 0.4988*2500 = -2.9988 + 1246.88 = 1243.88. log_abf_1 = log_abf_2 = -2.9988 + 0.00499 ≈ -2.9938. After max-shift: shifted = [0, -1246.87, -1246.87]. exp = [1.0, ~0, ~0]. Normalised PIPs = [1.0, 0.0, 0.0]. The log-space subtraction is the standard softmax trick and must remain in place.
+# REFERENCE_IMPLEMENTATION: scipy.special.softmax applies the same max-shift for numerical stability
+# CITATION: Wakefield, J. (2009). Genetic Epidemiology 33(1):79-86.

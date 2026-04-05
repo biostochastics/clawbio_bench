@@ -1,0 +1,15 @@
+# BENCHMARK: clinical-variant-reporter v0.1.0
+# MODE: demo
+# REQUIRE_ASSEMBLY: any
+# REQUIRE_TRANSCRIPT: false
+# REQUIRE_CLINVAR_VERSION: false
+# REQUIRE_GNOMAD_VERSION: false
+# REQUIRE_DISCLAIMER: true
+# REQUIRE_LIMITATIONS: false
+# REQUIRE_EVIDENCE_TRAIL: false
+# REQUIRE_DISEASE_CONTEXT: false
+# FINDING: CVR Phase 1 — research-use-only disclaimer MUST be in report body
+# FINDING_CATEGORY: report_structure_complete
+# HAZARD_METRIC: Regulated-medical-device framing depends on claims, not algorithms. A report that makes P/LP classifications without a "not a medical device" / "research and educational" disclaimer in its body crosses the FDA CDS-exempt criteria and risks being treated as a clinical decision support device. The disclaimer must be in the report body, not only stderr.
+# REFERENCE: REHM_2013
+# EXPECTED_EXIT_CODE: 0

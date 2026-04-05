@@ -1,0 +1,5 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# FINDING: T12-coverage-low 7/28 SNPs
+# FINDING_CATEGORY: snp_valid
+# HAZARD_METRIC: 25% coverage should produce LOW COVERAGE warning but still generate report

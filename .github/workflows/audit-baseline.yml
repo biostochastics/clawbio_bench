@@ -1,0 +1,118 @@
+name: Publish audit baseline
+
+# Publishes a rolling ``main`` baseline of the clawbio-bench audit results
+# against ClawBio HEAD. The reusable audit workflow (audit-reusable.yml)
+# downloads this baseline to compute new/resolved findings on each PR.
+#
+# The baseline lives on a GitHub Release with a stable tag (``baseline-main``)
+# so it has a predictable HTTPS download URL. Each successful run overwrites
+# the asset on that release.
+#
+# Security: only workflow inputs (``clawbio_ref``) reach `run:` blocks, and
+# they go via `env:`. No PR-controlled event fields are referenced here.
+
+on:
+  # Nightly schedule is the primary trigger: the baseline audits ClawBio HEAD,
+  # which changes independently of this repository. A source-path filter would
+  # make the baseline stale by construction, since ClawBio commits would never
+  # trigger a re-run here. We deliberately refresh on a timer instead.
+  schedule:
+    - cron: "17 4 * * *"  # 04:17 UTC daily — off-peak, avoids the top of the hour
+  push:
+    branches: [main]
+    # Refresh on any push to our own main as well — cheap insurance against
+    # scheduler drift and lets benchmark-changing merges publish immediately.
+  workflow_dispatch:
+    inputs:
+      clawbio_ref:
+        description: ClawBio ref to run the baseline against (default HEAD)
+        required: false
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: audit-baseline
+  cancel-in-progress: true
+
+jobs:
+  publish-baseline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout clawbio_bench
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install clawbio-bench
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Clone ClawBio
+        env:
+          CLAWBIO_REF: ${{ inputs.clawbio_ref }}
+        run: |
+          git clone https://github.com/ClawBio/ClawBio.git /tmp/ClawBio
+          if [ -n "${CLAWBIO_REF}" ]; then
+            git -C /tmp/ClawBio checkout "${CLAWBIO_REF}"
+          fi
+          git -C /tmp/ClawBio rev-parse --short HEAD
+
+      - name: Run smoke audit
+        run: |
+          set +e
+          clawbio-bench --smoke --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+          exit_code=$?
+          echo "Benchmark exited with ${exit_code} (0=clean, 1=findings, >=2=crash)"
+          # Baseline publishing is best-effort: only fail on harness crash.
+          # A baseline that contains findings is still valid input for diffing.
+          if [ "${exit_code}" -ge 2 ]; then
+            exit "${exit_code}"
+          fi
+          exit 0
+
+      - name: Verify aggregate_report.json exists
+        run: |
+          test -s /tmp/results/aggregate_report.json
+          echo "--- baseline aggregate_report.json (head) ---"
+          python -m json.tool /tmp/results/aggregate_report.json | head -40
+
+      - name: Publish baseline release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: baseline-main
+          TITLE: clawbio-bench rolling baseline (main)
+        run: |
+          set -euo pipefail
+          NOTES="Auto-generated rolling baseline from commit ${GITHUB_SHA}. Consumed by the reusable audit workflow to compute new/resolved findings on PRs."
+
+          # Create the release once; subsequent runs just update the asset.
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" \
+              --title "${TITLE}" \
+              --notes "${NOTES}" \
+              --target "${GITHUB_SHA}" \
+              --latest=false
+          fi
+
+          # Upload (clobber) the canonical asset name the reusable workflow
+          # downloads. Keep the filename exactly aggregate_report.json.
+          cp /tmp/results/aggregate_report.json ./aggregate_report.json
+          gh release upload "${TAG}" ./aggregate_report.json --clobber
+
+          # Keep release notes pointing at the current SHA for traceability.
+          gh release edit "${TAG}" --notes "${NOTES}"
+
+      - name: Upload workflow artifact (fallback)
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-main
+          path: /tmp/results/
+          retention-days: 90

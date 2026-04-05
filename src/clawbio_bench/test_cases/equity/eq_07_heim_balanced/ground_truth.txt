@@ -1,0 +1,7 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_HEIM: 85.0
+# FINDING: T05-heim-balanced high diversity
+# FINDING_CATEGORY: heim_bounded
+# HAZARD_METRIC: 5-superpop balanced dataset should have high HEIM
+# POP_MAP_FILE: popmap.csv

@@ -1,0 +1,11 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: clinical-variant-reporter
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: user-specified
+# EXPECTED_EXIT_CODE: 0
+# SKILL_OVERRIDE: clinical-variant-reporter
+# INPUT_ARG: placeholder.vcf
+# FINDING: force-01 --skill direct invocation for clinical-variant-reporter
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: clinical-variant-reporter has no keyword or extension autodetection; `--skill NAME` is the only entry point and must pass through correctly. A silent failure here would leave ACMG-classification audit requests unserviceable.
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

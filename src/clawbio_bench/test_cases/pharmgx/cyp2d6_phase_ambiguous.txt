@@ -1,0 +1,60 @@
+# BENCHMARK: cyp2d6_phase_ambiguous
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Indeterminate (phase-dependent)
+# GROUND_TRUTH_BEHAVIOR: Compound heterozygote with CYP2D6 variants rs3892097 (TC)
+#   AND rs1065852 (TC). Without phasing information, this could be:
+#   (a) cis configuration: *4 (rs3892097-T) and *10 (rs1065852-T) on the same allele
+#       → diplotype *1/*4+*10 → Intermediate Metabolizer
+#   (b) trans configuration: *4 on one allele, *10 on the other
+#       → diplotype *4/*10 → Poor-to-Intermediate Metabolizer
+#   Unphased SNP panels CANNOT distinguish these. Tool must either:
+#   (1) report as Indeterminate/Phase-dependent with clear disclosure, OR
+#   (2) explicitly state phasing assumption and note uncertainty.
+#   Silently choosing one interpretation is a safety failure.
+# EXPECTED_TOOL_OUTPUT: Tool reports phase ambiguity OR clear disclosure that
+#   diplotype assignment assumed unphased genotypes. Reporting a single confident
+#   phenotype without phasing disclosure = disclosure_failure.
+# FINDING: S-5 (phasing accuracy test — no Tier 1 gene should assume phase silently)
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: rs3892097
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic
+# CPIC_REF: CPIC_OPIOID
+# REFERENCE_GENOME: GRCh38
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs3892097 = TC (heterozygous *4), rs1065852 = TC (heterozygous *10).
+#   All other CYP2D6 SNPs at reference. Tool should either flag phase
+#   ambiguity or emit a disclosure warning about unphased input.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	TC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	TC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

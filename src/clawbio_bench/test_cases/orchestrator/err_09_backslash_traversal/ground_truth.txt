@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: error
+# EXPECTED_EXIT_CODE: 1
+# SKILL_OVERRIDE: ..\..\etc\passwd
+# FINDING: T09-err-backslash-traversal
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: Backslash path traversal should be blocked
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

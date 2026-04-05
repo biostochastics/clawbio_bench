@@ -1,0 +1,5 @@
+# BENCHMARK: claw-metagenomics v0.1.0
+# TEST_TYPE: demo
+# FINDING: T06-sec adversarial output path
+# FINDING_CATEGORY: demo_functional
+# HAZARD_METRIC: Demo mode should handle output path with spaces/special chars

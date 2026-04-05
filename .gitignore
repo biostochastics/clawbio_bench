@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Benchmark outputs (generated, not committed)
+results/
+*.log
+
+# Generated audit reports (Typst source + compiled PDFs)
+# results/ already covers the default path; these patterns backstop
+# reports written to custom --output locations outside results/.
+report.typ
+report.pdf
+*.pdf
+# Exception: the project intro PDF is a checked-in documentation artifact,
+# not a generated report. The *.pdf rule above would otherwise hide it.
+!clawbio_bench_intro.pdf
+
+# pytest
+.pytest_cache/
+.benchmarks/
+
+# ruff
+.ruff_cache/
+
+# Coverage
+htmlcov/
+.coverage

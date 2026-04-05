@@ -1,0 +1,262 @@
+name: clawbio-bench audit (reusable)
+
+# Reusable workflow that runs the clawbio-bench suite against the calling
+# repository on each pull request, uploads full verdicts as an artifact, and
+# posts (or updates) a sticky PR comment summarising the findings.
+#
+# Consumer example (drop into e.g. ClawBio/.github/workflows/audit.yml):
+#
+#   on:
+#     pull_request:
+#       branches: [main]
+#   jobs:
+#     audit:
+#       uses: biostochastics/clawbio_bench/.github/workflows/audit-reusable.yml@v0.1.0
+#       with:
+#         clawbio_bench_ref: v0.1.0   # PIN — do not leave on main
+#       permissions:
+#         contents: read
+#         pull-requests: write
+#
+# Security notes:
+#   * All workflow inputs and GitHub context values are routed via `env:`
+#     rather than inlined into `run:` blocks, to avoid shell-injection risk
+#     on the off-chance a caller passes user-influenced input.
+#   * Fork PRs never get a PR comment (GITHUB_TOKEN is read-only on forks);
+#     they get the report in the job summary + artifact instead.
+#   * The audited repository is checked out into a subdirectory — the
+#     benchmark never executes caller code at the runner's top level.
+
+on:
+  workflow_call:
+    inputs:
+      clawbio_bench_ref:
+        description: >-
+          Git ref of biostochastics/clawbio_bench to install. PIN to a
+          tag or SHA in production so benchmark changes don't silently alter
+          your PR audit baseline.
+        required: false
+        type: string
+        default: main
+      python_version:
+        description: Python version to install
+        required: false
+        type: string
+        default: "3.12"
+      baseline_url:
+        description: >-
+          HTTPS URL to a baseline aggregate_report.json used for new/resolved
+          finding diffing. Set to the empty string to skip baseline diffing.
+          The default points at the rolling baseline asset published by the
+          clawbio_bench repo's own audit-baseline.yml workflow.
+        required: false
+        type: string
+        default: "https://github.com/biostochastics/clawbio_bench/releases/download/baseline-main/aggregate_report.json"
+      comment_on_pr:
+        description: >-
+          Post a sticky comment on the PR. Automatically skipped for PRs from
+          forks (where GITHUB_TOKEN is read-only).
+        required: false
+        type: boolean
+        default: true
+      fail_on_harness_crash:
+        description: >-
+          Fail the job if the benchmark reports a harness crash (exit code
+          >= 2). Findings (exit 1) are always advisory and never fail the job.
+        required: false
+        type: boolean
+        default: true
+
+permissions: {}
+
+# Serialize audits on the same PR so two quick-succession pushes cannot
+# race the sticky-comment upsert (find-or-create → create + create).
+# Cancelling the older run is safe: the newer run posts a fresher report.
+concurrency:
+  group: clawbio-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout audited repo
+        uses: actions/checkout@v4
+        with:
+          path: audited
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Validate clawbio_bench_ref
+        env:
+          CB_REF: ${{ inputs.clawbio_bench_ref }}
+        run: |
+          # Restrict to the characters that appear in valid git refs (tags,
+          # branches, SHAs). Rejects anything that could act as a shell
+          # metacharacter even inside double quotes in the install step.
+          if ! printf '%s' "${CB_REF}" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
+            echo "::error::Invalid clawbio_bench_ref: ${CB_REF}"
+            exit 1
+          fi
+
+      - name: Install clawbio-bench
+        env:
+          CB_REF: ${{ inputs.clawbio_bench_ref }}
+        run: |
+          pip install --upgrade pip
+          pip install "git+https://github.com/biostochastics/clawbio_bench.git@${CB_REF}"
+          clawbio-bench --version
+
+      - name: Run smoke audit
+        id: run
+        env:
+          FAIL_ON_CRASH: ${{ inputs.fail_on_harness_crash }}
+        run: |
+          set +e
+          clawbio-bench --smoke --repo audited --output results --allow-dirty
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          echo "Benchmark exited with code ${exit_code} (0=clean, 1=findings, >=2=harness crash)"
+          if [ "${FAIL_ON_CRASH}" = "true" ] && [ "${exit_code}" -ge 2 ]; then
+            exit "${exit_code}"
+          fi
+          exit 0
+
+      - name: Download baseline (best effort)
+        id: baseline
+        if: ${{ inputs.baseline_url != '' }}
+        env:
+          BASELINE_URL: ${{ inputs.baseline_url }}
+        run: |
+          set +e
+          mkdir -p baseline
+          http_code=$(curl -sSL -o baseline/aggregate_report.json \
+            -w '%{http_code}' "${BASELINE_URL}")
+          curl_rc=$?
+          if [ "${curl_rc}" -eq 0 ] && [ "${http_code}" = "200" ] && [ -s baseline/aggregate_report.json ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Downloaded baseline (HTTP ${http_code})"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No baseline available (HTTP ${http_code}, curl rc=${curl_rc}) — rendering absolute findings"
+            rm -f baseline/aggregate_report.json
+          fi
+          exit 0
+
+      - name: Render markdown report
+        env:
+          BASELINE_AVAILABLE: ${{ steps.baseline.outputs.available }}
+          SERVER_URL: ${{ github.server_url }}
+          REPO_FULL: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          ARTIFACT_URL="${SERVER_URL}/${REPO_FULL}/actions/runs/${RUN_ID}"
+          BASELINE_ARG=""
+          if [ "${BASELINE_AVAILABLE}" = "true" ]; then
+            BASELINE_ARG="--baseline baseline/aggregate_report.json"
+          fi
+          # shellcheck disable=SC2086  # intentional word-splitting on BASELINE_ARG
+          clawbio-bench --render-markdown results/ ${BASELINE_ARG} \
+            --markdown-output report.md \
+            --artifact-url "${ARTIFACT_URL}"
+          # Intentionally NOT printing report.md to stdout: verdict rationales
+          # can contain audited-repo stderr that may start with '::' and be
+          # interpreted by the runner as workflow commands (warning/error
+          # annotation injection). The full report is written to the job
+          # summary and uploaded as an artifact instead.
+          echo "Rendered report.md ($(wc -c < report.md) bytes)"
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full verdict artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clawbio-bench-verdicts
+          path: results/
+          retention-days: 30
+
+      - name: Load report into step output
+        id: load_report
+        if: >-
+          inputs.comment_on_pr == true &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          # Use a per-run random delimiter so no line in report.md can
+          # accidentally terminate the heredoc and corrupt GITHUB_OUTPUT.
+          DELIM="CLAWBIO_EOF_$(python -c 'import uuid; print(uuid.uuid4().hex)')"
+          {
+            printf 'body<<%s\n' "${DELIM}"
+            cat report.md
+            printf '\n%s\n' "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post sticky PR comment
+        if: >-
+          inputs.comment_on_pr == true &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        env:
+          REPORT_BODY: ${{ steps.load_report.outputs.body }}
+        with:
+          script: |
+            const body = process.env.REPORT_BODY;
+            const marker = '<!-- clawbio-bench-report -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            // Prefer a comment written by this workflow's token over any
+            // random user comment that happens to contain our marker. A PR
+            // author could otherwise paste the marker in a normal comment
+            // and brick future updates (we'd try to edit their comment and
+            // hit 403). Falling back to marker-only matching keeps the
+            // workflow resilient if the token identity ever changes
+            // (e.g. github-actions[bot] -> custom GitHub App).
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+            const hasMarker = (c) =>
+              typeof c.body === 'string' && c.body.includes(marker);
+            const isBot = (c) =>
+              c.user && (c.user.type === 'Bot' || c.user.login.endsWith('[bot]'));
+
+            const botOwned = comments.find((c) => hasMarker(c) && isBot(c));
+            const anyMarker = comments.find(hasMarker);
+            const existing = botOwned || anyMarker;
+
+            if (existing) {
+              try {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: existing.id, body,
+                });
+                core.info(`Updated sticky comment ${existing.id}`);
+                return;
+              } catch (err) {
+                // 403 typically means we matched a user comment we cannot edit
+                // (marker leaked into user content). Fall through to create.
+                core.warning(
+                  `Could not update comment ${existing.id}: ${err.message}. ` +
+                  'Creating a new comment instead.'
+                );
+              }
+            }
+            await github.rest.issues.createComment({
+              owner, repo, issue_number, body,
+            });
+            core.info('Created sticky comment');
+
+      - name: Note fork PR (no comment posted)
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::notice::Fork PR detected — sticky comment skipped (GITHUB_TOKEN is read-only on forks). Report is in the job summary and as an artifact."

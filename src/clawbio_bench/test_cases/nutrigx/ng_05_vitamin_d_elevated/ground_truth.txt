@@ -1,0 +1,10 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: vitamin_d
+# GROUND_TRUTH_SCORE: 10.0
+# GROUND_TRUTH_CATEGORY: Elevated
+# SCORE_TOLERANCE: 0.1
+# FINDING: T12-vitamin-d-elevated
+# FINDING_CATEGORY: threshold_consistent
+# HAZARD_METRIC: All vit_d risk alleles → Elevated
+# DERIVATION: 3 vit_d SNPs hom-risk → raw=1.0 → score=10.0

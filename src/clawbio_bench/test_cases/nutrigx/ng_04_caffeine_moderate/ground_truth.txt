@@ -1,0 +1,10 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: caffeine
+# GROUND_TRUTH_SCORE: 5.0
+# GROUND_TRUTH_CATEGORY: Moderate
+# SCORE_TOLERANCE: 0.5
+# FINDING: T12-caffeine threshold
+# FINDING_CATEGORY: threshold_consistent
+# HAZARD_METRIC: Score 5.0 → Moderate category per threshold <3.5=Low <6.5=Moderate
+# DERIVATION: 2 caffeine SNPs het → ws=0.5*0.85+0.5*0.40=0.625 mp=1.25 → score=5.0

@@ -1,0 +1,4 @@
+##fileformat=VCFv4.1
+##source=benchmark
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	rs1	A	G	30	PASS	.

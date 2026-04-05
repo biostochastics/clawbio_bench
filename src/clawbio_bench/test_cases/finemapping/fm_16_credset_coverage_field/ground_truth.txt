@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: credset_susie
+# FINDING: FM-16 Credible-set 'coverage' field matches sum of selected alpha weights
+# FINDING_CATEGORY: credset_coverage_incorrect
+# HAZARD_METRIC: The credible-set dict reports a 'coverage' field that claims to equal the cumulative posterior weight captured by the set. A drift between that reported value and the actual sum of included alpha entries would be a 'claim vs reality' bug where downstream consumers trust a number the code never actually computed; a related failure mode is a fallback path that silently returns the requested threshold instead of the measured sum. This test pins current behavior: the skill currently computes coverage correctly, and a future refactor MUST NOT regress into returning the requested threshold instead of the measured sum.
+# COVERAGE_TOLERANCE: 0.0001
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: alpha=[[0.5, 0.3, 0.15, 0.05]] (one row, 4 variants). coverage=0.95 threshold. Greedy credible set builder adds variants in argsort(-alpha) order: idx 0 (cumsum=0.5), idx 1 (cumsum=0.8), idx 2 (cumsum=0.95) → stop (>= 0.95). Credible set = [0,1,2]. The 'coverage' field MUST equal 0.5+0.3+0.15 = 0.95 exactly (= sum of selected alpha entries, NOT the requested 0.95 threshold by coincidence). The harness independently recomputes sum(variants[*]['alpha']) and compares to the reported 'coverage' field; any drift >= COVERAGE_TOLERANCE fires credset_coverage_incorrect.
+# REFERENCE_IMPLEMENTATION: susieR::susie_get_cs stores the measured posterior mass, not the requested threshold
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

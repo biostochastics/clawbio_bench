@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# PAYLOAD: input.vcf.gz
+# GROUND_TRUTH_SKILL: equity-scorer
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: extension
+# FINDING: T09-ext-vcf-gz gzip routing
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: .vcf.gz should also route to equity-scorer
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

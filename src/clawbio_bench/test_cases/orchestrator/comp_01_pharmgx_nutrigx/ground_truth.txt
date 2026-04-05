@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL_LIST: pharmgx,nutrigx
+# GROUND_TRUTH_ROUTING_METHOD: multi-skill
+# EXPECTED_EXIT_CODE: 0
+# INPUT_ARG: placeholder
+# FINDING: comp-01 multi-skill composition pharmgx + nutrigx
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: `--skills pharmgx,nutrigx` must dispatch both skills via route_to_clawbio. A silent dispatch failure would mean composed audit runs miss one of the skills without any finding. This test also exercises SKILL_REGISTRY_MAP correctness; a renamed or removed registry entry would produce a missing-skill verdict.
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

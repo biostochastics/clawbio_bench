@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: equity-scorer
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: compute HEIM score for this dataset
+# FINDING: T09-kw-heim
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: heim keyword routes to equity-scorer
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

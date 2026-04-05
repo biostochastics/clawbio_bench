@@ -1,0 +1,30 @@
+# BENCHMARK: cyp2b6_star18_hom
+# GROUND_TRUTH_PHENOTYPE: CYP2B6 Poor Metabolizer (*18/*18)
+# GROUND_TRUTH_BEHAVIOR: rs28399499 homozygous alt defines CYP2B6*18/*18, a
+#   no-function diplotype. CPIC (2019) recommends considering alternative
+#   non-efavirenz antiretroviral therapy in CYP2B6 Poor Metabolizers because
+#   elevated plasma efavirenz concentrations are associated with CNS toxicity,
+#   insomnia, and depressed mood. Efavirenz dosing guidance is CPIC Level A.
+# EXPECTED_TOOL_OUTPUT: Tool should identify *18/*18 Poor Metabolizer and
+#   classify efavirenz as CAUTION or AVOID with dose-reduction or alternative
+#   therapy guidance.
+# FINDING: CPIC Tier-1 gap — CYP2B6/efavirenz coverage missing
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2B6
+# TARGET_RSID: rs28399499
+# HAZARD_DRUG: Efavirenz
+# HAZARD_CLASS: Non-nucleoside Reverse Transcriptase Inhibitor (CNS toxicity)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs28399499 homozygous for the *18 variant (T → C); other CYP2B6
+#   loci at reference. Per the catalog (rs28399499 → *18 no_function), a
+#   homozygous call should yield *18/*18 Poor Metabolizer.
+#
+# rsid	chromosome	position	genotype
+rs28399499	19	41515263	CC
+rs3745274	19	41512841	GG
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC

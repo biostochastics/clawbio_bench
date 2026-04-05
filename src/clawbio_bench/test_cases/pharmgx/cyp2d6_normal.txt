@@ -1,0 +1,56 @@
+# BENCHMARK: cyp2d6_normal
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Normal Metabolizer (*1/*1)
+# GROUND_TRUTH_BEHAVIOR: All 5 CYP2D6 SNPs at reference. Tool should report Normal
+#   Metabolizer BUT should caveat that CYP2D6 copy number variation (CNV) was not
+#   assessed. CYP2D6 gene duplications/deletions are common (~5-10% of Europeans carry
+#   whole-gene deletions, ~1-2% carry duplications) and fundamentally alter phenotype.
+#   CPIC explicitly requires CNV assessment for CYP2D6 phenotype assignment. A *1/*1
+#   call without CNV data could mask an Ultrarapid Metabolizer (gene duplication) or
+#   a Poor Metabolizer (whole-gene deletion).
+# EXPECTED_TOOL_OUTPUT: Tool reports "*1/*1", Normal Metabolizer. Codeine: standard.
+#   No CNV caveat is provided anywhere in the output. This is technically correct for
+#   the SNPs tested but clinically incomplete per CPIC requirements.
+# FINDING: PF-1 (CYP2D6 CNV absence)
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: N/A (whole-gene CNV)
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic (respiratory depression risk in UM; FDA boxed warning)
+# CPIC_REF: CPIC_OPIOID
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: All CYP2D6 SNPs at reference. Note: rs5030655 (alt="DEL") is present at
+#   reference "TT" -- the tool skips it via the structural variant check, so it does
+#   not contribute to the diplotype call regardless.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

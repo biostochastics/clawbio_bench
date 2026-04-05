@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: equity-scorer
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: analyse diversity in my population
+# FINDING: T09-kw-diversity
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: diversity keyword should route to equity-scorer
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

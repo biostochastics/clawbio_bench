@@ -1,0 +1,58 @@
+# BENCHMARK: grch37_reference_mismatch
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Indeterminate (reference genome mismatch)
+# GROUND_TRUTH_BEHAVIOR: Negative control for reference genome handling.
+#   This input uses GRCh37/hg19 coordinates for CYP2D6 variants. Specifically,
+#   rs3892097 is at chr22:42524947 (GRCh38) vs chr22:42522612 (GRCh37).
+#   If the tool expects GRCh38 coordinates but the header declares GRCh37,
+#   the tool must either (a) handle the coordinate difference correctly via
+#   rsid lookup (which is coordinate-independent), OR (b) explicitly reject
+#   or flag the mismatch. Silently interpreting GRCh37 positions as GRCh38
+#   would be a correctness failure — it could assign variants to wrong genes.
+# EXPECTED_TOOL_OUTPUT: Tool either correctly processes rsids (ignoring position
+#   for coordinate-independent matching) OR warns/errors that input reference
+#   does not match expected reference genome.
+# FINDING: S-4 (reference genome version validation — GRCh37/GRCh38 ambiguity)
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: rs3892097
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic
+# CPIC_REF: CPIC_OPIOID
+# REFERENCE_GENOME: GRCh37
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: All positions are GRCh37/hg19 coordinates. rsids are stable across
+#   assemblies, so an rsid-based tool should produce the same calls regardless.
+#   A position-dependent tool would need to detect the mismatch.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96522463	GG
+rs4986893	10	96521657	GG
+rs12248560	10	96521289	CC
+rs28399504	10	96594341	CC
+rs3892097	22	42522612	TT
+rs5030655	22	42521909	TT
+rs16947	22	42521608	GG
+rs1065852	22	42524356	CC
+rs28371725	22	42521840	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

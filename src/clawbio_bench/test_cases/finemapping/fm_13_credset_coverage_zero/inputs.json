@@ -1,0 +1,7 @@
+{
+  "method": "credset_abf",
+  "pips": [0.6, 0.4],
+  "coverage": 0.0,
+  "z": [3.0, 2.0],
+  "rsids": ["rs_syn_0", "rs_syn_1"]
+}

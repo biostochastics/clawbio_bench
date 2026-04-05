@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: error
+# EXPECTED_EXIT_CODE: 1
+# SKILL_OVERRIDE: nonexistent-skill-xyz
+# FINDING: T09-err-bad-skill
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: Non-existent skill name should error cleanly
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

@@ -1,0 +1,10 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: folate
+# GROUND_TRUTH_SCORE: 10.0
+# GROUND_TRUTH_CATEGORY: Elevated
+# SCORE_TOLERANCE: 0.1
+# FINDING: T12-score-all-risk
+# FINDING_CATEGORY: score_correct
+# HAZARD_METRIC: All hom-risk → raw=1.0 → score=10.0 for every domain
+# DERIVATION: 28 SNPs hom-risk → risk_count=2 → raw=1.0 → score=10.0

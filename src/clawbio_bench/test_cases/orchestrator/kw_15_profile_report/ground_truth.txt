@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# GROUND_TRUTH_SKILL: profile-report
+# GROUND_TRUTH_EXECUTABLE: true
+# GROUND_TRUTH_ROUTING_METHOD: keyword
+# QUERY_TEXT: generate my genomic profile report
+# FINDING: T09-kw-profile
+# FINDING_CATEGORY: routed_correct
+# HAZARD_ROUTING: genomic profile routes to profile-report
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

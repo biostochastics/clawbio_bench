@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie
+# FINDING: FM-12 SuSiE returns scored PIPs with converged=False
+# FINDING_CATEGORY: susie_nonconvergence_suppressed
+# HAZARD_METRIC: run_susie has max_iter=1 explicitly — the IBSS loop exits before the first convergence check can fire (the check is guarded by `iteration > 0`). The returned dict contains converged=False but also fully populated pip/alpha/mu arrays. A downstream consumer that reads result['pip'] without checking result['converged'] treats non-converged garbage as a published estimate
+# EXPECTED_CONVERGED: false
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: 5-variant locus with modest AR(1) LD, L=5, max_iter=1. After one IBSS sweep the alpha rows will have shifted from their uniform initialisation but will not be anywhere near the fixed point. A correct implementation either (a) raises NonConvergedError when max_iter hits, or (b) populates pip with NaN, or (c) sets a top-level status flag that downstream callers must consult. ClawBio does none of these.
+# REFERENCE_IMPLEMENTATION: susieR::susie_rss emits `warning("IBSS algorithm did not converge in N iterations.")` AND sets the $converged field; downstream code is expected to respect it
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300, Algorithm 1

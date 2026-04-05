@@ -1,0 +1,53 @@
+# BENCHMARK: cyp2d6_pm
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Poor Metabolizer (*4/*4)
+# GROUND_TRUTH_BEHAVIOR: Homozygous CYP2D6*4 (rs3892097 TT). Tool should report Poor
+#   Metabolizer. Codeine: AVOID (risk of no analgesic effect). Tramadol: AVOID.
+#   Tamoxifen: AVOID (risk of treatment failure in breast cancer). Multiple TCAs: AVOID.
+#   This is a high-impact finding affecting ~7% of Europeans (CYP2D6 PM prevalence).
+# EXPECTED_TOOL_OUTPUT: Tool detects rs3892097 alt="T", genotype "TT" -> gt.count("T")=2
+#   -> copies=2 -> diplotype "*4/*4" -> Poor Metabolizer. Codeine: avoid. Tramadol: avoid.
+#   Tamoxifen: avoid. Amitriptyline/Nortriptyline/etc: avoid. This test should PASS.
+#   NOTE: Still missing CNV caveat but the PM call itself is correct.
+# FINDING: PF-1 (CYP2D6 positive control -- PM detection)
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: rs3892097
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic
+# CPIC_REF: CPIC_OPIOID
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs3892097 = TT (homozygous *4). All other CYP2D6 SNPs at reference.
+#   rs5030655 at "TT" (reference -- tool skips due to alt="DEL").
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	TT
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

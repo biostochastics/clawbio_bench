@@ -1,0 +1,53 @@
+# BENCHMARK: dpyd_partial
+# GROUND_TRUTH_PHENOTYPE: DPYD Indeterminate (incomplete coverage -- only 1/3 SNPs tested)
+# GROUND_TRUTH_BEHAVIOR: A correct tool should prominently warn that DPYD assessment is
+#   incomplete when 2 of 3 DPYD SNPs are missing. With only rs3918290 tested (reference),
+#   the tool cannot rule out *13 (rs55886062) or D949V (rs67376798). For a gene where
+#   missed variants can be LETHAL (5-FU toxicity), incomplete coverage should produce
+#   a strong warning or Indeterminate result, not a Normal Metabolizer call.
+# EXPECTED_TOOL_OUTPUT: Tool returns diplotype "Normal/Normal (1/3 SNPs tested)" with
+#   phenotype "Normal Metabolizer" (the annotation is stripped for phenotype matching).
+#   Fluorouracil: standard. Capecitabine: standard. The "(1/3 SNPs tested)" annotation
+#   exists in the diplotype string but is NOT surfaced as a clinical warning. The tool
+#   treats this as functionally equivalent to full Normal assessment.
+# FINDING: PF-1 (DPYD incomplete coverage -- false sense of safety)
+# FINDING_CATEGORY: incorrect_determinate
+# TARGET_GENE: DPYD
+# TARGET_RSID: rs3918290
+# HAZARD_DRUG: Fluorouracil
+# HAZARD_CLASS: NTI Oncology (lethal toxicity risk)
+# CPIC_REF: CPIC_FLUOROPYRIMIDINE
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Only rs3918290=GG present for DPYD. rs55886062 and rs67376798 REMOVED.
+#   All other gene SNPs at reference.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

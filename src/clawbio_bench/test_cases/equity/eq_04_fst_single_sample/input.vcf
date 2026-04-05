@@ -1,0 +1,9 @@
+##fileformat=VCFv4.1
+##source=benchmark_harness
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SOLO_A_1	SOLO_B_1
+1	100	rs4000	A	G	30	PASS	.	GT	0/1	1/1
+1	200	rs4001	A	G	30	PASS	.	GT	0/1	1/1
+1	300	rs4002	A	G	30	PASS	.	GT	0/1	1/1
+1	400	rs4003	A	G	30	PASS	.	GT	0/1	1/1
+1	500	rs4004	A	G	30	PASS	.	GT	0/1	1/1

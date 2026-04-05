@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# PAYLOAD: input.bam
+# GROUND_TRUTH_SKILL: seq-wrangler
+# GROUND_TRUTH_EXECUTABLE: false
+# GROUND_TRUTH_ROUTING_METHOD: extension
+# FINDING: T09-ext-bam stub
+# FINDING_CATEGORY: stub_silent
+# HAZARD_ROUTING: BAM routes to stub
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

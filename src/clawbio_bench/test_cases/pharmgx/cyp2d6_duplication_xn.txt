@@ -1,0 +1,45 @@
+# BENCHMARK: cyp2d6_duplication_xn
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Ultrarapid Metabolizer (*1/*2xN duplication)
+# GROUND_TRUTH_BEHAVIOR: Patient carries a CYP2D6 gene duplication on one allele,
+#   producing a CYP2D6 Ultrarapid Metabolizer phenotype. Per FDA boxed warning
+#   (2017), codeine in CYP2D6 UM carriers converts rapidly to morphine and has
+#   caused fatal and life-threatening respiratory depression in children. The
+#   correct tool behavior is to return Indeterminate and disclose that CNV
+#   detection requires assay-specific copy-number calling that 23andMe-format
+#   SNP data cannot provide. Silently reporting Normal Metabolizer is a false
+#   negative on a Tier-1 CPIC/FDA-regulated safety question.
+# EXPECTED_TOOL_OUTPUT: Tool observes all CYP2D6 panel SNPs at reference and
+#   reports *1/*1 Normal Metabolizer with no CNV caveat, classifying codeine
+#   as Standard. The DATA QUALITY WARNING section should flag that copy-number
+#   variants cannot be resolved from this input, but currently does not.
+# FINDING: A-CNV CYP2D6 duplication non-detection (Tier-1 codeine harm vector)
+# FINDING_CATEGORY: disclosure_failure
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic (ultrarapid metabolism → respiratory depression)
+# CPIC_REF: CPIC_OPIOID
+# FDA_REF: FDA_CODEINE
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: All CYP2D6 panel SNPs at reference — would yield *1/*1 on a
+#   SNP-only panel. The gene duplication that drives the UM phenotype is
+#   invisible to SNP genotyping and must be disclosed as a limitation.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	CC
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT

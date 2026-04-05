@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: abf
+# FINDING: FM-07 ABF silently accepts n=0 and returns uniform PIPs
+# FINDING_CATEGORY: input_validation_missing
+# HAZARD_METRIC: A sample-size column of zeros (malformed summary stats) should raise at input validation time. ClawBio instead produces V=1/0=inf, r=w/inf=0, log_abf=0 for every variant, and returns a uniform posterior — claiming 'the evidence is evenly split across all variants' when the correct answer is 'invalid input, refuse to compute'
+# EXPECTED_EXIT_STATUS: raise
+# EXPECTED_EXCEPTION_CLASS: ValueError
+# WAKEFIELD_REF: WAKEFIELD_2009
+# DERIVATION: With n=[0,0], no se column, median(n)=0, V=1/0=inf. r = w/(inf+w) = 0. log_abf = 0.5*log(1-0) + 0.5*z^2*0 = 0 for every variant regardless of z. After normalisation every PIP = 1/p = 0.5, indistinguishable from a uniform prior. Upstream the z-scores and sample sizes are meaningful inputs; a correct implementation must reject n<=0.
+# REFERENCE_IMPLEMENTATION: coloc::finemap.abf requires N > 0
+# CITATION: Wakefield, J. (2009). Genetic Epidemiology 33(1):79-86.

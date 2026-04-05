@@ -1,0 +1,6 @@
+# BENCHMARK: claw-metagenomics v0.1.0
+# TEST_TYPE: static
+# GROUND_TRUTH_EXIT_HANDLING: error
+# FINDING: T06-exit-handling non-critical suppression
+# FINDING_CATEGORY: exit_suppressed
+# HAZARD_METRIC: run_command(critical=False) only logs WARNING for non-zero exit

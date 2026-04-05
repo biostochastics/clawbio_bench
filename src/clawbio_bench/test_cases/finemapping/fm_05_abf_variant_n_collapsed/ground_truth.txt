@@ -1,0 +1,13 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: abf
+# FINDING: FM-05 ABF collapses per-variant n to median
+# FINDING_CATEGORY: abf_variant_n_collapsed
+# HAZARD_METRIC: When summary statistics include a variant-specific sample size column but no SE, ClawBio computes V_i = 1/median(n) instead of V_i = 1/n_i, discarding per-variant information. Variants with very different sample sizes get identical V, and the Wakefield ABF ranking changes.
+# EXPECTED_PIPS: [0.43129582, 0.56870418]
+# PIP_TOLERANCE: 0.005
+# EXPECTED_EXIT_STATUS: ok
+# WAKEFIELD_REF: WAKEFIELD_2009
+# DERIVATION: z=[5,5], n=[100,10000], w=0.04, no SE column. Correct per-variant computation: V_1=0.01, V_2=0.0001; r_1=0.8, r_2=0.99751; log_abf_1 = 0.5*log(0.2) + 0.4*25 = 9.1953; log_abf_2 = 0.5*log(0.00249) + 12.4688 = 9.4719. Softmax → PIPs [0.43130, 0.56870]. ClawBio's median-based fallback produces uniform PIPs [0.5, 0.5].
+# REFERENCE_IMPLEMENTATION: coloc::finemap.abf (R package) with per-variant N
+# CITATION: Wakefield, J. (2009). Genetic Epidemiology 33(1):79-86.

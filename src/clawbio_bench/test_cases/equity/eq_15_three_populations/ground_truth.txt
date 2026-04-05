@@ -1,0 +1,21 @@
+# BENCHMARK: equity-scorer v0.1.0
+# PAYLOAD: input.vcf
+# GROUND_TRUTH_FST: 0.500
+# GROUND_TRUTH_FST_ESTIMATOR: Nei's GST
+# GROUND_TRUTH_FST_PAIR: POP_A_vs_POP_B
+# FST_TOLERANCE: 0.02
+# GROUND_TRUTH_HEIM: 70.0
+# FINDING: C-4 negative control — three populations require GROUND_TRUTH_FST_PAIR
+# FINDING_CATEGORY: fst_correct
+# HAZARD_METRIC: Multi-population output must not silently fall back to first pair
+# POP_MAP_FILE: popmap.csv
+# REFERENCE_GENOME: GRCh38
+# NEI_REF: NEI_1973
+# DERIVATION: 3 pops x 5 samples. POP_A all 1/1, POP_B all 0/0, POP_C all 0/1.
+#   Targets: POP_A_vs_POP_B=1.0 (perfect differentiation),
+#            POP_A_vs_POP_C=0.33, POP_B_vs_POP_C=0.33.
+#   This test verifies the harness catches silent fallback to the first pair
+#   when ground truth has no GROUND_TRUTH_FST_PAIR — but here we DO specify
+#   the pair, so scoring must use POP_A_vs_POP_B specifically. A tool that
+#   emits POP_A_vs_POP_C as first pair must not be credited.
+# DESIGN: Uses 3 populations to force multi-pair output.

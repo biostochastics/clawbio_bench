@@ -1,0 +1,11 @@
+# BENCHMARK: nutrigx-advisor v0.1.0
+# PAYLOAD: input.txt
+# GROUND_TRUTH_DOMAIN: folate
+# GROUND_TRUTH_SCORE: 7.43
+# GROUND_TRUTH_CATEGORY: Elevated
+# SCORE_TOLERANCE: 0.15
+# FINDING: T12-folate MTHFR C677T hom-risk
+# FINDING_CATEGORY: score_correct
+# HAZARD_METRIC: Folate with MTHFR 677TT should be Elevated
+# DERIVATION: TT(w=0.85 raw=1.0)+AC(w=0.50 raw=0.5)+AG(w=0.40 raw=0.5) → ws=1.30 mp=1.75 → 7.43
+# MTHFR_REF: MTHFR_C677T

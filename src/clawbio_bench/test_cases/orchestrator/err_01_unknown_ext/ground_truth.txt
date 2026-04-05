@@ -1,0 +1,9 @@
+# BENCHMARK: bio-orchestrator v0.1.0
+# PAYLOAD: input.xyz
+# GROUND_TRUTH_SKILL:
+# GROUND_TRUTH_ROUTING_METHOD: error
+# EXPECTED_EXIT_CODE: 1
+# FINDING: T09-err-unknown-ext
+# FINDING_CATEGORY: unroutable_handled
+# HAZARD_ROUTING: Unknown extension should produce clean error
+# ORCHESTRATOR_REF: ORCHESTRATOR_SOURCE

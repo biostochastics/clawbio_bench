@@ -1,0 +1,14 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie
+# FINDING: FM-03 Null-locus forced signal
+# FINDING_CATEGORY: susie_null_forced_signal
+# HAZARD_METRIC: A SuSiE implementation with no null component forces every L effect to place mass, producing phantom PIPs on loci that contain no real signal
+# NULL_PIP_THRESHOLD: 0.1
+# EXPECTED_PIPS: [0.0, 0.0, 0.0]
+# PIP_TOLERANCE: 0.1
+# EXPECTED_EXIT_STATUS: ok
+# WANG_REF: WANG_2020
+# DERIVATION: With z=[0,0,0], R=I, n=100, L=3, the residual r_l = 0 for every effect, so log_abf is uniform across variants and each alpha row stays uniform at 1/p=1/3. PIP_i = 1 - prod_l(1 - alpha_{l,i}) = 1 - (2/3)^3 = 19/27 ≈ 0.7037. A default-configured susieR::susie_rss(z=0, R=I, n=100, L=3) exhibits the same algebraic pathology because the Single Effect Regression (SER) submodel has no "null" component and must place unit mass per effect row. susieR mitigates the downstream damage with the optional `null_weight` parameter (adds an explicit null alternative to each SER prior) and via `susie_get_cs`'s purity + `min_abs_corr` pruning, which drops the bogus credible sets before they reach the user. ClawBio implements neither mechanism, so the raw 0.7-per-variant PIP flows straight through to callers. The audit criterion for this test is intentionally conservative: any max PIP > 0.1 on a z≡0 locus is an unambiguous auditable red flag for downstream consumers that inspect PIP directly (not via credible sets).
+# REFERENCE_IMPLEMENTATION: susieR::susie_rss with null_weight >= 0.1 OR with downstream susie_get_cs(min_abs_corr>=0.5) pruning; both approaches remove the phantom signals
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.

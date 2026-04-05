@@ -1,0 +1,12 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie
+# FINDING: FM-08 SuSiE returns NaN PIPs on negative n
+# FINDING_CATEGORY: pip_nan_silent
+# HAZARD_METRIC: run_susie computes V = 1/n without validating sign, so n=-100 yields V<0, log(1-r) = log(negative) = NaN, NaN propagates through alpha/mu/PIP, and the function returns a NaN-filled dict with no error
+# EXPECTED_EXIT_STATUS: raise
+# EXPECTED_EXCEPTION_CLASS: ValueError
+# WANG_REF: WANG_2020
+# DERIVATION: run_susie(z=[3,0], R=I, n=-100, L=1). Inside the loop V = full(p, 1/-100) = -0.01. r = w/(V+w) = 0.04/0.03 = 1.333. log(1 - 1.333) = log(-0.333) = NaN. All downstream math is NaN. susieR validates n > 0 with stopifnot(n > 0) before entering the IBSS loop.
+# REFERENCE_IMPLEMENTATION: susieR::susie_rss rejects n <= 0
+# CITATION: Wang, G. et al. (2020). JRSS-B 82(5):1273-1300.
