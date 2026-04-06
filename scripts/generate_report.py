@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -49,18 +50,19 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 PALETTE = {
-    "navy": "#0f2440",
-    "steel": "#2d4a6f",
-    "sky": "#5b8dbf",
-    "coral": "#d94f4f",
-    "ember": "#cf7a30",
-    "forest": "#3a8a5c",
-    "slate": "#64748b",
-    "pearl": "#f1f5f9",
-    "snow": "#fafbfc",
-    "ink": "#1e293b",
-    "code_bg": "#1a1b2e",
-    "code_fg": "#c9d1d9",
+    # Industrial archival — near-monochrome with restrained severity accents
+    "navy": "#1a1a2e",  # deep near-black for headings
+    "steel": "#374151",  # dark grey for subheadings
+    "sky": "#9ca3af",  # mid-grey for rules/accents (not used for text)
+    "coral": "#b91c1c",  # muted dark red — critical severity
+    "ember": "#92400e",  # muted dark amber — warning severity
+    "forest": "#166534",  # muted dark green — pass
+    "slate": "#6b7280",  # grey for metadata
+    "pearl": "#f3f4f6",  # very light grey for subtle fills
+    "snow": "#f9fafb",  # near-white
+    "ink": "#111827",  # near-black body text
+    "code_bg": "#f3f4f6",  # light grey code blocks (not dark)
+    "code_fg": "#1f2937",  # dark text on light code blocks
 }
 
 # Fallback colors for categories that somehow lack a legend entry (should
@@ -74,7 +76,11 @@ DEFAULT_UNKNOWN_COLOR = "#94a3b8"
 # alpha / mu dumps would blow the page otherwise. The finding card notes
 # how many were truncated.
 MAX_DETAIL_ENTRIES = 8
-MAX_DETAIL_VALUE_CHARS = 180
+MAX_DETAIL_VALUE_CHARS = 150
+
+# When a severity group has more than this many findings with the same
+# category, collapse them into a summary table instead of individual cards.
+COLLAPSE_THRESHOLD = 5
 
 
 # ---------------------------------------------------------------------------
@@ -265,11 +271,14 @@ def is_failing(verdict_doc: dict[str, Any], pass_categories: list[str]) -> bool:
     return category not in pass_categories
 
 
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
+
+
 def category_color(category: str, legend: dict[str, dict[str, str]]) -> str:
     entry = legend.get(category)
     if entry and isinstance(entry, dict):
         color = entry.get("color")
-        if color:
+        if color and _HEX_COLOR_RE.match(str(color)):
             return str(color)
     return CATEGORY_FALLBACK_COLOR.get(category, DEFAULT_UNKNOWN_COLOR)
 
@@ -309,50 +318,77 @@ def emit_preamble(title: str, subtitle: str) -> str:
         ")",
         "#set page(",
         '  paper: "a4",',
-        "  margin: (x: 2.0cm, y: 2.2cm),",
+        "  margin: (x: 2.5cm, y: 2.8cm),",  # wider margins = more whitespace
         "  fill: white,",
         '  numbering: "1 / 1",',
+        "  header: context {",
+        "    if counter(page).get().first() > 1 [",
+        "      #set text(7.5pt, fill: slate)",
+        "      #grid(columns: (1fr, auto),",
+        f"        [clawbio-bench #sym.dot.c {tesc(title)}],",
+        "        [page #counter(page).display() / #counter(page).final().first()],",
+        "      )",
+        "      #v(0.1cm)",
+        "      #line(length: 100%, stroke: 0.2pt + pearl)",
+        "    ]",
+        "  },",
         "  footer: context [",
-        "    #set text(9pt, fill: slate)",
-        "    #line(length: 100%, stroke: 0.3pt + pearl)",
-        "    #v(0.15cm)",
-        "    #grid(columns: (1fr, auto),",
-        f"      [clawbio-bench audit report #sym.dot.c {tesc(title)}],",
-        "      [page #counter(page).display() / #counter(page).final().first()],",
-        "    )",
+        "    #set text(7.5pt, fill: slate)",
+        "    #line(length: 100%, stroke: 0.2pt + pearl)",
+        "    #v(0.08cm)",
+        "    #align(center)[page #counter(page).display()]",
         "  ],",
         ")",
-        '#set text(font: "Libertinus Serif", size: 10.5pt, fill: ink)',
-        "#set par(leading: 0.62em, justify: true)",
-        "#set heading(numbering: none)",
-        '#show heading.where(level: 1): set text(18pt, weight: "bold", fill: navy)',
-        '#show heading.where(level: 2): set text(14pt, weight: "bold", fill: navy)',
-        '#show heading.where(level: 3): set text(11.5pt, weight: "bold", fill: steel)',
-        '#show raw: set text(font: "DejaVu Sans Mono", size: 9pt)',
         "",
-        "// ── tasteful helpers ──",
-        '#let eyebrow(txt) = text(9pt, weight: "bold", fill: sky, tracking: 0.1em, upper(txt))',
-        "#let rule() = { v(0.15cm); line(length: 100%, stroke: 0.4pt + sky.lighten(50%)); v(0.2cm) }",
+        "// ── Industrial Archivist typography ──",
+        '#set text(font: "Libertinus Serif", size: 9.5pt, fill: ink)',
+        "#set par(leading: 0.65em, justify: true)",  # more leading = more air
+        "#set heading(numbering: none)",
+        "#show heading.where(level: 1): it => {",
+        "  v(0.8cm)",
+        '  text(14pt, weight: "bold", fill: navy, upper(it.body))',
+        "  v(0.15cm)",
+        "  line(length: 100%, stroke: 0.5pt + ink)",
+        "  v(0.4cm)",
+        "}",
+        "#show heading.where(level: 2): it => {",
+        "  v(0.5cm)",
+        '  text(12pt, weight: "bold", fill: ink, it.body)',
+        "  v(0.1cm)",
+        "  line(length: 4cm, stroke: 0.3pt + slate)",
+        "  v(0.3cm)",
+        "}",
+        '#show heading.where(level: 3): set text(10pt, weight: "bold", fill: steel)',
+        '#show raw: set text(font: "DejaVu Sans Mono", size: 7.5pt)',
+        "",
+        "// ── minimal helpers ──",
+        '#let eyebrow(txt) = text(8pt, weight: "bold", fill: slate, tracking: 0.12em, upper(txt))',
+        "#let rule() = { v(0.2cm); line(length: 100%, stroke: 0.2pt + pearl); v(0.3cm) }",
         "#let chip(label, color) = box(",
-        "  fill: color.lighten(82%),",
+        "  fill: white,",
         "  stroke: 0.5pt + color,",
-        "  inset: (x: 5pt, y: 2pt),",
+        "  inset: (x: 4pt, y: 1.5pt),",
         "  outset: (y: 1pt),",
-        "  radius: 2pt,",
-        '  text(8.5pt, weight: "bold", fill: color.darken(20%), label),',
+        "  radius: 1pt,",
+        '  text(7pt, weight: "bold", fill: color, label),',
         ")",
         "#let kvrow(k, v) = grid(",
-        "  columns: (3.5cm, 1fr), column-gutter: 0.4cm, row-gutter: 0.15cm,",
-        '  text(9pt, weight: "bold", fill: slate, k),',
-        "  text(9pt, fill: ink, v),",
+        "  columns: (3.2cm, 1fr), column-gutter: 0.4cm, row-gutter: 0.12cm,",
+        '  text(8pt, weight: "bold", fill: slate, k),',
+        "  text(8pt, fill: ink, v),",
         ")",
-        "#let panel(body, accent: sky) = block(",
-        "  fill: pearl, width: 100%, inset: 10pt, radius: 3pt,",
-        "  stroke: (left: 2pt + accent), body,",
+        "#let panel(body, accent: slate) = block(",
+        "  fill: white, width: 100%, inset: 10pt, radius: 0pt,",
+        "  stroke: (left: 1.5pt + accent), body,",
         ")",
         "#let codeblock(body) = block(",
-        "  fill: code_bg, width: 100%, inset: 10pt, radius: 3pt,",
-        '  text(fill: code_fg, font: "DejaVu Sans Mono", size: 8.5pt, body),',
+        "  fill: code_bg, width: 100%, inset: 8pt, radius: 0pt,",
+        "  stroke: 0.3pt + pearl,",
+        '  text(fill: code_fg, font: "DejaVu Sans Mono", size: 7pt, body),',
+        ")",
+        "#let bento(body) = block(",
+        "  fill: white, width: 100%, inset: 12pt, radius: 0pt,",
+        "  stroke: 0.4pt + pearl, body,",
         ")",
         "",
     ]
@@ -375,23 +411,35 @@ def emit_cover(
     pass_rate = overall.get("total_pass_rate", 0.0)
     harness_errors = overall.get("total_harness_errors", 0)
     blocking = overall.get("blocking_skills", []) or []
-    overall_pass = overall.get("pass", False)
 
-    status_label = "OVERALL PASS" if overall_pass else "FINDINGS PRESENT"
-    status_color = "forest" if overall_pass else "coral"
+    has_findings = total_eval > total_pass
+    if harness_errors > 0 and has_findings:
+        status_label = "FINDINGS + HARNESS ERRORS"
+        status_color = "coral"
+    elif harness_errors > 0:
+        status_label = "HARNESS ERRORS"
+        status_color = "ember"
+    elif has_findings:
+        status_label = "FINDINGS PRESENT"
+        status_color = "coral"
+    else:
+        status_label = "OVERALL PASS"
+        status_color = "forest"
 
     return "\n".join(
         [
-            "#v(0.6cm)",
+            "// ── Minimal archival cover ──",
+            "#v(2cm)",
             "#eyebrow[Reproducible safety benchmark]",
-            "#v(0.4cm)",
-            f'#text(26pt, weight: "bold", fill: navy)[{tesc(title)}]',
-            "#v(0.1cm)",
-            f"#text(13pt, fill: steel)[{tesc(subtitle)}]",
-            "#v(0.35cm)",
-            "#line(length: 30%, stroke: 1pt + sky)",
-            "#v(0.5cm)",
-            "#grid(columns: (1fr, 1fr), column-gutter: 0.8cm, row-gutter: 0.25cm,",
+            "#v(0.6cm)",
+            f'#text(22pt, weight: "bold", fill: ink)[{tesc(title)}]',
+            "#v(0.2cm)",
+            f"#text(10pt, fill: slate)[{tesc(subtitle)}]",
+            "#v(0.8cm)",
+            "#line(length: 100%, stroke: 0.5pt + ink)",
+            "#v(0.6cm)",
+            "// Metadata — clean two-column layout",
+            "#grid(columns: (1fr, 1fr), column-gutter: 1cm, row-gutter: 0.15cm,",
             f'  kvrow("Audit target", [{tesc(audit_target)}]),',
             f'  kvrow("HEAD commit", raw("{tstr(commit_short)}")),',
             f'  kvrow("Run mode", [{tesc(mode)}]),',
@@ -399,19 +447,24 @@ def emit_cover(
             f'  kvrow("Suite version", raw("{tstr(suite_version)}")),',
             f'  kvrow("Report generated", [{tesc(generated_at)}]),',
             ")",
-            "#v(0.7cm)",
-            f"#panel(accent: {status_color})[",
-            f'  #text(10pt, weight: "bold", fill: {status_color}, tracking: 0.1em)[{tesc(status_label)}]',
-            "  #v(0.15cm)",
-            f'  #text(22pt, weight: "bold", fill: navy)[{human_int(total_pass)} / {human_int(total_eval)} test cases passing #h(0.3cm) #text(16pt, fill: slate)[({pct(pass_rate)})]]',
-            "  #v(0.1cm)",
-            (
-                f"  #text(10pt, fill: slate)[{harness_errors} harness-level error"
-                f"{'' if harness_errors == 1 else 's'} · {len(blocking)} blocking harness"
-                f"{'' if len(blocking) == 1 else 'es'}]"
-            ),
-            "]",
-            "#v(0.5cm)",
+            "#v(1cm)",
+            "// Status — understated",
+            f'#text(8pt, weight: "bold", fill: {status_color}, tracking: 0.1em)[{tesc(status_label)}]',
+            "#v(0.2cm)",
+            f'#text(36pt, weight: "bold", fill: ink)[{human_int(total_pass)} / {human_int(total_eval)}]',
+            "#v(0.1cm)",
+            f"#text(10pt, fill: slate)[tests passing ({pct(pass_rate)}) #sym.dot.c "
+            f"{harness_errors} harness error"
+            f"{'' if harness_errors == 1 else 's'} #sym.dot.c "
+            f"{len(blocking)} blocking]",
+            "#v(1.5cm)",
+            "// Table of contents with clickable PDF links",
+            '#text(8pt, weight: "bold", fill: slate, tracking: 0.1em)[CONTENTS]',
+            "#v(0.15cm)",
+            "// Outline with clickable links",
+            "#show outline.entry: set text(8.5pt)",
+            "#outline(title: none, indent: 1.5em, depth: 2)",
+            "#pagebreak()",
         ]
     )
 
@@ -432,7 +485,7 @@ def emit_executive_summary(harnesses: list[dict[str, Any]]) -> str:
         status_chip = "forest" if passed else "coral"
         status_word = "PASS" if passed else "FINDINGS"
         rows.append(
-            "  [{name}], [{status}], [{pass_count}/{eval}], [{rate}], "
+            "  [{name}], {status}, [{pass_count}/{eval}], [{rate}], "
             "[{fail}], [{errors}], [{total}],".format(
                 name=tesc(name),
                 status=f'chip("{status_word}", {status_chip})',
@@ -448,12 +501,11 @@ def emit_executive_summary(harnesses: list[dict[str, Any]]) -> str:
     return "\n".join(
         [
             "== Executive summary",
-            "#rule()",
-            '#show table.cell.where(y: 0): set text(weight: "bold", fill: white)',
+            '#show table.cell.where(y: 0): set text(weight: "bold", fill: white, size: 8pt)',
             "#table(",
             "  columns: (1fr, auto, auto, auto, auto, auto, auto),",
             "  align: (left, center, right, right, right, right, right),",
-            "  inset: 7pt,",
+            "  inset: 5pt,",
             "  stroke: none,",
             "  fill: (x, y) => if y == 0 { navy } else if calc.odd(y) { pearl } else { white },",
             "  [Harness], [Status], [Pass], [Rate], [Fail], [Errors], [Total],",
@@ -492,21 +544,22 @@ def emit_rubric_table(heatmap: dict[str, Any] | None) -> str:
         # in `[...]` would put the `#xxxxxx` hex string into markup mode,
         # where `#8...` is parsed as a (broken) code expression.
         rows.append(
-            "  box(width: 10pt, height: 10pt, radius: 2pt, "
+            "  box(width: 8pt, height: 8pt, radius: 1.5pt, "
             f'fill: rgb("{color_hex}")), '
-            f'raw("{tstr(cat)}"), [{tesc(label)}],'
+            f'text(7.5pt, raw("{tstr(cat)}")), '
+            f"text(7.5pt)[{tesc(label)}],"
         )
 
     return "\n".join(
         [
-            '#text(10pt, weight: "bold", fill: steel)[Rubric]',
-            "#v(0.15cm)",
+            '#text(9pt, weight: "bold", fill: steel)[Rubric]',
+            "#v(0.08cm)",
             "#table(",
             "  columns: (auto, auto, 1fr),",
             "  align: (center, left, left),",
-            "  inset: 5pt,",
-            "  stroke: (x, y) => if y == 0 { none } else { (bottom: 0.2pt + pearl) },",
-            "  [], [Category], [Remediation hint],",
+            "  inset: 3pt,",
+            "  stroke: (x, y) => if y == 0 { none } else { (bottom: 0.15pt + pearl) },",
+            '  [], [#text(7.5pt, weight: "bold")[Category]], [#text(7.5pt, weight: "bold")[Hint]],',
             *rows,
             ")",
             "",
@@ -531,31 +584,22 @@ def emit_harness_header(h: dict[str, Any]) -> str:
     return "\n".join(
         [
             "#pagebreak(weak: true)",
-            "#eyebrow[Harness]",
-            f'#text(20pt, weight: "bold", fill: navy)[{tesc(name)}]',
-            "#v(0.1cm)",
-            "#rule()",
-            "#grid(columns: (1fr, 1fr), column-gutter: 0.6cm,",
+            f"== {tesc(name)}",
+            "// Stats strip",
+            "#grid(columns: (auto, 1fr, auto), column-gutter: 0.4cm, align: horizon,",
             "  [",
-            '    #text(10pt, weight: "bold", fill: slate)[Pass rate]',
-            "    #v(0.1cm)",
             "    #stack(dir: ltr,",
-            "      box(width: 5cm, height: 0.5cm, radius: 2pt, fill: pearl)[",
-            f"        #place(left + horizon, box(width: {bar_frac * 5:.2f}cm, height: 0.5cm, radius: 2pt, fill: {bar_color}))",
+            "      box(width: 4cm, height: 0.3cm, radius: 0pt, fill: pearl)[",
+            f"        #place(left + horizon, box(width: {bar_frac * 4:.2f}cm, height: 0.3cm, radius: 0pt, fill: {bar_color}))",
             "      ],",
-            "      h(0.25cm),",
-            f'      align(horizon, text(12pt, weight: "bold", fill: navy)[{pct(pass_rate)}]),',
+            "      h(0.15cm),",
+            f'      text(10pt, weight: "bold", fill: ink)[{pct(pass_rate)}],',
             "    )",
             "  ],",
-            "  [",
-            f'    #kvrow("Total cases", [{human_int(total)}])',
-            f'    #kvrow("Evaluated", [{human_int(evaluated)}])',
-            f'    #kvrow("Passing", [{human_int(pass_count)}])',
-            f'    #kvrow("Findings", [{human_int(fail_count)}])',
-            f'    #kvrow("Harness errors", [{human_int(errors)}])',
-            "  ],",
+            f"  text(8.5pt, fill: slate)[{human_int(pass_count)}/{human_int(evaluated)} pass #sym.dot.c {human_int(fail_count)} findings #sym.dot.c {human_int(errors)} errors],",
+            f"  text(8.5pt, fill: slate)[{human_int(total)} total],",
             ")",
-            "#v(0.3cm)",
+            "#v(0.15cm)",
         ]
     )
 
@@ -659,7 +703,7 @@ def emit_verdict_matrix(h: dict[str, Any]) -> str:
                 f'fill: rgb("{color_hex}").lighten(55%), '
                 f'stroke: 0.3pt + rgb("{color_hex}"), '
                 "inset: (x: 3pt, y: 2pt), radius: 2pt, "
-                f'text(7.5pt, fill: rgb("{color_hex}").darken(25%), '
+                f'text(8pt, fill: rgb("{color_hex}").darken(25%), '
                 f'raw("{tstr(category)}"))),'
             )
 
@@ -687,29 +731,37 @@ def emit_persistent_failures(h: dict[str, Any]) -> str:
     always_err = meta.get("always_harness_errored") or []
     if not persistent and not always_err:
         return ""
+
+    def _compact_name_list(names: list[str], label: str, color: str) -> list[str]:
+        """Render a name list — use columns for long lists."""
+        out: list[str] = []
+        out.append(f'#text(9pt, weight: "bold", fill: {color})[{label} ({len(names)})]')
+        out.append("#v(0.06cm)")
+        if len(names) <= 8:
+            out.append("#list(")
+            for n in names:
+                out.append(f'  raw("{tstr(n)}"),')
+            out.append(")")
+        else:
+            # Compact 2-column table for large lists
+            out.append("#table(")
+            out.append("  columns: (1fr, 1fr),")
+            out.append("  inset: 2pt,")
+            out.append("  stroke: none,")
+            for n in names:
+                out.append(f'  text(7.5pt, raw("{tstr(n)}")),')
+            # Pad odd count
+            if len(names) % 2:
+                out.append("  [],")
+            out.append(")")
+        out.append("#v(0.12cm)")
+        return out
+
     parts: list[str] = []
     if persistent:
-        parts.append(
-            '#text(10pt, weight: "bold", fill: coral)[Persistent failures '
-            f"(evaluated, never passed — {len(persistent)})]"
-        )
-        parts.append("#v(0.1cm)")
-        parts.append("#list(")
-        for name in persistent:
-            parts.append(f'  [raw("{tstr(name)}")],')
-        parts.append(")")
-        parts.append("#v(0.2cm)")
+        parts.extend(_compact_name_list(persistent, "Persistent failures", "coral"))
     if always_err:
-        parts.append(
-            '#text(10pt, weight: "bold", fill: ember)[Always harness-errored '
-            f"(infrastructure broken — {len(always_err)})]"
-        )
-        parts.append("#v(0.1cm)")
-        parts.append("#list(")
-        for name in always_err:
-            parts.append(f'  [raw("{tstr(name)}")],')
-        parts.append(")")
-        parts.append("#v(0.2cm)")
+        parts.extend(_compact_name_list(always_err, "Always harness-errored", "ember"))
     return "\n".join(parts)
 
 
@@ -773,61 +825,61 @@ def emit_finding_card(
     detail_items = detail_items[:MAX_DETAIL_ENTRIES]
 
     lines: list[str] = []
-    lines.append("#block(width: 100%, breakable: true, inset: 0pt)[")
-    lines.append("  #grid(columns: (auto, 1fr, auto), column-gutter: 0.4cm, align: horizon,")
-    lines.append(f'    text(10pt, weight: "bold", fill: slate)[Finding #{index}/{total}],')
-    lines.append(f'    text(12pt, weight: "bold", fill: navy, raw("{tstr(test_name)}")),')
+    # Minimal filing card — left-edge severity stripe, no rounded corners
+    lines.append(
+        f"#block(width: 100%, breakable: true, inset: (left: 10pt, rest: 8pt), radius: 0pt, "
+        f'stroke: (left: 2pt + rgb("{color_hex}"), bottom: 0.2pt + pearl))['
+    )
+    # Header: index + test name + chip
+    lines.append("  #grid(columns: (auto, 1fr, auto), column-gutter: 0.3cm, align: horizon,")
+    lines.append(f"    text(7.5pt, fill: slate)[{index}/{total}],")
+    lines.append(f'    text(9pt, weight: "bold", fill: ink, raw("{tstr(test_name)}")),')
     lines.append(f'    chip(raw("{tstr(category)}"), rgb("{color_hex}")),')
     lines.append("  )")
-    lines.append("  #v(0.1cm)")
+    # Meta line
     lines.append(
-        "  #text(9pt, fill: slate)[commit "
-        f'#raw("{tstr(commit_short)}") #sym.dot.c category label: {tesc(label)}'
-        + (f" #sym.dot.c verdict SHA {tesc(short_hash(verdict_sha, 12))}" if verdict_sha else "")
+        "  #text(7pt, fill: slate)[commit "
+        f'#raw("{tstr(commit_short)}") #sym.dot.c {tesc(label)}'
+        + (f" #sym.dot.c {tesc(short_hash(verdict_sha, 12))}" if verdict_sha else "")
         + "]"
     )
-    lines.append("  #v(0.2cm)")
-    # Rationale
+    # Rationale — plain left-border, no colored background
     if rationale:
+        lines.append("  #v(0.1cm)")
         lines.append(f'  #panel(accent: rgb("{color_hex}"))[')
-        lines.append('    #text(9.5pt, weight: "bold", fill: slate)[Rationale]')
-        lines.append("    #v(0.1cm)")
-        lines.append(f"    #text(10pt)[{tesc(rationale)}]")
+        lines.append(f"    #text(8.5pt)[{tesc(rationale)}]")
         lines.append("  ]")
-        lines.append("  #v(0.2cm)")
-    # Ground-truth narrative
+    # Ground-truth narrative — inline label:value pairs, tighter
     if gt_fields:
-        lines.append("  #block(width: 100%, inset: (left: 4pt), stroke: (left: 1.5pt + pearl))[")
+        lines.append("  #v(0.05cm)")
+        lines.append("  #block(width: 100%, inset: (left: 3pt), stroke: (left: 1pt + pearl))[")
         for key, val in gt_fields:
             lines.append(
-                f'    #text(8.5pt, weight: "bold", fill: slate, tracking: 0.05em)[{tesc(key)}]'
+                f'    #text(7pt, weight: "bold", fill: slate, tracking: 0.04em)[{tesc(key)}]'
+                f" #text(8pt)[ {tesc(val)}]"
             )
-            lines.append(f"    #text(9.5pt)[ {tesc(val)}]")
-            lines.append("    #v(0.1cm)")
+            lines.append("    #v(0.03cm)")
         lines.append("  ]")
-        lines.append("  #v(0.15cm)")
-    # Verdict details — compact key:value block
+    # Verdict details — compact codeblock
     if detail_items:
+        lines.append("  #v(0.04cm)")
         lines.append("  #codeblock[")
         for k, val in detail_items:
             lines.append(f"    {tesc(k)} = {tesc(_truncate(val))} \\")
         if detail_truncated:
             remaining = len(details) - MAX_DETAIL_ENTRIES
-            lines.append(
-                f"    ... ({remaining} more detail field{'' if remaining == 1 else 's'} omitted) \\"
-            )
+            lines.append(f"    ... ({remaining} more omitted) \\")
         lines.append("  ]")
-        lines.append("  #v(0.15cm)")
-    # Citations
+    # Citations — single compressed line
     if citation_lines:
-        lines.append('  #text(8.5pt, style: "italic", fill: slate)[')
-        lines.append(f"    Citation — {tesc(' · '.join(citation_lines))}")
-        lines.append("  ]")
-        lines.append("  #v(0.1cm)")
+        lines.append("  #v(0.03cm)")
+        # Truncate citation to keep cards compact
+        cit_text = " · ".join(citation_lines)
+        if len(cit_text) > 120:
+            cit_text = cit_text[:117] + "..."
+        lines.append(f'  #text(7pt, style: "italic", fill: slate)[{tesc(cit_text)}]')
     lines.append("]")
-    lines.append("#v(0.3cm)")
-    lines.append("#line(length: 100%, stroke: 0.25pt + pearl)")
-    lines.append("#v(0.2cm)")
+    lines.append("#v(0.2cm)")  # breathing room between cards
     return "\n".join(lines)
 
 
@@ -838,16 +890,25 @@ def emit_findings_section(h: dict[str, Any]) -> str:
     heatmap = h.get("heatmap") or {}
     legend = heatmap.get("category_legend") or {}
 
-    # Extract and sort: coral (fail) categories before slate (harness_error),
-    # then by test name + commit for stability across runs.
+    # Extract and sort by severity using the harness's own category sets
+    # (palette-independent). Fail categories → tier 0, harness_error → tier 3,
+    # non-pass/non-fail (warnings) → tier 1, unknown → tier 2.
     failing = [v for v in verdicts if is_failing(v, pass_categories)]
-    failing.sort(
-        key=lambda v: (
-            v.get("verdict", {}).get("category", "zzz") == "harness_error",
-            v.get("test_case", {}).get("name", ""),
-            v.get("commit", {}).get("short", ""),
-        )
-    )
+    fail_categories = set(entry.get("fail_categories") or [])
+
+    def _severity_key(v: dict[str, Any]) -> tuple[int, str, str]:
+        cat = v.get("verdict", {}).get("category", "zzz")
+        if cat in fail_categories:
+            tier = 0
+        elif cat == "harness_error":
+            tier = 3
+        elif cat not in pass_categories:
+            tier = 1  # warning tier (non-pass, non-fail)
+        else:
+            tier = 2  # unknown / fallback
+        return (tier, v.get("test_case", {}).get("name", ""), v.get("commit", {}).get("short", ""))
+
+    failing.sort(key=_severity_key)
 
     if not failing:
         return "\n".join(
@@ -859,16 +920,107 @@ def emit_findings_section(h: dict[str, Any]) -> str:
             ]
         )
 
+    # Group by severity tier for section headers
+    tier_names = {0: "Critical failures", 1: "Warnings", 2: "Other", 3: "Harness errors"}
+    tier_colors = {0: "coral", 1: "ember", 2: "slate", 3: "slate"}
+
     lines: list[str] = [
-        f'#text(12pt, weight: "bold", fill: coral)[Findings ({len(failing)})]',
+        f'#text(11pt, weight: "bold", fill: coral)[Findings ({len(failing)})]',
+        "#v(0.1cm)",
+        "#text(8pt, fill: slate)[One card per non-passing verdict. "
+        f"Same-category groups above {COLLAPSE_THRESHOLD} are collapsed into summary tables.]",
         "#v(0.15cm)",
-        "#text(9.5pt, fill: slate)[Enumerated in full — one card per failing or erroring verdict. "
-        "Each card carries the verbatim rationale, the ground-truth hazard metric the test "
-        "exists to detect, key verdict detail fields, and the upstream citation where available.]",
-        "#v(0.3cm)",
     ]
-    for i, v in enumerate(failing, 1):
-        lines.append(emit_finding_card(v, legend, i, len(failing)))
+
+    # Pre-compute per-category counts for collapse detection
+    from collections import Counter
+
+    cat_counts: Counter[str] = Counter()
+    for fv in failing:
+        cat_counts[fv.get("verdict", {}).get("category", "")] += 1
+
+    current_tier: int | None = None
+    card_index = 0
+    i = 0
+    while i < len(failing):
+        v = failing[i]
+        cat = v.get("verdict", {}).get("category", "")
+        if cat in fail_categories:
+            tier = 0
+        elif cat == "harness_error":
+            tier = 3
+        elif cat not in pass_categories:
+            tier = 1
+        else:
+            tier = 2
+
+        # Severity group header
+        if tier != current_tier:
+            current_tier = tier
+            tier_count = sum(1 for fv in failing if _severity_key(fv)[0] == tier)
+            tc = tier_colors.get(tier, "slate")
+            tn = tier_names.get(tier, "Other")
+            lines.append(
+                f"#block(fill: {tc}.lighten(92%), inset: (left: 6pt, y: 3pt), "
+                f"width: 100%, stroke: (left: 2pt + {tc}))["
+            )
+            lines.append(f'  #text(8.5pt, weight: "bold", fill: {tc})[{tesc(tn)} ({tier_count})]')
+            lines.append("]")
+            lines.append("#v(0.08cm)")
+
+        # Collect consecutive same-category findings
+        run: list[dict[str, Any]] = [v]
+        j = i + 1
+        while j < len(failing) and failing[j].get("verdict", {}).get("category", "") == cat:
+            run.append(failing[j])
+            j += 1
+
+        if len(run) >= COLLAPSE_THRESHOLD:
+            # Collapse into a compact summary table
+            color_hex = category_color(cat, legend)
+            lbl = category_label(cat, legend)
+            lines.append(
+                f"#block(width: 100%, inset: 6pt, radius: 2pt, "
+                f'stroke: (left: 2.5pt + rgb("{color_hex}"), rest: 0.3pt + pearl))['
+            )
+            lines.append(
+                f"  #grid(columns: (1fr, auto), align: horizon, "
+                f'text(9pt, weight: "bold", fill: navy)'
+                f"[{tesc(cat)} #text(8pt, fill: slate)[({len(run)} findings)]], "
+                f'chip(raw("{tstr(cat)}"), rgb("{color_hex}")),'
+                f")"
+            )
+            lines.append("  #v(0.06cm)")
+            lines.append(f"  #text(8pt, fill: slate)[{tesc(lbl)}]")
+            lines.append("  #v(0.06cm)")
+            # Compact table of test names + rationales
+            lines.append("  #table(")
+            lines.append("    columns: (auto, 1fr),")
+            lines.append("    align: (left, left),")
+            lines.append("    inset: 3pt,")
+            lines.append("    stroke: (bottom: 0.15pt + pearl),")
+            lines.append(
+                '    [#text(7.5pt, weight: "bold")[Test]], '
+                '[#text(7.5pt, weight: "bold")[Rationale]],'
+            )
+            for rv in run:
+                card_index += 1
+                tname = rv.get("test_case", {}).get("name", "?")
+                rat = rv.get("verdict", {}).get("rationale", "")
+                if len(rat) > 100:
+                    rat = rat[:97] + "..."
+                lines.append(f'    text(7pt, raw("{tstr(tname)}")), text(7pt)[{tesc(rat)}],')
+            lines.append("  )")
+            lines.append("]")
+            lines.append("#v(0.08cm)")
+            i = j
+        else:
+            # Individual card
+            for rv in run:
+                card_index += 1
+                lines.append(emit_finding_card(rv, legend, card_index, len(failing)))
+            i = j
+
     return "\n".join(lines)
 
 
@@ -895,7 +1047,6 @@ def emit_harness_section(h: dict[str, Any]) -> str:
         emit_commit_snapshot(h),
         emit_verdict_matrix(h),
         emit_persistent_failures(h),
-        "#v(0.2cm)",
         emit_findings_section(h),
     ]
     return "\n".join(p for p in parts if p)
@@ -938,8 +1089,7 @@ def emit_chain_of_custody(loaded: dict[str, Any]) -> str:
         [
             "#pagebreak(weak: true)",
             "== Chain of custody",
-            "#rule()",
-            "#text(10pt, fill: slate)[",
+            "#text(9pt, fill: slate)[",
             "  Every verdict written by clawbio-bench carries an embedded SHA-256 self-hash. "
             'The sidecar #raw("verdict_hashes.json") under each harness directory indexes '
             "those hashes independently, and "
@@ -968,7 +1118,7 @@ def emit_chain_of_custody(loaded: dict[str, Any]) -> str:
             f'#kvrow("Hostname hash", raw("{tstr(env_fp.get("hostname_hash") or "—")}"))',
             f'#kvrow("Installed packages", [{human_int(env_fp.get("package_count") or 0)}])',
             f'#kvrow("Package-set SHA-256", raw("{tstr(short_hash(env_fp.get("package_set_sha256"), 24))}"))',
-            f'#kvrow("Audit target SHA", raw("{tstr(aggregate.get("clawbio_commit") or "—")}"))',
+            f'#kvrow("Audit target SHA", raw("{tstr(short_hash(aggregate.get("clawbio_commit"), 12))}"))',
             f'#kvrow("Suite wall time", [{aggregate.get("wall_clock_seconds", 0)} s])',
             "",
         ]
@@ -978,7 +1128,7 @@ def emit_chain_of_custody(loaded: dict[str, Any]) -> str:
 def emit_appendix(loaded: dict[str, Any]) -> str:
     """Dense tables: category counts per harness + test-case inventory."""
     harnesses = loaded["harnesses"]
-    lines: list[str] = ["#pagebreak(weak: true)", "== Appendix", "#rule()"]
+    lines: list[str] = ["#pagebreak(weak: true)", "== Appendix"]
 
     lines.append('#text(11pt, weight: "bold", fill: steel)[Category counts]')
     lines.append("#v(0.15cm)")
@@ -1041,7 +1191,7 @@ def build_typst(loaded: dict[str, Any]) -> str:
     subtitle = "Safety, correctness, and honesty findings"
     mode = aggregate.get("mode") or "unknown"
     date_str = aggregate.get("date") or datetime.now(UTC).strftime("%Y-%m-%d")
-    commit_short = aggregate.get("clawbio_commit") or "—"
+    commit_short = short_hash(aggregate.get("clawbio_commit"), 8) or "—"
     suite_version = aggregate.get("benchmark_suite_version") or "—"
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 

@@ -1,8 +1,9 @@
 # BENCHMARK: dpyd_2a_hom
 # GROUND_TRUTH_PHENOTYPE: DPYD Poor Metabolizer (*2A/*2A)
-# GROUND_TRUTH_BEHAVIOR: Homozygous DPYD*2A (rs3918290 TT). CPIC STRONGLY recommends
-#   CONTRAINDICATION of fluorouracil and capecitabine -- standard dosing is potentially
-#   lethal. This is the highest-severity pharmacogenomic finding in clinical practice.
+# GROUND_TRUTH_BEHAVIOR: Homozygous DPYD*2A (rs3918290 TT, activity score 0). CPIC
+#   Strong recommendation: "Avoid use of 5-fluorouracil or 5-fluorouracil prodrug-based
+#   regimens" (Amstutz et al. 2018, PMID 29152729). Standard dosing is potentially
+#   lethal (OR 34.86 for treatment-related mortality, de Moraes et al. 2024 meta-analysis).
 # EXPECTED_TOOL_OUTPUT: Tool detects rs3918290 alt="T", genotype "TT" -> gt.count("T")=2
 #   -> copies=2 -> diplotype "*2A/*2A" -> Poor Metabolizer. Fluorouracil: avoid.
 #   Capecitabine: avoid. This test should PASS.

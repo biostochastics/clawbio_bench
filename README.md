@@ -31,6 +31,8 @@ every step.
 - **For external auditors**: use the rubric design, ground-truth methodology,
   and verdict format as a reference for auditing other computational biology
   tools.
+- **[Sample audit report (PDF)](sample_audit_report.pdf)** — a full 30-page
+  report from a 7-harness smoke run against ClawBio HEAD.
 
 ### The three audit dimensions
 
@@ -81,6 +83,18 @@ test suites.
 - **A local clone of [ClawBio](https://github.com/ClawBio/ClawBio)** — this
   repository does not bundle ClawBio. Every harness run needs a
   `--repo /path/to/ClawBio` argument.
+- **numpy and pandas** in the benchmark virtualenv — ClawBio's
+  `clawbio.common` package unconditionally imports `scrna_io` which
+  requires numpy and pandas at import time, even for harnesses that
+  don't use scRNA functionality. Without these packages, **every harness
+  will report mass `unroutable_crash` / `harness_error` verdicts** from
+  `ModuleNotFoundError` rather than real audit findings. Install the
+  `[dev]` or `[finemapping]` extras to get them automatically.
+- **[Typst](https://typst.app)** CLI on `PATH` — required only for PDF report
+  generation (`python scripts/generate_report.py`). Install via
+  `brew install typst` (macOS), `cargo install typst-cli`, or download
+  from [typst.app](https://github.com/typst/typst/releases). The
+  benchmark itself runs without Typst; only the report renderer needs it.
 - Operating system: Linux or macOS (Windows is untested)
 
 ## Install
@@ -107,7 +121,7 @@ ClawBio checkout at `~/src/ClawBio`:
 git clone https://github.com/biostochastics/clawbio_bench.git
 cd clawbio_bench
 python3.11 -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"               # includes numpy/pandas needed by ClawBio
 clawbio-bench --smoke --repo ~/src/ClawBio
 ```
 

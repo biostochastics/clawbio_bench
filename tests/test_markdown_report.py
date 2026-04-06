@@ -276,12 +276,13 @@ def test_rationale_newlines_are_collapsed(tmp_path: Path):
     (rdir / "aggregate_report.json").write_text(json.dumps(agg))
     md = render_markdown_report(rdir)
 
-    # The finding bullet exists
+    # The finding appears in both the summary bullet list and the per-test
+    # breakdown — at least one line must contain the collapsed rationale.
     finding_lines = [line for line in md.splitlines() if "routed_wrong" in line]
-    assert len(finding_lines) == 1
+    assert len(finding_lines) >= 1
     # Content is present but newlines and workflow commands are flattened into
     # the same bullet line (no standalone `::warning::` line).
-    assert "first line second line" in finding_lines[0]
+    assert any("first line second line" in fl for fl in finding_lines)
     assert not any(line.strip().startswith("::warning::") for line in md.splitlines())
 
 

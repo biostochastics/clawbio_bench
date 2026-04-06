@@ -1,7 +1,7 @@
 {
   "$defs": {
     "MinimalVerdictDoc": {
-      "description": "Required-minimum contract honored by every verdict shape.\n\n``harness_error_verdict()`` returns only {test_case, commit, ground_truth,\nverdict}. Some harnesses also return this shape directly on early returns.\nUnknown fields are intentionally allowed (``forbid_unknown_fields=False``\nby default) so full verdicts can also validate against this model.",
+      "description": "Required-minimum contract honored by every verdict shape.\n\n    ``harness_error_verdict()`` returns only {test_case, commit, ground_truth,\n    verdict}. Some harnesses also return this shape directly on early returns.\n    Unknown fields are intentionally allowed (``forbid_unknown_fields=False``\n    by default) so full verdicts can also validate against this model.",
       "properties": {
         "commit": {
           "type": "object"
@@ -22,7 +22,7 @@
       "type": "object"
     },
     "VerdictInfo": {
-      "description": "The ``verdict`` sub-document.\n\nCategory is a free-form string at this layer; allowlist enforcement lives\nin ``core.validate_verdict_schema`` because the allowed set depends on\nwhich harness emitted the verdict. ``details`` is an open dict because\nharnesses embed heterogeneous scoring data here.",
+      "description": "The ``verdict`` sub-document.\n\n    Category is a free-form string at this layer; allowlist enforcement lives\n    in ``core.validate_verdict_schema`` because the allowed set depends on\n    which harness emitted the verdict. ``details`` is an open dict because\n    harnesses embed heterogeneous scoring data here.",
       "properties": {
         "category": {
           "type": "string"

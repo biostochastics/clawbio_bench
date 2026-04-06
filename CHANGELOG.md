@@ -1,8 +1,125 @@
 # Changelog
 
-All notable changes to this project are documented here. The format loosely
-follows [Keep a Changelog](https://keepachangelog.com/) and the project
-adheres to [Semantic Versioning](https://semver.org/).
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.1] — 2026-04-06
+
+### Added
+
+- **Sample audit report.** `sample_audit_report.pdf` checked in at repo
+  root — a full 30-page report from a 7-harness smoke run against
+  ClawBio HEAD, linked from README.
+- **Enhanced markdown report.** `--render-markdown` now renders:
+  - Per-harness category breakdown tables.
+  - Per-test detailed findings with severity-sorted clinical context
+    (FINDING, HAZARD_METRIC, DERIVATION, FINDING_CATEGORY from ground
+    truth) plus legacy clinical fields (HAZARD_DRUG, TARGET_GENE).
+  - Severity tiers derived dynamically from each harness's
+    `FAIL_CATEGORIES` / `PASS_CATEGORIES` instead of a hardcoded dict.
+  - Scope disclosure note: "critical findings only; warnings in PDF."
+- **`--harness` filter for `--render-markdown`.** Renders only the named
+  harness section, making it easy to extract a single-harness breakdown
+  (e.g. `clawbio-bench --render-markdown results/ --harness pharmgx`).
+- **HTML escaping for harness/test/category names** in markdown output,
+  preventing `</details>` structural injection via backtick breakout.
+- **Color hex validation** in Typst report generator. Legend colors are
+  validated with a `#RRGGBB` / `#RGB` regex; malformed values fall back
+  to `DEFAULT_UNKNOWN_COLOR` instead of breaking Typst compilation.
+
+### Changed
+
+- **Typst PDF report redesign.** Near-monochrome palette, clickable TOC,
+  same-category finding collapse, severity group headers, running page
+  headers. 80 pages → 30 for a 7-harness / 140-test run.
+- **4-state cover status.** OVERALL PASS / FINDINGS PRESENT / HARNESS
+  ERRORS / FINDINGS + HARNESS ERRORS.
+- **Severity sort uses category sets** (`fail_categories` /
+  `pass_categories`) instead of hex color substring matching.
+
+### Fixed
+
+- **`glob_pattern` threading through CLI.** The harness registry now carries
+  an optional `glob_pattern` per harness (e.g. `"*.txt"` for PharmGx), and
+  `run_single_harness`, `--dry-run`, `--list`, and `--list --json` all
+  respect it. Previously the CLI path used `"*"` regardless, which could
+  diverge from the standalone harness's explicit pattern. A dotfile filter
+  (`.DS_Store`, editor swap files) was added to `resolve_test_cases` to
+  prevent silent contamination on macOS.
+- **GRCh37/GRCh38 coordinate correction in `grch37_reference_mismatch`
+  test case.** The GRCh38 position for rs3892097 was corrected from 42524947
+  to 42128945 per Ensembl REST API verification. The previous value was
+  actually the GRCh37 coordinate (labels were inverted). The ~396 kb shift
+  between assemblies is now documented with source citation.
+- **Pre-existing schema drift.** Regenerated `verdict-minimal.schema.json`
+  and `verdict-full.schema.json` via `gen_schemas.py` to match current
+  Struct definitions.
+- **CPIC guideline version citations.** Corrected fabricated version numbers:
+  DPYD/fluoropyrimidines reference now cites Amstutz et al. 2018 (PMID
+  29152729) instead of non-existent "v3.0 (2023)"; HLA-B/abacavir now cites
+  Martin et al. 2012/2014 instead of non-existent "2020 update"; UGT1A1/
+  irinotecan now correctly attributes to DPWG (CPIC irinotecan guideline is
+  pending). All citations verified against cpicpgx.org and PubMed.
+- **DPYD*2A test case wording.** Replaced "CONTRAINDICATION" (FDA label
+  language) with CPIC's actual recommendation: "Avoid use." Added mortality
+  OR citation (de Moraes et al. 2024 meta-analysis).
+- **HLA-B*57:01 HSR risk range.** Updated from single "~48%" to "~48-61%"
+  with source attribution (DPWG 48%; PREDICT-1 ~61%).
+- **`cyp2c19_rapid_clopidogrel` HAZARD_DRUG.** Changed from Voriconazole to
+  Clopidogrel to match filename and FINDING description.
+- **Phenotype matching Rapid/Ultrarapid.** Added "rapid metabolizer" to
+  `_KEY_TERMS` so the regex lookbehind correctly distinguishes Rapid from
+  Ultrarapid (previously "rapid" substring-matched inside "ultrarapid").
+- **Typst report `_severity_key` unused variable.** Removed dead
+  `overall_pass` assignment.
+- **Typst `chip()` rendering bug.** Executive summary status column rendered
+  literal `chip("FINDINGS", coral)` text instead of a colored badge.
+  Caused by wrapping the function call in content brackets `[...]` inside
+  a `#table()`. Fixed by emitting `chip(...)` as a bare code expression.
+- **Typst `raw()` in persistent failures.** List items rendered literal
+  `raw("fm_03_...")` text. Same content-bracket issue — fixed by removing
+  `[...]` wrapper in `emit_persistent_failures()`.
+- **Markdown `gt_map` key mismatch.** `_extract_detailed_findings()` mapped
+  to `HAZARD_DRUG` / `HAZARD_CLASS` / `TARGET_GENE` but the finemapping
+  harness uses `HAZARD_METRIC` / `DERIVATION` / `FINDING_CATEGORY`.
+  Extended the map to cover both schemas (old clinical + new finemapping).
+- **Markdown multi-commit ground-truth collision.** `gt_lookup` keyed by
+  `(harness, test)` without commit dimension, so multi-commit runs could
+  silently attach wrong ground truth. Now skips enrichment when
+  `mode != smoke`.
+- **Long SHA overflow in Typst.** Cover commit and chain-of-custody SHA
+  values are now capped via `short_hash()` (8 and 12 chars respectively)
+  to prevent `raw()` overflow in narrow kvrow columns.
+- **Hardcoded `CORE_VERSION` in `core.py`.** Replaced `"0.1.0"` string
+  with dynamic import from `clawbio_bench.__version__` (which reads
+  `pyproject.toml` via `importlib.metadata`). Version now stays in sync
+  automatically — no more drift between pyproject.toml and report output.
+- **numpy/pandas dependency note in README.** Added requirement note and
+  updated Quick Start to use `pip install -e ".[dev]"` by default.
+- **Typst CLI requirement in README.** Documented as optional dependency
+  for PDF report generation.
+- **`.mypy_cache/` added to `.gitignore`.**
+- **Missing `timeout` in `resolve_commits` for `--commits HEAD` path.**
+  `subprocess.run` call in `core.py` lacked a `timeout` kwarg, unlike
+  every other git subprocess in the codebase. Could hang indefinitely on a
+  stalled git process. Now passes `timeout=10`.
+- **`save_execution_logs` locale-dependent encoding.** `write_text()` calls
+  for `stdout.log` / `stderr.log` relied on the platform default encoding
+  instead of explicit `encoding="utf-8"`. On non-UTF-8 locales (Windows,
+  some CI images) this could produce different bytes for the same run,
+  breaking chain-of-custody hash portability during `--verify`.
+- **`--heatmap` raw `ImportError` when matplotlib not installed.** Now
+  catches `ImportError` and prints a user-friendly message directing to
+  `pip install clawbio-bench[viz]` instead of a raw traceback.
+- **Infra crash message dropped in rich mode with non-TTY stderr.** In
+  `render_suite_summary`, the rich branch only emitted the `HARNESS CRASH`
+  line when `get_console(stderr=True)` returned a console. When stderr was
+  piped (non-TTY) while stdout was a TTY, the message was silently lost.
+  Now falls back to plain `print(..., file=sys.stderr)`.
 
 ## [0.1.0] — 2026-04-04
 
@@ -176,4 +293,5 @@ set before interpolation into `pip install`.
   roadmap.
 - Platform coverage: Linux and macOS only. Windows is untested.
 
+[0.1.1]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.1
 [0.1.0]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.0

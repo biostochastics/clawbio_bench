@@ -35,10 +35,14 @@ report.pdf
 # Exception: the project intro PDF is a checked-in documentation artifact,
 # not a generated report. The *.pdf rule above would otherwise hide it.
 !clawbio_bench_intro.pdf
+!sample_audit_report.pdf
 
 # pytest
 .pytest_cache/
 .benchmarks/
+
+# mypy
+.mypy_cache/
 
 # ruff
 .ruff_cache/

@@ -10,9 +10,9 @@
 # FINDING_CATEGORY: correct_determinate
 # TARGET_GENE: CYP2C19
 # TARGET_RSID: rs12248560
-# HAZARD_DRUG: Voriconazole
-# HAZARD_CLASS: Antifungal
-# CPIC_REF: CPIC_VORICONAZOLE
+# HAZARD_DRUG: Clopidogrel
+# HAZARD_CLASS: Antiplatelet (also affects voriconazole clearance)
+# CPIC_REF: CPIC_CLOPIDOGREL
 # REFERENCE_GENOME: GRCh38
 # EXPECTED_EXIT_CODE: 0
 #
