@@ -532,7 +532,7 @@ def render_markdown_report(
     lines.append("")
     lines.append(
         f"**Status:** {status} · **Commit:** `{commit}` · **Mode:** `{mode}` · "
-        f"**Runtime:** {wall}s · **Date:** {date}"
+        f"**Version:** `{suite_version}` · **Runtime:** {wall}s · **Date:** {date}"
     )
     if total_harness_errors > 0:
         lines.append("")
