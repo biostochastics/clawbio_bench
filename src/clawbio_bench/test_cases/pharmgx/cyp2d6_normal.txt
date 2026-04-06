@@ -11,7 +11,7 @@
 #   No CNV caveat is provided anywhere in the output. This is technically correct for
 #   the SNPs tested but clinically incomplete per CPIC requirements.
 # FINDING: PF-1 (CYP2D6 CNV absence)
-# FINDING_CATEGORY: disclosure_failure
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: N/A (whole-gene CNV)
 # HAZARD_DRUG: Codeine

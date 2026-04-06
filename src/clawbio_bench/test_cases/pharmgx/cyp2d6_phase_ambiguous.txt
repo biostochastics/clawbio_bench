@@ -14,7 +14,7 @@
 #   diplotype assignment assumed unphased genotypes. Reporting a single confident
 #   phenotype without phasing disclosure = disclosure_failure.
 # FINDING: S-5 (phasing accuracy test — no Tier 1 gene should assume phase silently)
-# FINDING_CATEGORY: disclosure_failure
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: rs3892097
 # HAZARD_DRUG: Codeine

@@ -91,13 +91,14 @@ jobs:
       - run: pip install -e ".[dev]"
       - name: Clone ClawBio (full history)
         run: git clone https://github.com/ClawBio/ClawBio.git /tmp/ClawBio
-      - name: Run regression sweep (last 20 commits)
+      - name: Run regression sweep (HEAD vs parent)
         run: |
-          clawbio-bench --regression-window 20 --repo /tmp/ClawBio --output /tmp/results --allow-dirty
+          set +e
+          clawbio-bench --regression-window 2 --repo /tmp/ClawBio --output /tmp/results --allow-dirty
           exit_code=$?
+          set -e
           if [ $exit_code -ge 2 ]; then exit $exit_code; fi
-          exit 0
-        timeout-minutes: 15
+        timeout-minutes: 10
       - name: Upload regression artifacts
         uses: actions/upload-artifact@v4
         with:

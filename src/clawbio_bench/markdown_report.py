@@ -148,10 +148,10 @@ def _summary_table(
     aggregate: dict[str, Any],
     harness_filter: str | None = None,
 ) -> list[str]:
-    """Per-harness pass/fail table with a totals row. Harnesses sorted by name."""
+    """Per-harness pass/fail table with status indicator and totals row."""
     lines = [
-        "| Harness | Pass | Fail | Harness errors | Rate |",
-        "|---|---:|---:|---:|---:|",
+        "| Harness | Status | Pass | Fail | Errors | Rate |",
+        "|---|:---:|---:|---:|---:|---:|",
     ]
     harnesses = aggregate.get("harnesses") or {}
     for name in sorted(harnesses.keys()):
@@ -163,8 +163,12 @@ def _summary_table(
         failed = data.get("fail_count", 0)
         herr = data.get("harness_errors", 0)
         rate = _fmt_pct(data.get("pass_rate", 0.0))
+        is_pass = bool(data.get("pass")) and herr == 0
+        status = "\u2705" if is_pass else "\u274c"
         esc_name = html.escape(name, quote=False)
-        lines.append(f"| `{esc_name}` | {passed}/{evaluated} | {failed} | {herr} | {rate} |")
+        lines.append(
+            f"| `{esc_name}` | {status} | {passed}/{evaluated} | {failed} | {herr} | {rate} |"
+        )
 
     if not harness_filter:
         overall = aggregate.get("overall") or {}
@@ -173,9 +177,11 @@ def _summary_table(
         total_fail = total_eval - total_pass
         total_herr = overall.get("total_harness_errors", 0)
         total_rate = _fmt_pct(overall.get("total_pass_rate", 0.0))
+        all_pass = bool(overall.get("pass")) and total_herr == 0
+        total_status = "\u2705" if all_pass else "\u274c"
         lines.append(
-            f"| **total** | **{total_pass}/{total_eval}** | **{total_fail}** | "
-            f"**{total_herr}** | **{total_rate}** |"
+            f"| **total** | {total_status} | **{total_pass}/{total_eval}** | "
+            f"**{total_fail}** | **{total_herr}** | **{total_rate}** |"
         )
     return lines
 
@@ -257,12 +263,29 @@ def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
         pass_cats = set(harness_data.get("pass_categories") or [])
         for cat in fail_cats:
             severity.setdefault(cat, 0)
+        # When fail_categories is missing from the aggregate (e.g. older
+        # baselines or stripped JSON), infer critical tier from categories
+        # that appear in critical_failures.
+        if not fail_cats:
+            for cf in harness_data.get("critical_failures") or []:
+                cat = cf.get("category")
+                if cat and cat != "harness_error":
+                    severity.setdefault(cat, 0)
         # Non-pass, non-fail categories that appear in the results are
         # warnings (tier 1). We derive them from the actual category counts.
         for cat in harness_data.get("categories") or {}:
             if cat not in fail_cats and cat not in pass_cats and cat != "harness_error":
                 severity.setdefault(cat, 1)
     return severity
+
+
+# Severity tier indicator emojis for PR comments (GitHub renders these)
+_SEVERITY_EMOJI = {
+    0: "\U0001f534",  # red circle — critical
+    1: "\U0001f7e0",  # orange circle — warning
+    2: "\u26aa",  # white circle — infra
+    3: "\u2753",  # question mark — unknown
+}
 
 
 def _severity_key(
@@ -276,12 +299,18 @@ def _severity_key(
     )
 
 
-def _render_detailed_finding(f: dict[str, str], index: int) -> str:
-    """Render a single finding with clinical context for the detailed breakdown."""
+def _render_detailed_finding(
+    f: dict[str, str],
+    index: int,
+    severity_map: dict[str, int] | None = None,
+) -> str:
+    """Render a single finding with clinical context and severity indicator."""
     h = html.escape(f["harness"], quote=False)
     t = html.escape(f["test"], quote=False)
     c = html.escape(f["category"], quote=False)
-    parts = [f"**{index}. `{h}` / `{t}`** — `{c}`"]
+    tier = (severity_map or {}).get(f.get("category", ""), 3)
+    emoji = _SEVERITY_EMOJI.get(tier, "")
+    parts = [f"{emoji} **{index}. `{h}` / `{t}`** — `{c}`"]
     rationale = _sanitize_rationale(f.get("rationale", ""))
     if rationale:
         parts.append(f"  - **Rationale:** {rationale}")
@@ -392,6 +421,7 @@ def _detailed_findings_block(
     title: str = "Detailed findings",
     open_: bool = True,
     cap: int | None = None,
+    severity_map: dict[str, int] | None = None,
 ) -> list[str]:
     """Render a ``<details>`` section with per-finding clinical context."""
     if not findings:
@@ -400,7 +430,7 @@ def _detailed_findings_block(
     out = [f"<details{open_attr}><summary>{title} ({len(findings)})</summary>", ""]
     shown = findings if cap is None or len(findings) <= cap else findings[:cap]
     for i, f in enumerate(shown, 1):
-        out.append(_render_detailed_finding(f, i))
+        out.append(_render_detailed_finding(f, i, severity_map=severity_map))
         out.append("")
     if cap is not None and len(findings) > cap:
         remaining = len(findings) - cap
@@ -510,7 +540,7 @@ def render_markdown_report(
     lines.append("")
     lines.append(
         f"**Status:** {status} · **Commit:** `{commit}` · **Mode:** `{mode}` · "
-        f"**Runtime:** {wall}s · **Date:** {date}"
+        f"**Version:** `{suite_version}` · **Runtime:** {wall}s · **Date:** {date}"
     )
     if total_harness_errors > 0:
         lines.append("")
@@ -585,6 +615,7 @@ def render_markdown_report(
     # Detailed per-test breakdown with clinical context (severity-sorted).
     # Cap to the same limit as unchanged findings to respect GitHub's comment
     # size limit when baseline diffing produces large finding lists.
+    sev_map = _build_severity_map(current)
     if detailed_findings:
         lines.append("### Per-test breakdown")
         lines.append("")
@@ -594,6 +625,7 @@ def render_markdown_report(
                 "Detailed findings",
                 open_=True,
                 cap=UNCHANGED_FINDINGS_CAP if baseline_data else None,
+                severity_map=sev_map,
             )
         )
         lines.append("")

@@ -207,6 +207,108 @@ class TestOmission:
         assert verdict["category"] == "incorrect_determinate"
 
 
+class TestScopeHonestIndeterminate:
+    def test_tool_returns_indeterminate_for_cnv(self):
+        """Tool correctly returns Indeterminate for a CNV scope limitation."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Intermediate Metabolizer (*1/*5)",
+            "GROUND_TRUTH_BEHAVIOR": "whole-gene deletion, CNV undetectable from SNP",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "unknown", "phenotype": "Indeterminate"}},
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "scope_honest_indeterminate"
+
+    def test_tool_discloses_cnv_limitation_in_report(self):
+        """Tool reports a determinate phenotype but discloses CNV limitation for the target gene."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Normal Metabolizer (*1/*1)",
+            "GROUND_TRUTH_BEHAVIOR": "CNV not assessed",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "*1/*1", "phenotype": "Normal Metabolizer"}},
+            data_quality_warning_present=True,
+            warnings_in_report=["DATA QUALITY WARNING: CYP2D6 copy number not assessed"],
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "scope_honest_indeterminate"
+
+    def test_dqw_for_wrong_gene_is_disclosure_failure(self):
+        """A DQW that names a different gene should NOT credit the target gene."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Normal Metabolizer (*1/*1)",
+            "GROUND_TRUTH_BEHAVIOR": "CNV not assessed",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "*1/*1", "phenotype": "Normal Metabolizer"}},
+            data_quality_warning_present=True,
+            warnings_in_report=["DATA QUALITY WARNING: UGT1A1 copy number not assessed"],
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "disclosure_failure"
+
+    def test_tool_discloses_cnv_via_warnings_in_report(self):
+        """Tool reports determinate but warnings_in_report mentions CNV for gene."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Normal Metabolizer (*1/*1)",
+            "GROUND_TRUTH_BEHAVIOR": "CNV not assessed",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "*1/*1", "phenotype": "Normal Metabolizer"}},
+            data_quality_warning_present=False,
+            warnings_in_report=["report_mentions: CYP2D6 copy number not assessed"],
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "scope_honest_indeterminate"
+
+    def test_generic_warning_for_wrong_gene_not_credited(self):
+        """A CNV warning for a different gene should not credit this gene."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Intermediate Metabolizer",
+            "GROUND_TRUTH_BEHAVIOR": "whole-gene deletion, CNV undetectable",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "*1/*1", "phenotype": "Normal Metabolizer"}},
+            data_quality_warning_present=False,
+            warnings_in_report=["report_mentions: UGT1A1 copy number limitation"],
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "disclosure_failure"
+
+    def test_tool_silently_reports_normal_no_disclosure(self):
+        """Tool reports Normal without disclosing scope limitation → disclosure_failure."""
+        gt = {
+            "FINDING_CATEGORY": "scope_honest_indeterminate",
+            "TARGET_GENE": "CYP2D6",
+            "EXPECTED_EXIT_CODE": "0",
+            "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Intermediate Metabolizer (*1/*5)",
+            "GROUND_TRUTH_BEHAVIOR": "whole-gene deletion, CNV undetectable from SNP",
+        }
+        ra = _report_analysis(
+            gene_profiles={"CYP2D6": {"diplotype": "*1/*1", "phenotype": "Normal Metabolizer"}},
+            data_quality_warning_present=False,
+            warnings_in_report=[],
+        )
+        verdict = score_pgx_verdict(gt, ra, [], _result_json_analysis(), 0)
+        assert verdict["category"] == "disclosure_failure"
+
+
 class TestDisclosureFailure:
     def test_warnings_on_stderr_not_in_report(self):
         gt = {
@@ -308,6 +410,23 @@ class TestPgxScoringSchemaCompliance:
                 },
                 _report_analysis(
                     gene_profiles={"DPYD": {"diplotype": "unknown", "phenotype": "Indeterminate"}}
+                ),
+                [],
+                _result_json_analysis(),
+                0,
+            ),
+            (
+                {
+                    "FINDING_CATEGORY": "scope_honest_indeterminate",
+                    "TARGET_GENE": "CYP2D6",
+                    "EXPECTED_EXIT_CODE": "0",
+                    "GROUND_TRUTH_PHENOTYPE": "CYP2D6 Intermediate Metabolizer",
+                    "GROUND_TRUTH_BEHAVIOR": "CNV undetectable",
+                },
+                _report_analysis(
+                    gene_profiles={
+                        "CYP2D6": {"diplotype": "unknown", "phenotype": "Indeterminate"}
+                    }
                 ),
                 [],
                 _result_json_analysis(),

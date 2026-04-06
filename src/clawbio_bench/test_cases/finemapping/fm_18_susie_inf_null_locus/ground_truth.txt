@@ -1,0 +1,28 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-18 SuSiE-inf null locus: tau^2 should collapse to zero via MoM fallback
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: On a null locus (all z near zero), SuSiE-inf's method-of-moments
+#   variance estimator should produce a negative tau^2 solution, triggering the
+#   automatic fallback to tau^2=0 (Cui et al. 2023, Methods section). With tau^2=0,
+#   SuSiE-inf degenerates to standard SuSiE-RSS. The output tausq field (if exposed)
+#   should be 0.0 or near-zero. All PIPs should be near 1/p = 0.2 (5 variants).
+#   No credible set should pass the coverage threshold. This tests the MoM fallback
+#   path, which fires silently — a tool that does NOT implement the fallback will
+#   produce nonsensical tau^2 estimates and miscalibrated PIPs.
+# EXPECTED_PIPS: [0.2, 0.2, 0.2, 0.2, 0.2]
+# PIP_TOLERANCE: 0.15
+# NULL_PIP_THRESHOLD: 0.5
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+# DERIVATION: 5 variants, z=[0.1, -0.05, 0.08, -0.12, 0.03], R=I, n=5000, L=3.
+#   With z near zero the marginal likelihood is nearly uniform across variants.
+#   MoM system A*[sigma^2, tau^2]' = c yields tau^2 < 0 because the observed
+#   variance is less than expected under any positive infinitesimal contribution.
+#   The implementation should detect the negative solution and fall back to
+#   (c[0]/n, 0). With tau^2=0, the IBSS loop runs standard SuSiE, producing
+#   uniform alpha rows and PIP_i = 1 - (1 - 1/5)^3 = 0.488 for L=3 (same as
+#   fm_03). The audit threshold of 0.5 is intentionally conservative: any PIP > 0.5
+#   with tau^2 active on a null locus is a red flag.
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3

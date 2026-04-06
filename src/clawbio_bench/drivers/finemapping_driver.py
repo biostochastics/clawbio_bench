@@ -248,6 +248,85 @@ def _run_susie(inputs: dict, mods: dict) -> dict:
     }
 
 
+def _run_susie_inf(inputs: dict, mods: dict) -> dict:
+    """Invoke ClawBio's SuSiE-inf path (Cui et al. 2023) and return a serialisable result."""
+    import numpy as np
+
+    if mods.get("susie_inf") is None:
+        raise ImportError("core.susie_inf module not found in this ClawBio commit")
+
+    run_susie_inf = mods["susie_inf"].run_susie_inf
+
+    z = np.asarray(inputs["z"], dtype=float)
+    R_in = inputs.get("R")
+    R = np.eye(len(z)) if R_in is None else np.asarray(R_in, dtype=float)
+    n = int(inputs.get("n", 5000))
+    L = int(inputs.get("L", 10))
+    w = float(inputs.get("w", 0.04))
+    max_iter = int(inputs.get("max_iter", 100))
+    tol = float(inputs.get("tol", 1e-3))
+
+    # SuSiE-inf specific: initial tausq. When est_tausq is False in the
+    # test case, we pass tausq=0 which makes the algorithm algebraically
+    # identical to standard SuSiE (tau^2 stays at 0 through MoM when the
+    # initial value is 0 and the locus is sparse).
+    est_tausq = inputs.get("est_tausq", True)
+    tausq_init = float(inputs.get("tausq", 0.0))
+    if not est_tausq:
+        # Force tau^2 = 0 to degenerate to standard SuSiE behavior.
+        # The ClawBio implementation always runs MoM, but starting from
+        # tausq=0 on a sparse locus keeps it near zero.
+        tausq_init = 0.0
+
+    meansq = float(inputs.get("meansq", 1.0))
+    sigmasq = float(inputs.get("sigmasq", 1.0))
+    est_sigmasq = inputs.get("est_sigmasq", True)
+    est_ssq = inputs.get("est_ssq", True)
+    ssq_init = float(inputs.get("ssq_init", w))
+
+    warnings: list[str] = []
+    with np.errstate(all="warn"):
+        import warnings as _w
+
+        with _w.catch_warnings(record=True) as caught:
+            _w.simplefilter("always")
+            out = run_susie_inf(
+                z=z,
+                R=R,
+                n=n,
+                L=L,
+                meansq=meansq,
+                ssq_init=ssq_init,
+                est_ssq=est_ssq,
+                est_sigmasq=est_sigmasq,
+                sigmasq=sigmasq,
+                tausq=tausq_init,
+                max_iter=max_iter,
+                tol=tol,
+            )
+            for entry in caught:
+                warnings.append(f"{entry.category.__name__}: {entry.message}")
+
+    return {
+        "method": "susie_inf",
+        "status": "ok",
+        "error": None,
+        "pips": _numeric_list(out.get("pip")),
+        "alpha": _numeric_matrix(out.get("alpha")),
+        "mu": _numeric_matrix(out.get("mu")),
+        "mu2": None,
+        "converged": bool(out.get("converged", False))
+        if out.get("converged") is not None
+        else None,
+        "n_iter": int(out.get("n_iter", 0)),
+        "elbo_history": None,
+        "credible_sets": None,
+        "tausq": float(out.get("tausq", 0.0)),
+        "sigmasq": float(out.get("sigmasq", 1.0)),
+        "warnings": warnings,
+    }
+
+
 def _run_credset_susie(inputs: dict, mods: dict) -> dict:
     """Directly exercise build_credible_sets_susie with caller-supplied alpha.
 
@@ -342,6 +421,7 @@ def _run_credset_abf(inputs: dict, mods: dict) -> dict:
 METHOD_RUNNERS = {
     "abf": _run_abf,
     "susie": _run_susie,
+    "susie_inf": _run_susie_inf,
     "credset_susie": _run_credset_susie,
     "credset_abf": _run_credset_abf,
 }
@@ -423,6 +503,16 @@ def main() -> int:
             "core.credible_sets",
             fromlist=["build_credible_sets_susie", "build_credible_set_abf"],
         )
+        # SuSiE-inf is optional — only present in ClawBio commits after PR #105.
+        # If absent, susie_inf method calls will fail with import_error status.
+        try:
+            core_susie_inf = __import__("core.susie_inf", fromlist=["run_susie_inf"])
+        except ImportError as ie:
+            # Only suppress if the module itself is absent (not a transitive dep failure).
+            if "core.susie_inf" in str(ie):
+                core_susie_inf = None
+            else:
+                raise
     except Exception as exc:  # noqa: BLE001 — we intentionally catch everything
         _emit(
             {
@@ -448,7 +538,12 @@ def main() -> int:
         )
         return 2
 
-    mods = {"abf": core_abf, "susie": core_susie, "credible_sets": core_credsets}
+    mods = {
+        "abf": core_abf,
+        "susie": core_susie,
+        "susie_inf": core_susie_inf,
+        "credible_sets": core_credsets,
+    }
 
     # Run the method under a blanket exception handler. A raise from the
     # skill becomes ``status="raised"`` and the harness scores it — it

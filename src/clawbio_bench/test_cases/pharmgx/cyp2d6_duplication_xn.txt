@@ -13,7 +13,7 @@
 #   as Standard. The DATA QUALITY WARNING section should flag that copy-number
 #   variants cannot be resolved from this input, but currently does not.
 # FINDING: A-CNV CYP2D6 duplication non-detection (Tier-1 codeine harm vector)
-# FINDING_CATEGORY: disclosure_failure
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: N/A
 # HAZARD_DRUG: Codeine

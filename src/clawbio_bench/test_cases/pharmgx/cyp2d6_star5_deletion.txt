@@ -11,7 +11,7 @@
 #   *1 allele is reference) and reports *1/*1 Normal Metabolizer with no CNV
 #   caveat. The resulting codeine guidance is overconfident.
 # FINDING: A-CNV CYP2D6*5 whole-gene deletion non-detection
-# FINDING_CATEGORY: disclosure_failure
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: N/A
 # HAZARD_DRUG: Codeine

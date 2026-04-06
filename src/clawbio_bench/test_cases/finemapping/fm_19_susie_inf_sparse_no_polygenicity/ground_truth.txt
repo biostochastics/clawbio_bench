@@ -1,0 +1,26 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-19 SuSiE-inf on purely sparse signal: should match standard SuSiE
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: When the true architecture is purely sparse (one strong signal,
+#   no polygenic background), SuSiE-inf should estimate tau^2 near zero and produce
+#   PIPs nearly identical to standard SuSiE. This tests that the infinitesimal
+#   component does not steal signal from the sparse component when there is no
+#   polygenicity. If tau^2 is incorrectly estimated as large, PIP for the true
+#   causal variant will be deflated. This also validates that the eigendecomposition
+#   machinery does not introduce numerical noise relative to the standard SuSiE path.
+# EXPECTED_PIPS: [0.9999, 0.00001, 0.00001, 0.00001, 0.00001]
+# PIP_TOLERANCE: 0.01
+# EXPECTED_CONVERGED: true
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+# DERIVATION: Same as fm_02 (5 variants, R=I, z=[5, 0.3, 0.2, 0.3, 0.4], n=5000,
+#   L=1) but run with est_tausq=True. With only one strong signal and no background,
+#   the MoM estimator should yield tau^2 near zero because the observed variance is
+#   fully explained by sigma^2 and the single sparse effect. With tau^2≈0, the
+#   precision matrix simplifies to (sigma^2 * I)^{-1} and the IBSS update becomes
+#   algebraically identical to standard SuSiE-RSS. The expected PIP should therefore
+#   match fm_02 within tolerance.
+# CITATION: Cui R et al. (2023) Nat Genet 56(1):162-169 doi:10.1038/s41588-023-01597-3;
+#   Wang G et al. (2020) JRSS-B 82(5):1273-1300 doi:10.1111/rssb.12388

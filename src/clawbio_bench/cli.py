@@ -113,6 +113,7 @@ def run_single_harness(
     allow_dirty: bool = False,
     inputs_override: Path | None = None,
     quiet: bool = False,
+    tag_map: dict[str, list[str]] | None = None,
 ) -> dict:
     """Run one harness and return its summary."""
     mod = load_harness(name)
@@ -153,7 +154,7 @@ def run_single_harness(
         fail_categories=mod.FAIL_CATEGORIES,
     )
 
-    heatmap = harness_core.build_heatmap_data(verdicts, mod.CATEGORY_LEGEND)
+    heatmap = harness_core.build_heatmap_data(verdicts, mod.CATEGORY_LEGEND, tag_map=tag_map)
     with open(harness_output / "heatmap_data.json", "w", encoding="utf-8") as f:
         json.dump(heatmap, f, indent=2, default=str)
 
@@ -234,6 +235,7 @@ def main() -> None:
         "  clawbio-bench --smoke --harness equity --repo /path/to/ClawBio\n"
         "  clawbio-bench --regression-window 10 --repo /path/to/ClawBio\n"
         "  clawbio-bench --all-commits --repo /path/to/ClawBio\n"
+        "  clawbio-bench --tagged-commits --repo /path/to/ClawBio\n"
         "  clawbio-bench --heatmap results/suite/20260404_120000/\n"
         "  clawbio-bench --render-markdown results/suite/20260404_120000/  "
         "# smoke runs only\n"
@@ -531,10 +533,24 @@ def main() -> None:
         mode = "smoke"
     elif args.all_commits:
         mode = "full"
+    elif getattr(args, "tagged_commits", False):
+        mode = "tagged"
     elif args.regression_window:
         mode = f"regression-{args.regression_window}"
     else:
         mode = "custom"
+
+    # Resolve tag metadata for commit enrichment (release markers on heatmaps).
+    # Best-effort: tag enrichment is additive, never blocks a benchmark run.
+    try:
+        tag_map = harness_core.get_commit_tags(repo_path)
+    except Exception as e:
+        print(
+            f"  WARNING: Failed to resolve tag metadata: {e} — "
+            f"heatmaps will render without release markers",
+            file=sys.stderr,
+        )
+        tag_map = {}
 
     harness_names = [args.harness] if args.harness else list(HARNESS_REGISTRY.keys())
 
@@ -596,6 +612,7 @@ def main() -> None:
                 allow_dirty=allow_dirty,
                 inputs_override=args.inputs,
                 quiet=quiet,
+                tag_map=tag_map,
             )
         except Exception as e:
             render_error(f"HARNESS FAILED: {e}")

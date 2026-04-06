@@ -1,0 +1,31 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-20 SuSiE-inf activation guard: est_tausq=False should produce standard SuSiE output
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: The critical activation switch for SuSiE-inf is est_tausq. When
+#   est_tausq=False (default in the reference implementation), the method is
+#   algebraically identical to standard SuSiE-RSS regardless of whether the code
+#   path is labeled "susie_inf". A tool that claims to run SuSiE-inf but does not
+#   actually estimate tau^2 will produce identical output to standard SuSiE. This
+#   is the most important honesty check: is the infinitesimal component actually
+#   active? This test runs the same polygenic-background input as fm_17 but with
+#   est_tausq=False. The expected result is standard SuSiE behavior (inflated PIPs
+#   across background variants, multiple credible sets). If the output matches fm_17
+#   (concentrated PIPs), the tool is ignoring est_tausq and the switch is broken.
+# EXPECTED_PIPS: [0.60, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+# PIP_TOLERANCE: 0.25
+# SECONDARY_PIP_THRESHOLD: 0.05
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+# DERIVATION: Same input as fm_17 (10 variants, polygenic LD structure, z=[5, 2,
+#   1.8, ...], n=10000, L=5) but est_tausq=False. Without the infinitesimal
+#   component, SuSiE distributes posterior mass across LD-correlated background
+#   variants. PIP_0 should still be highest (~0.4-0.7) but background PIPs will be
+#   substantially higher than in the SuSiE-inf case (fm_17). The tolerance is wide
+#   (0.25) because exact PIP values depend on the SuSiE implementation's convergence
+#   behavior, but the qualitative difference — multiple non-trivial PIPs vs.
+#   concentrated on variant 0 — is the auditable signal. If the tool does not
+#   distinguish est_tausq=True from est_tausq=False, both fm_17 and fm_20 will
+#   produce the same output, which the harness can detect by cross-referencing.
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3

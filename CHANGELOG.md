@@ -5,7 +5,157 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] — 2026-04-06
+
+### Added
+
+- **Daily automated audit workflow.** `.github/workflows/daily-audit.yml`
+  cron (8 AM UTC daily + `workflow_dispatch`): smoke suite against ClawBio
+  HEAD, markdown + PDF delta reports, baseline promotion on improvement,
+  artifact upload (90/30-day retention), deduplicated regression issues,
+  per-commit attribution via `--regression-window 5`.
+- **`scripts/update_baseline.py`.** Baseline manager: promotes on strict
+  improvement, initializes on first run, handles corrupt baselines.
+- **`scripts/post_summary.py` with multi-model LLM swarm.** `--llm
+  openrouter` fans out to 3 analyst models (deepseek-v3.2-exp,
+  minimax-m2.7, gpt-5-nano), synthesizes via mimo-v2-pro with number
+  verification. Thinking-model aware (extracts `reasoning` when `content`
+  is null). Consolidated daily reports (`--log-dir`) with 4 sections:
+  audit digest, ClawBio git diff analysis (`--clawbio-repo`),
+  clawbio-bench self-changelog (`--self-changelog`), and coverage
+  investigation (`--investigate`). Final polish pass for coherence.
+  Weekly/monthly trend summaries (`--weekly`, `--monthly`). Graceful
+  degradation to structured digest on any failure.
+- **`[all]` optional extra** — combines `viz`, `ui`, `finemapping`, and
+  `scikit-learn` for CI.
+- **`--tagged-commits` CLI mode.** New commit-selection mode that runs
+  benchmarks against only tagged (release / milestone) commits. Works
+  with both lightweight and annotated git tags. Usage:
+  `clawbio-bench --tagged-commits --repo /path/to/ClawBio`.
+- **Release markers on heatmap timeline.** When heatmap data includes
+  tag metadata (automatically captured in all modes), tagged commits
+  are highlighted with purple bold labels, and dashed horizontal lines
+  demarcate releases on the Y-axis.
+- **Hierarchical harness grouping in aggregate heatmaps.** Multi-harness
+  heatmaps now draw vertical separator lines between harnesses and label
+  each harness above the X-axis, making large grids easier to navigate.
+- **Per-harness sub-heatmaps.** When rendering an aggregate (multi-harness)
+  heatmap, individual per-harness heatmap PNGs are also generated in each
+  harness subdirectory alongside the aggregate view.
+- **`get_tagged_commits()` and `get_commit_tags()` in core.** Two new git
+  helper functions for resolving tagged commits and mapping SHAs to tag
+  names. Both handle annotated and lightweight tags correctly.
+- **Missing-cell color in heatmaps.** Cells with no data (e.g. test cases
+  that didn't exist at earlier commits) now render in a distinct light
+  slate color (`#f1f5f9`) instead of falling through to category zero.
+- **Delta comparison in Typst report.** `--baseline` CLI flag on
+  `generate_report.py` accepts a baseline results directory or
+  `aggregate_report.json`. When provided, a "Delta vs. baseline" section
+  appears on the executive summary page with new/resolved/unchanged
+  finding counts, per-finding lists with tier-colored cells, and
+  checkmarks for resolved items.
+- **Unified 5-tier severity system.** All ~50 verdict categories across 7
+  harnesses now map to exactly one of five tiers: Pass, Advisory,
+  Warning, Critical, Infra. `SEVERITY_TIERS` and `TIER_DEFS` in
+  `generate_report.py` provide the canonical mapping; colors are
+  tier-consistent across all harnesses instead of per-category ad-hoc.
+- **Bento-grid executive dashboard.** Page 2 of the PDF report is now a
+  6-cell instrument-panel dashboard: suite status (pass/total),
+  blocking harnesses (count + names), persistent failures (count),
+  top failure classes (category × count), per-harness pass rates
+  (color-coded), and audit target metadata — all above the existing
+  per-harness summary table.
+- **Two-column pass/findings verdict matrix.** The flat single-column
+  verdict list is replaced by a split layout: passing tests grouped by
+  gene/module on the left, findings on the right. Colored heatmap
+  squares (8 pt) replace verbose text badges. Single-test groups are
+  merged into an "OTHER" bucket. Group headers show name, pass rate,
+  and test count inline.
+- **Severity indicators in markdown report.** Summary table gains a
+  Status column with pass/fail emoji (✅/❌). Detailed findings gain
+  per-tier colored circle indicators (🔴 critical, 🟠 warning, ⚪ infra).
+- **`scope_honest_indeterminate` category in PharmGx harness.** Split the
+  former `disclosure_failure` bucket into two distinct categories:
+  - `disclosure_failure` (4 cases) — tool returns a wrong determinate
+    answer with a stderr warning that is NOT surfaced in the user-facing
+    report. This remains a safety failure.
+  - `scope_honest_indeterminate` (5 cases) — tool correctly returns
+    Indeterminate (or discloses the limitation) for variants that DTC/SNP
+    arrays fundamentally cannot resolve: whole-gene CNV, hybrid alleles,
+    phasing ambiguity. This is correct clinical behavior and now scores
+    as a **pass**.
+  Reclassified cases: `cyp2d6_star5_deletion`, `cyp2d6_phase_ambiguous`,
+  `cyp2d6_duplication_xn`, `cyp2d6_star13_hybrid`, `cyp2d6_normal`.
+- **Gene-specific scope disclosure check.** The `scope_honest_indeterminate`
+  scoring branch now requires that a report warning names the target gene,
+  preventing a generic disclaimer for Gene B from crediting silence about
+  Gene A.
+- **scikit-learn** added to `[dev]` optional dependencies.
+- **Consolidated `ROADMAP.md`.** Standalone roadmap document replacing
+  the inline README roadmap section. Tracks all planned harnesses (P1–P3),
+  framework features, audit-framework failure-class coverage matrix, full
+  ClawBio skill inventory (47 skills), incoming skills from open PRs,
+  and collaboration context. README Roadmap section now summarizes and
+  points to the full document.
+
+### Changed
+
+- **Typst PDF report redesign.** Industrial audit-console aesthetic with
+  tighter margins (1.5 cm), two-column layouts, instrument-panel finding
+  cards, and pass/findings split verdict matrix. 29 → 21 pages for the
+  same 7-harness / 140-test suite.
+- **`category_color()` uses tier-based lookup** instead of per-category
+  legend colors.
+- **`--branch` help text** now mentions `--tagged-commits` alongside
+  `--all-commits` and `--regression-window`.
+- **Standalone harness entry point (`run_harness_main`)** now resolves
+  tag metadata and passes it to `build_heatmap_data`, matching the
+  suite CLI behavior.
+- **CI regression window reduced from 20 to 2 commits.** The sweep now
+  compares only HEAD vs its parent, preventing the 15-minute timeout
+  that occurred when running 93 test cases × 20 commits. Deeper sweeps
+  remain available via `clawbio-bench --regression-window N` locally.
+
+### Fixed
+
+- **`get_tagged_commits()` handles `TimeoutExpired`.** Wraps `git tag`
+  subprocess in try/except and re-raises as `BenchmarkConfigError` for
+  consistent CLI error handling.
+- **Finemapping ImportError restricted to `susie_inf` sentinel.** The
+  `edge_handled` downgrade now requires `method == "susie_inf"` AND
+  `"core.susie_inf"` in the error message, preventing unrelated import
+  failures from being silently credited as passes.
+- **Finemapping driver `susie_inf` import narrowed.** Only suppresses
+  `ImportError` when `"core.susie_inf"` is in the message; transitive
+  dependency failures now re-raise correctly.
+- **PharmGx scope_terms expanded.** Added `"deletion"`, `"structural
+  variant"`, `"cannot interpret"` to match the warning extraction
+  vocabulary, preventing legitimate disclosures from being scored as
+  `disclosure_failure`.
+- **PharmGx DQW requires gene-specific match.** `data_quality_warning_present`
+  alone no longer credits `scope_honest_indeterminate` — the warning
+  text must also name the target gene, preventing a generic disclaimer
+  for Gene B from crediting silence about Gene A.
+- **Markdown status icons account for harness_errors.** Per-harness and
+  total-row status icons now show `\u274c` when `harness_errors > 0`,
+  even if `pass` is True.
+- **Severity map fallback for missing `fail_categories`.** When
+  `fail_categories` is absent from aggregate data (older baselines),
+  categories from `critical_failures` are inferred as tier 0 (critical)
+  instead of defaulting to tier 1 (warning).
+- **`get_commit_tags()` no longer silently swallows git failures.**
+  Returns an empty dict on error (tag enrichment is best-effort) but
+  now prints a stderr warning so users can distinguish "no tags exist"
+  from "tag resolution broke."
+- **`get_commit_tags()` warns on malformed tag lines** instead of
+  silently skipping them.
+- **`cli.py` tag resolution wrapped in try/except.** A
+  `subprocess.TimeoutExpired` from a hanging `git for-each-ref` no
+  longer crashes the entire benchmark run; it degrades gracefully with
+  a warning and an empty tag map.
+- **All-missing heatmap matrix** now prints a stderr warning when no
+  verdict data matched any commit/test combination, instead of
+  rendering a blank gray rectangle with no explanation.
 
 ## [0.1.1] — 2026-04-06
 
@@ -272,7 +422,7 @@ set before interpolation into `pip install`.
   under one second.
 - **Full `mypy --strict` compliance** across every source file.
 - **CI matrix**: lint → unit tests (Python 3.11 / 3.12 / 3.13 / 3.14) →
-  smoke (pinned ClawBio ref) → regression (last 20 commits, main only).
+  smoke (pinned ClawBio ref) → regression (HEAD vs parent, main only).
 - **Pre-commit hooks**: `ruff format`, `ruff check`, unit tests.
 - **SPDX-License-Identifier headers** on every source file.
 
@@ -293,5 +443,6 @@ set before interpolation into `pip install`.
   roadmap.
 - Platform coverage: Linux and macOS only. Windows is untested.
 
+[0.1.2]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.2
 [0.1.1]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.1
 [0.1.0]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.0

@@ -221,6 +221,102 @@ def get_all_commits(repo_path: Path, branch: str = "main") -> list[str]:
     return [sha.strip() for sha in result.stdout.strip().split("\n") if sha.strip()]
 
 
+def get_tagged_commits(repo_path: Path, branch: str = "main") -> list[str]:
+    """Get SHAs of commits that carry at least one tag, in chronological order.
+
+    Only includes tags reachable from *branch*. Lightweight and annotated
+    tags are both included. The returned list is a subset of
+    ``get_all_commits()`` preserving its chronological (oldest-first) order.
+    """
+    # 1. All SHAs on the branch (ordered oldest-first).
+    all_shas = get_all_commits(repo_path, branch=branch)
+
+    # 2. Resolve every tag to its target commit SHA.
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo_path),
+                "tag",
+                "--list",
+                "--format=%(objectname) %(*objectname)",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise BenchmarkConfigError("Timed out resolving tagged commits") from exc
+    if result.returncode != 0:
+        raise BenchmarkConfigError(f"git tag failed: {result.stderr.strip()}")
+
+    tagged_shas: set[str] = set()
+    for line in result.stdout.strip().split("\n"):
+        if not line.strip():
+            continue
+        parts = line.strip().split()
+        # Annotated tags have a dereferenced (*objectname) field; lightweight
+        # tags only have objectname.  Use the deref if present.
+        sha = parts[-1] if len(parts) > 1 and parts[-1] else parts[0]
+        tagged_shas.add(sha)
+
+    # 3. Intersect with branch history to keep only reachable tagged commits,
+    #    preserving chronological order from get_all_commits().
+    return [sha for sha in all_shas if sha in tagged_shas]
+
+
+def get_commit_tags(repo_path: Path) -> dict[str, list[str]]:
+    """Return a mapping of commit SHA → list of tag names.
+
+    Both lightweight and annotated tags are included. Annotated tags are
+    dereferenced to their target commit SHA so the mapping is always keyed
+    by commit, not tag-object, SHA.
+
+    Returns an empty dict (with a stderr warning) if git fails. This is
+    best-effort metadata — tag enrichment is additive, never blocking.
+    """
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_path),
+            "for-each-ref",
+            "--format=%(refname:short) %(objecttype) %(*objectname) %(objectname)",
+            "refs/tags/",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if result.returncode != 0:
+        print(
+            f"  WARNING: git for-each-ref failed (exit {result.returncode}): "
+            f"{result.stderr.strip()!r} — tag enrichment disabled for this run",
+            file=sys.stderr,
+        )
+        return {}
+
+    tag_map: dict[str, list[str]] = {}
+    for line in result.stdout.strip().split("\n"):
+        if not line.strip():
+            continue
+        parts = line.strip().split()
+        if len(parts) < 3:
+            print(
+                f"  WARNING: skipping malformed tag line: {line.strip()!r}",
+                file=sys.stderr,
+            )
+            continue
+        tag_name = parts[0]
+        obj_type = parts[1]
+        # Annotated: deref (*objectname) is the commit SHA; lightweight: objectname.
+        commit_sha = parts[2] if obj_type == "tag" and len(parts) >= 4 else parts[-1]
+        tag_map.setdefault(commit_sha, []).append(tag_name)
+
+    return tag_map
+
+
 def safe_checkout(repo_path: Path, commit_sha: str) -> bool:
     """Checkout a commit. Returns True on success."""
     result = subprocess.run(
@@ -1007,13 +1103,20 @@ def write_manifest(
 def build_heatmap_data(
     verdicts: list[dict],
     category_legend: dict[str, dict],
+    tag_map: dict[str, list[str]] | None = None,
 ) -> dict:
-    """Build aggregated heatmap matrix from verdict list."""
+    """Build aggregated heatmap matrix from verdict list.
+
+    If *tag_map* is provided (SHA → tag names), each commit entry in the
+    returned dict will carry a ``"tags"`` list so downstream renderers can
+    annotate releases on the timeline axis.
+    """
     commits = []
     seen_commits: set[str] = set()
     test_cases = []
     seen_tests: set[str] = set()
     matrix = {}
+    tag_map = tag_map or {}
 
     for v in verdicts:
         commit_sha = v.get("commit", {}).get("sha", "unknown")
@@ -1021,14 +1124,15 @@ def build_heatmap_data(
         category = v.get("verdict", {}).get("category", "unknown")
 
         if commit_sha not in seen_commits:
-            commits.append(
-                {
-                    "sha": commit_sha,
-                    "short": commit_sha[:8],
-                    "date": v.get("commit", {}).get("date", ""),
-                    "message": v.get("commit", {}).get("message", ""),
-                }
-            )
+            entry = {
+                "sha": commit_sha,
+                "short": commit_sha[:8],
+                "date": v.get("commit", {}).get("date", ""),
+                "message": v.get("commit", {}).get("message", ""),
+            }
+            if commit_sha in tag_map:
+                entry["tags"] = tag_map[commit_sha]
+            commits.append(entry)
             seen_commits.add(commit_sha)
 
         if test_name not in seen_tests:
@@ -1430,11 +1534,16 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         metavar="N",
         help="Run against last N commits (must be > 0)",
     )
+    mode_group.add_argument(
+        "--tagged-commits",
+        action="store_true",
+        help="Run against tagged commits only (releases / milestones)",
+    )
     parser.add_argument(
         "--branch",
         type=str,
         default="main",
-        help="Git branch for --all-commits and --regression-window (default: main)",
+        help="Git branch for --all-commits, --regression-window, and --tagged-commits (default: main)",
     )
     parser.add_argument(
         "--inputs",
@@ -1490,6 +1599,13 @@ def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
         print(f"Regression window: last {n} commits (branch: {branch})")
         return commits
 
+    if getattr(args, "tagged_commits", False):
+        commits = get_tagged_commits(repo_path, branch=branch)
+        if not commits:
+            raise BenchmarkConfigError(f"No tagged commits found on branch '{branch}'")
+        print(f"Tagged-commits sweep: {len(commits)} releases (branch: {branch})")
+        return commits
+
     if args.commits:
         raw = args.commits.split(",")
         commits = []
@@ -1512,7 +1628,7 @@ def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
         return commits
 
     raise BenchmarkConfigError(
-        "Must specify --smoke, --commits, --regression-window, or --all-commits"
+        "Must specify --smoke, --commits, --regression-window, --all-commits, or --tagged-commits"
     )
 
 
@@ -2050,8 +2166,12 @@ def run_harness_main(
         fail_categories=fail_categories,
     )
 
-    # Write aggregated outputs
-    heatmap = build_heatmap_data(verdicts, category_legend)
+    # Write aggregated outputs — include tag metadata when available.
+    try:
+        tag_map = get_commit_tags(repo_path)
+    except Exception:
+        tag_map = {}
+    heatmap = build_heatmap_data(verdicts, category_legend, tag_map=tag_map)
     with open(output_base / "heatmap_data.json", "w", encoding="utf-8") as f:
         json.dump(heatmap, f, indent=2, default=str)
 

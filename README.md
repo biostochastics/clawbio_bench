@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.%22requires-python%22&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-224%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-244%20passing-brightgreen)](tests/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy: checked](https://img.shields.io/badge/mypy-checked-blue)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -103,6 +103,7 @@ test suites.
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e .                    # core: msgspec, regex, ruamel.yaml
 pip install -e ".[dev]"             # + pytest, ruff, mypy, pre-commit, rich, numpy, pandas
+pip install -e ".[all]"             # + viz, ui, finemapping, scikit-learn (for CI / daily audit)
 pip install -e ".[viz]"             # + matplotlib for heatmap rendering
 pip install -e ".[ui]"              # + rich for styled CLI output
 pip install -e ".[finemapping]"     # + numpy, pandas for the fine-mapping subprocess driver
@@ -149,6 +150,9 @@ clawbio-bench --regression-window 10 --repo ~/src/ClawBio -q
 # Full longitudinal sweep on a specific branch
 clawbio-bench --all-commits --branch main --repo ~/src/ClawBio
 
+# Tagged commits only — benchmark at each release/milestone
+clawbio-bench --tagged-commits --repo ~/src/ClawBio
+
 # Custom test case directory
 clawbio-bench --smoke --harness equity --inputs /my/test_cases --repo ~/src/ClawBio
 
@@ -176,6 +180,7 @@ clawbio-bench --version
 | `--smoke` | Fast check: HEAD commit only, all harnesses. The default CI gate. |
 | `--regression-window N` | Replay every test case across the last `N` commits on the current branch. |
 | `--all-commits` | Every commit on a branch from the first audit-era commit forward (slowest). |
+| `--tagged-commits` | Run against tagged commits only (releases / milestones). Heatmaps annotate release names on the timeline. |
 | `--commits SHA,SHA,...` | Explicit commit list (diagnostic mode). |
 | `--branch NAME` | Which branch to walk (default: the repo's current `HEAD`). |
 | `--harness NAME` | Run only one harness (e.g. `equity`, `pharmgx`). Omit to run all six. |
@@ -235,7 +240,8 @@ Step by step:
 
 1. **Resolve the commit set.** `--smoke` → `[HEAD]`. `--regression-window N`
    → last `N` commits on the branch. `--all-commits` → every commit from
-   the audit-era root. `--commits SHA,...` → an explicit list.
+   the audit-era root. `--tagged-commits` → only tagged (release) commits.
+   `--commits SHA,...` → an explicit list.
 2. **Isolate each commit.** Every commit is checked out in a git worktree
    so the user's working tree is never modified, and submodules are
    recursively reset between commits so a dirty submodule from commit *N*
@@ -837,7 +843,7 @@ CSV mode honesty, edge cases.
 | `edge_crash` | No | Edge case crash |
 | `harness_error` | — | Infrastructure error |
 
-### PharmGx Reporter (33 tests, 6 categories)
+### PharmGx Reporter (33 tests, 7 categories)
 
 **In plain English.** Given a genotype file, does the tool call the right
 pharmacogenomic phenotype (e.g. "CYP2C19 Poor Metabolizer"), classify the
@@ -852,6 +858,7 @@ against CPIC guidelines.
 |---|:---:|---|
 | `correct_determinate` | Yes | Right phenotype + drug class |
 | `correct_indeterminate` | Yes | Correctly indeterminate |
+| `scope_honest_indeterminate` | Yes | Tool correctly returns Indeterminate for a variant DTC arrays cannot resolve (CNV, hybrid, phasing) — correct clinical behavior |
 | `incorrect_determinate` | No | Wrong phenotype (false Normal) |
 | `incorrect_indeterminate` | No | Unnecessary indeterminate |
 | `omission` | No | Drug missing from report |
@@ -1063,9 +1070,11 @@ before deciding to use this tool.
   ground-truth file, stdout, stderr, and on the verdict document itself.
   `clawbio-bench --verify` runs a three-layer reconciliation (per-verdict
   self-hash, sidecar index, log-file integrity).
-- **Longitudinal sweeps across git history.** `--regression-window N`
-  and `--all-commits` replay every test case against every selected
-  commit so you can see exactly when a finding was introduced or fixed.
+- **Longitudinal sweeps across git history.** `--regression-window N`,
+  `--all-commits`, and `--tagged-commits` replay every test case against
+  every selected commit so you can see exactly when a finding was
+  introduced or fixed. Tagged-commit mode annotates releases on the
+  heatmap timeline.
 - **JSON Schema as external contract.** `schemas/verdict-*.schema.json`
   are committed artifacts — auditors can validate verdicts in any
   language without running Python.
@@ -1227,9 +1236,9 @@ is hidden:
   **false failures on small-sample studies** where estimator variance
   is high. A Z-score-based replacement is on the [Roadmap](#roadmap).
 - **`--smoke` is HEAD-only by design.** Smoke mode runs a single commit
-  (the current `HEAD`). Use `--regression-window N` or `--all-commits`
-  for longitudinal findings; findings from a smoke run say nothing
-  about trajectory.
+  (the current `HEAD`). Use `--regression-window N`, `--all-commits`,
+  or `--tagged-commits` for longitudinal findings; findings from a
+  smoke run say nothing about trajectory.
 - **Markdown rendering is designed for smoke-mode aggregates.**
   Non-smoke runs still render, but the markdown renderer identifies
   findings by `(harness, test, category)` — which **collapses
@@ -1398,6 +1407,32 @@ See [docs/baseline-schema.md](docs/baseline-schema.md) for the exact
 fields consumed during diffing, so downstream tooling can produce
 compatible baselines.
 
+### Daily automated audit
+
+A cron-scheduled workflow (`.github/workflows/daily-audit.yml`) runs
+every morning at 8 AM UTC against ClawBio HEAD:
+
+1. **Smoke suite** — all harnesses, HEAD only (~40 seconds).
+2. **Delta reports** — markdown and PDF (Typst) compared against a
+   rolling baseline committed to `baselines/latest_baseline.json`.
+3. **Baseline promotion** — if pass rate improved, the baseline is
+   updated and committed. Regressions keep the old baseline so the
+   delta stays visible.
+4. **Notification** — a one-paragraph digest posted to a webhook
+   (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
+   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
+   the findings, then Haiku 4.5 synthesizes a narrative digest with
+   number verification against the structured source.
+5. **Regression issue** — a deduplicated GitHub issue opens
+   automatically when findings are detected.
+6. **Per-commit attribution** — a secondary job runs
+   `--regression-window 5` for the last 5 ClawBio commits, so you
+   can see which specific commit introduced a regression.
+
+Secrets: `NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
+(optional, enables LLM swarm digest). The workflow also supports
+`workflow_dispatch` for manual triggering.
+
 ---
 
 ## Confirmed Findings at ClawBio HEAD
@@ -1432,135 +1467,51 @@ from the corresponding test cases at `v0.1.0`.
 
 ## Roadmap
 
-### Dedicated-harness coverage expansion (31 executable ClawBio skills without behavioral tests)
+> **Full roadmap: [`ROADMAP.md`](ROADMAP.md)** — consolidated tracking
+> of all planned harnesses, framework features, audit-framework
+> failure-class coverage, and ClawBio skill inventory.
 
-Prioritized by clinical-harm potential. Each new harness follows the
-contract in [CONTRIBUTING.md](CONTRIBUTING.md) — a module-level
-constants block plus a `run_single_<name>()` function, bundled test
-cases under `src/clawbio_bench/test_cases/<name>/`, and registration in
-`HARNESS_REGISTRY`.
+### What's done (v0.1.0–v0.1.2)
 
-**Done in this release (2026-04-04)**
+- 7 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
+  nutrigx, metagenomics, clinical-variant-reporter Phase 1, finemapping)
+  covering **140 test cases**.
+- Dynamic skill inventory, `--skill NAME` force-routing, `--skills
+  A,B,C` composition mode, prompt-injection regression pins.
+- CYP2D6 CNV/hybrid/*5, NUDT15, CYP2B6, G6PD, MT-RNR1 pharmgx tests.
+- `scope_honest_indeterminate` category split, `--tagged-commits` mode,
+  5-tier severity system, delta comparison in reports.
 
-- ✅ **`clinical-variant-reporter`** — Phase 1 harness (5 tests,
-  structural/traceability only). Phase 2 (small unambiguous-subset
-  correctness against ClinGen VCEP 3-star+ consensus variants) is
-  the highest-priority P1 addition below.
-- ✅ **Orchestrator P0 suite integrity** — removed stale
-  `STUB_SKILLS` / `EXECUTABLE_SKILLS` dependency from verdict logic;
-  added dynamic drift detection; added `--skill NAME` direct-invocation
-  tests for five previously-unreachable high-clinical-harm skills;
-  added `--skills A,B,C` composition-mode support + test cases.
-- ✅ **CYP2D6 CNV / hybrid / whole-gene deletion** — 3 new pharmgx
-  disclosure_failure tests (xN duplication, \*5 deletion, \*13 hybrid).
-- ✅ **Missing CPIC Tier-1 genes** — 4 new pharmgx tests (NUDT15,
-  CYP2B6, G6PD scope-honesty, MT-RNR1 scope-honesty).
-- ✅ **Prompt-injection regression pins + one genuine LLM-path test**
-  (`orchestrator/inj_03_flock_routing_hijack` with `--provider flock`).
+### Next priorities (P1 — clinical safety)
 
-**P1 — Clinical safety / highest harm potential**
+| Harness | ClawBio skill | Tier |
+|---------|---------------|:----:|
+| `clinical-variant-reporter` Phase 2 | `clinical-variant-reporter` | 1 |
+| `variant-annotation` | `variant-annotation` | 1 |
+| `clinpgx` | `clinpgx` | 1 |
+| `gwas-prs` | `gwas-prs` | 1 |
+| `clinical-trial-finder` | `clinical-trial-finder` | 1 |
+| `wes-clinical-report` | `wes-clinical-report-en/es` | 1 |
+| `target-validation-scorer` | `target-validation-scorer` | 2 |
+| `genome-compare` | `genome-compare` | 2 |
+| `methylation-clock` | `methylation-clock` | 2 |
 
-1. **`clinical-variant-reporter` Phase 2** — small unambiguous-subset
-   correctness on ClinGen VCEP 3-star+ consensus variants (BA1 very-
-   common benign, PVS1 clear loss-of-function in established LoF-
-   intolerant genes, stable-consensus P/LP variants). **Do not** use
-   MAVEdb as gold for PS3/BS3 — assay-to-strength mapping requires
-   expert calibration.
-2. **`variant-annotation`** — distinct from the `vcf-annotator` stub.
-   VEP consequence correctness, ClinVar significance retrieval, gnomAD
-   AF handling, prioritization ranking. Rubric: `annotation_correct` /
-   `consequence_wrong` / `clinvar_stale` / `frequency_mislabeled`.
-3. **`clinpgx`** — ClinPGx variant annotation. Heavily overlaps the
-   pharmgx safety domain; can reuse phenotype-matching scoring
-   infrastructure. Rubric: `annotation_correct` / `annotation_stale` /
-   `annotation_missing` / `level_miscategorized`. Ground truth: pinned
-   PharmGKB / CPIC annotations for CYP2C19, CYP2D6, DPYD, TPMT, HLA-B.
-4. **`gwas-prs`** — Polygenic risk score computation. PRS miscalibration
-   is a documented clinical harm vector (wrong coefficient signs,
-   missing beta normalization, **strand flips / allele alignment**,
-   **ancestry transferability**). Rubric: `prs_correct` /
-   `prs_sign_flipped` / `prs_strand_flipped` / `prs_uncalibrated` /
-   `prs_ancestry_mismatch` / `prs_coverage_inflated`.
-5. **`clinical-trial-finder`** — FHIR R4 eligibility matching output
-   for a gene/variant/condition. Rubric: `trial_enumeration_correct` /
-   `fhir_schema_invalid` / `eligibility_parse_wrong` / `euctr_ctgov_dedup_wrong`.
-6. **`target-validation-scorer`** — GO/NO-GO decision reproducibility,
-   evidence grading, citation hallucination detection. Rubric:
-   `score_reproducible` / `evidence_hallucinated` / `threshold_undocumented`.
-7. **`genome-compare`** — VCF intersection and diff correctness. Rubric:
-   `diff_correct` / `diff_missed_variant` / `diff_spurious` /
-   `coord_normalization_failed`. Ground truth: deterministic two-VCF
-   pairs with known intersection, union, and symmetric-difference sets.
-8. **`methylation-clock`** — PyAging clocks (GrimAge, DunedinPACE,
-   Horvath, AltumAge) make disease-linked epigenetic-age claims.
-   Rubric: `clock_reproducible` / `missing_feature_silent` /
-   `tissue_specificity_disclosed` / `batch_effect_disclosed`.
+### Framework priorities
 
-**P2 — Population / research integrity**
+- YAML-only ground truth migration ([plan](docs/plans/YAML_MIGRATION_PLAN.md))
+- Shared AST security sweep (`core.ast_security_sweep()`)
+- Parallel execution (`--jobs` / `-j`)
+- Cross-harness Tier-1 safety gate (`--tier1-only`)
+- FST variance-aware Z-score, diplotype-level PGx validation
 
-4. **`claw-ancestry-pca`** — PCA eigenvector stability, 1000G projection
-   accuracy, outlier handling. Parallels the existing equity harness.
-   Rubric: `eigenvectors_stable` / `projection_correct` /
-   `outlier_flagged` / `singular_crash`.
-5. **`gwas-lookup`** — GWAS Catalog query correctness. Rubric:
-   `lookup_correct` / `lookup_stale` / `trait_mismatched` /
-   `pvalue_extraction_wrong`. Ground truth: pinned snapshot of GWAS
-   Catalog records.
-6. **`scrna-orchestrator`** — Single-cell RNA-seq routing and QC gates.
-   Rubric: `qc_bounded` / `qc_unbounded` / `doublet_disclosed` /
-   `doublet_silent` / `routing_correct`.
-
-**P3 — Workflow / data handling**
-
-7. **`data-extractor`** — Structured field extraction from
-   semi-structured inputs. Rubric: `extraction_correct` /
-   `field_missing` / `schema_violation` / `hallucinated_field`.
-8. **`ukb-navigator`** — UK Biobank field mapping + phenotype coding.
-   Rubric: `mapping_correct` / `phenotype_miscoded` /
-   `field_deprecated_not_flagged`.
-9. **`profile-report`** — Report generation correctness and mandatory
-   disclaimer presence. Rubric: `report_complete` / `section_missing` /
-   `disclaimer_missing` / `sensitive_field_leaked`.
-10. **`galaxy-bridge`** — Galaxy tool recommendation correctness, XML
-    wrapper generation validity. Rubric: `wrapper_valid` /
-    `wrapper_malformed` / `tool_mismatched`.
-
-### Framework and tooling
-
-- **Shared AST security utilities** — extract the AST-based static
-  analysis from the metagenomics harness (handles aliased imports,
-  OS-level shell helpers) into `core.py` as a reusable utility for
-  any harness auditing tools that invoke external processes.
-- **Entry-point harness discovery** — plugin architecture via
-  `[project.entry-points]` so third-party harnesses can register
-  without modifying `HARNESS_REGISTRY`.
-- **Parallel execution** — `--jobs` / `-j` flag for concurrent test
-  case execution within a commit.
-- **Config file support** — YAML / TOML for complex benchmark
-  configurations.
-- **Benchmark diff tool** — compare two longitudinal runs and surface
-  new / resolved findings with category-level remediation context.
-- **Cross-harness Tier-1 safety gate** — dedicated `--tier1-only` mode
-  that runs only Tier 1 clinical safety tests (CYP2D6, DPYD,
-  CYP2C19 + clopidogrel, HLA-B\*57:01, SLCO1B1) across all harnesses
-  for fast CI gating on safety-critical changes.
-- **Statistical correctness upgrade for FST** — replace the hardcoded
-  `FST_TOLERANCE` absolute-value comparison with a variance-aware
-  Z-score test based on the standard error of the chosen estimator
-  (Nei vs Hudson). Current tolerances assume large sample sizes;
-  small-*n* studies produce false failures.
-- **Diplotype-level PGx validation** — today phenotype strings are
-  matched; a future pass will validate the intermediate diplotype →
-  activity score → phenotype chain against PharmVar, catching tools
-  that produce the right phenotype via the wrong haplotype call.
-- **Independent review pipeline** — automate an independent review loop
-  as a `make review` target so every new harness gets external
-  sanity-checking before landing.
+See [`ROADMAP.md`](ROADMAP.md) for P2/P3 harnesses, failure-class
+coverage matrix, skills watchlist, and open questions.
 
 ---
 
 ## Documentation
 
+- **[ROADMAP.md](ROADMAP.md)** — Consolidated roadmap: planned harnesses, framework features, failure-class coverage, ClawBio skill inventory
 - **[docs/methodology.md](docs/methodology.md)** — Audit methodology and rubric design
 - **[docs/ground-truth-derivation.md](docs/ground-truth-derivation.md)** — How reference values are computed per harness
 - **[docs/baseline-schema.md](docs/baseline-schema.md)** — Fields consumed by the baseline diff renderer
