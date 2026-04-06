@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   improvement, initializes on first run, handles corrupt baselines.
 - **`scripts/post_summary.py` with multi-model LLM swarm.** `--llm
   openrouter` fans out to 3 analyst models (deepseek-v3.2-exp,
-  minimax-m2.7, qwen3-coder), synthesizes via mimo-v2-pro with number
+  minimax-m2.7, gpt-5-nano), synthesizes via mimo-v2-pro with number
   verification. Thinking-model aware (extracts `reasoning` when `content`
   is null). Consolidated daily reports (`--log-dir`) with 4 sections:
   audit digest, ClawBio git diff analysis (`--clawbio-repo`),

@@ -1420,7 +1420,7 @@ every morning at 8 AM UTC against ClawBio HEAD:
    delta stays visible.
 4. **Notification** — a one-paragraph digest posted to a webhook
    (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
-   LLM swarm (mimo, minimax-m2.7, deepseek) independently analyzes
+   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
    the findings, then Haiku 4.5 synthesizes a narrative digest with
    number verification against the structured source.
 5. **Regression issue** — a deduplicated GitHub issue opens

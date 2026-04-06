@@ -148,7 +148,7 @@ def build_digest(
 DEFAULT_ANALYST_MODELS = [
     "deepseek/deepseek-v3.2-exp",
     "minimax/minimax-m2.7",
-    "qwen/qwen3-coder",
+    "openai/gpt-5-nano",
 ]
 
 # Synthesizer fuses analyst perspectives into a final narrative.
