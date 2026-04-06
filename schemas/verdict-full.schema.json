@@ -2,7 +2,7 @@
   "$defs": {
     "FullTestCaseInfo": {
       "additionalProperties": false,
-      "description": "Test case metadata inside a fully-populated verdict.\n\n    Fields match what ``core.build_verdict_doc()`` writes: ``name`` is always\n    present, and the driver/payload SHA-256 pairs appear iff the corresponding\n    files existed at build time.",
+      "description": "Test case metadata inside a fully-populated verdict.\n\nFields match what ``core.build_verdict_doc()`` writes: ``name`` is always\npresent, and the driver/payload SHA-256 pairs appear iff the corresponding\nfiles existed at build time.",
       "properties": {
         "driver": {
           "anyOf": [
@@ -60,7 +60,7 @@
     },
     "FullVerdictDoc": {
       "additionalProperties": false,
-      "description": "The complete shape emitted by ``core.build_verdict_doc()``.\n\n    ``forbid_unknown_fields=True`` means unknown keys raise\n    ``msgspec.ValidationError``, catching schema drift immediately. Harness-\n    specific data lives inside the flexible dict fields (``ground_truth``,\n    ``outputs``, ``report_analysis``, ``environment``).",
+      "description": "The complete shape emitted by ``core.build_verdict_doc()``.\n\n``forbid_unknown_fields=True`` means unknown keys raise\n``msgspec.ValidationError``, catching schema drift immediately. Harness-\nspecific data lives inside the flexible dict fields (``ground_truth``,\n``outputs``, ``report_analysis``, ``environment``).",
       "properties": {
         "benchmark_name": {
           "type": "string"
@@ -133,7 +133,7 @@
       "type": "object"
     },
     "VerdictInfo": {
-      "description": "The ``verdict`` sub-document.\n\n    Category is a free-form string at this layer; allowlist enforcement lives\n    in ``core.validate_verdict_schema`` because the allowed set depends on\n    which harness emitted the verdict. ``details`` is an open dict because\n    harnesses embed heterogeneous scoring data here.",
+      "description": "The ``verdict`` sub-document.\n\nCategory is a free-form string at this layer; allowlist enforcement lives\nin ``core.validate_verdict_schema`` because the allowed set depends on\nwhich harness emitted the verdict. ``details`` is an open dict because\nharnesses embed heterogeneous scoring data here.",
       "properties": {
         "category": {
           "type": "string"
