@@ -277,9 +277,9 @@ def test_rationale_newlines_are_collapsed(tmp_path: Path):
     md = render_markdown_report(rdir)
 
     # The finding appears in both the summary bullet list and the per-test
-    # breakdown — at least one line must contain the collapsed rationale.
+    # breakdown — require at least two lines to validate both render paths.
     finding_lines = [line for line in md.splitlines() if "routed_wrong" in line]
-    assert len(finding_lines) >= 1
+    assert len(finding_lines) >= 2
     # Content is present but newlines and workflow commands are flattened into
     # the same bullet line (no standalone `::warning::` line).
     assert any("first line second line" in fl for fl in finding_lines)
