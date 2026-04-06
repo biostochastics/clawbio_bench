@@ -62,6 +62,10 @@ ui = ["rich>=13.0"]
 # its own interpreter, so numpy is ONLY required for users who run the
 # fine-mapping harness. clawbio_bench.* itself never imports numpy.
 finemapping = ["numpy>=1.26", "pandas>=2.0"]
+all = [
+    "clawbio-bench[viz,ui,finemapping]",
+    "scikit-learn>=1.4",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.4",

@@ -1,0 +1,252 @@
+name: Daily ClawBio Audit
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # 8 AM UTC daily
+  workflow_dispatch:       # manual trigger
+
+permissions:
+  contents: write          # baseline commit + push
+  issues: write            # open regression issues
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout ClawBio HEAD
+        uses: actions/checkout@v4
+        with:
+          repository: ClawBio/ClawBio
+          path: clawbio
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install bench
+        run: pip install -e ".[all,dev]"
+
+      # ── Run smoke suite against ClawBio HEAD ──
+      - name: Run smoke suite
+        id: smoke
+        run: |
+          set +e
+          clawbio-bench --smoke \
+            --repo clawbio \
+            --output results/today/ \
+            --allow-dirty \
+            --no-rich
+          exit_code=$?
+          set -e
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+          # exit >= 2 = harness crash (infra broken), fail the step
+          if [ $exit_code -ge 2 ]; then exit $exit_code; fi
+
+      - name: Verify artifacts generated
+        run: |
+          test -f results/today/aggregate_report.json
+
+      # ── Delta report (markdown) ──
+      - name: Generate markdown delta report
+        run: |
+          if [ -f baselines/latest_baseline.json ]; then
+            clawbio-bench --render-markdown results/today/ \
+              --baseline baselines/latest_baseline.json \
+              --markdown-output results/today/report.md \
+              --no-rich
+          else
+            clawbio-bench --render-markdown results/today/ \
+              --markdown-output results/today/report.md \
+              --no-rich
+          fi
+
+      # ── Delta report (PDF via Typst) ──
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
+      - name: Generate PDF report
+        run: |
+          if [ -f baselines/latest_baseline.json ]; then
+            python scripts/generate_report.py results/today/ \
+              --baseline baselines/latest_baseline.json \
+              --output results/today/report.pdf
+          else
+            python scripts/generate_report.py results/today/ \
+              --output results/today/report.pdf
+          fi
+
+      # ── Baseline management ──
+      - name: Update baseline if improved
+        run: |
+          python scripts/update_baseline.py \
+            --current results/today/ \
+            --baseline baselines/latest_baseline.json
+
+      - name: Commit baseline if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add baselines/latest_baseline.json
+          if git diff --cached --quiet; then
+            echo "Baseline unchanged, nothing to commit."
+          else
+            RATE=$(python -c "
+          import json, sys
+          d = json.load(open('baselines/latest_baseline.json'))
+          print(d.get('overall',{}).get('total_pass_rate',0))
+          ")
+            COMMIT=$(python -c "
+          import json
+          d = json.load(open('baselines/latest_baseline.json'))
+          print(d.get('clawbio_commit','unknown'))
+          ")
+            git commit -m "baseline: ${RATE}% at ClawBio ${COMMIT}"
+            git push
+          fi
+
+      # ── Upload artifacts ──
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-audit-${{ github.run_id }}
+          path: |
+            results/today/aggregate_report.json
+            results/today/report.md
+            results/today/report.pdf
+          retention-days: 90
+
+      - name: Upload full verdicts
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-verdicts-${{ github.run_id }}
+          path: results/today/
+          retention-days: 30
+
+      # ── Daily digest + log + investigation ──
+      - name: Generate daily digest and log
+        if: always() && steps.smoke.outcome != 'skipped'
+        env:
+          NOTIFICATION_WEBHOOK: ${{ secrets.NOTIFICATION_WEBHOOK }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          ARGS="--results results/today/ --log-dir baselines/log"
+          if [ -f baselines/latest_baseline.json ]; then
+            ARGS="$ARGS --baseline baselines/latest_baseline.json"
+          fi
+          # Enable LLM swarm if OpenRouter key is configured
+          if [ -n "$OPENROUTER_API_KEY" ]; then
+            ARGS="$ARGS --llm openrouter --investigate --self-changelog --clawbio-repo clawbio"
+          fi
+          # Weekly summary on Mondays (day 1)
+          if [ "$(date -u +%u)" = "1" ]; then
+            ARGS="$ARGS --weekly"
+          fi
+          # Monthly summary on the 1st
+          if [ "$(date -u +%d)" = "01" ]; then
+            ARGS="$ARGS --monthly"
+          fi
+          if [ -n "$NOTIFICATION_WEBHOOK" ]; then
+            python scripts/post_summary.py $ARGS --webhook "$NOTIFICATION_WEBHOOK"
+          else
+            python scripts/post_summary.py $ARGS
+          fi
+
+      - name: Commit log files
+        if: always() && steps.smoke.outcome != 'skipped'
+        run: |
+          git add baselines/log/ || true
+          if ! git diff --cached --quiet; then
+            git commit -m "audit log: $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      # ── Open issue on regression ──
+      - name: Open issue on regression
+        if: steps.smoke.outputs.exit_code == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = 'Daily audit detected findings. See workflow artifacts for the delta report.';
+            try {
+              const agg = JSON.parse(fs.readFileSync('results/today/aggregate_report.json', 'utf8'));
+              const overall = agg.overall || {};
+              const rate = overall.total_pass_rate || 0;
+              const commit = agg.clawbio_commit || 'unknown';
+              const blocking = (overall.blocking_skills || []).join(', ') || 'none';
+              body = [
+                `**Daily audit:** ${overall.total_pass || 0}/${overall.total_evaluated || 0} (${rate}%)`,
+                `**ClawBio commit:** \`${commit}\``,
+                `**Blocking harnesses:** ${blocking}`,
+                '',
+                `See [workflow run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) for full artifacts.`,
+              ].join('\n');
+            } catch (e) {
+              // fall back to generic body
+            }
+
+            // Check if an open regression issue already exists today
+            const today = new Date().toISOString().split('T')[0];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'regression,automated',
+              state: 'open',
+            });
+            const alreadyOpen = existing.data.some(i => i.title.includes(today));
+            if (alreadyOpen) {
+              console.log('Regression issue for today already exists, skipping.');
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Regression detected: ${today}`,
+              body: body,
+              labels: ['regression', 'automated'],
+            });
+
+  # ── Watch-commits mode: per-commit attribution on regression ──
+  regression-sweep:
+    needs: [audit]
+    if: always() && (needs.audit.result == 'success' || needs.audit.result == 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout ClawBio (full history)
+        uses: actions/checkout@v4
+        with:
+          repository: ClawBio/ClawBio
+          path: clawbio
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - run: pip install -e ".[all,dev]"
+
+      - name: Regression sweep (last 5 commits)
+        run: |
+          set +e
+          clawbio-bench --regression-window 5 \
+            --repo clawbio \
+            --output results/regression/ \
+            --allow-dirty \
+            --no-rich
+          exit_code=$?
+          set -e
+          if [ $exit_code -ge 2 ]; then exit $exit_code; fi
+
+      - name: Upload regression artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-sweep-${{ github.run_id }}
+          path: results/regression/
+          retention-days: 90

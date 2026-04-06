@@ -5,72 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-- **Daily automated audit workflow.** New `.github/workflows/daily-audit.yml`
-  cron-scheduled workflow (8 AM UTC daily, plus `workflow_dispatch`) that:
-  - Checks out ClawBio HEAD and runs the full smoke suite.
-  - Generates markdown and PDF (Typst) delta reports against a rolling
-    baseline.
-  - Conditionally updates the committed baseline when pass rate improves
-    (never on regression).
-  - Uploads audit artifacts (reports + full verdicts) with 90/30-day
-    retention.
-  - Posts a one-paragraph digest to a configurable webhook
-    (Slack/Discord compatible) via `scripts/post_summary.py`.
-  - Opens a deduplicated GitHub issue on regression detection.
-  - Runs a secondary regression-sweep job (last 5 commits) for
-    per-commit attribution of new findings.
-- **`scripts/update_baseline.py`.** Baseline manager: compares current
-  run pass rate to stored baseline, promotes on strict improvement,
-  initializes on first run, and handles corrupt baselines gracefully.
-- **`scripts/post_summary.py`.** Notification script: reads
-  `aggregate_report.json` (with optional baseline delta), builds a
-  concise digest, and POSTs to a webhook URL. Supports `--dry-run`.
-- **`[all]` optional extra** in `pyproject.toml` — combines `viz`, `ui`,
-  `finemapping`, and `scikit-learn` for CI convenience. scikit-learn is
-  needed at runtime because the smoke suite executes ClawBio's equity
-  scorer, which imports it.
-- **MTHFR PharmGx test cases (3 tests).** `mthfr_677tt_methotrexate`,
-  `mthfr_677cc_normal`, `mthfr_677ct_het`. Tests enzyme-activity reporting
-  accuracy and honesty: MTHFR has no CPIC guideline (DPWG found
-  insufficient evidence, PMC10853275); ACMG explicitly discourages testing
-  (PMID 23288205). Tools must not fabricate CPIC guidance, recommend MTX
-  dose changes, use CYP metabolizer terminology, or label as thrombophilia.
-  Added `DPWG_MTHFR` reference to `GROUND_TRUTH_REFS`.
-- **SuSiE-inf fine-mapping test cases (4 tests).** `fm_17` through `fm_20`
-  covering the infinitesimal background model (Cui et al. 2023, Nat Genet):
-  polygenic background absorption (fm_17), null-locus MoM fallback (fm_18),
-  sparse-only consistency with standard SuSiE (fm_19), and `est_tausq`
-  activation guard (fm_20). Added `CUI_2023` reference to `GROUND_TRUTH_REFS`.
-- **`susie_inf` method in finemapping driver.** New `_run_susie_inf()`
-  runner in `drivers/finemapping_driver.py` that imports ClawBio's
-  `core.susie_inf.run_susie_inf()` and passes SuSiE-inf-specific
-  parameters (tausq, meansq, sigmasq, est_sigmasq, est_ssq). Gracefully
-  handles pre-SuSiE-inf commits (module absent → `import_error` status).
-- **Consolidated `ROADMAP.md`.** Standalone roadmap document replacing
-  the inline README roadmap section. Tracks all planned harnesses (P1–P3),
-  framework features, audit-framework failure-class coverage matrix, full
-  ClawBio skill inventory (47 skills), incoming skills from open PRs,
-  and collaboration context. README Roadmap section now summarizes and
-  points to the full document.
-
-### Fixed
-
-- **Finemapping harness: method-level ImportError handling.** When a
-  SuSiE-inf test case runs against a pre-SuSiE-inf commit (driver returns
-  `status="raised"` with `ImportError`), the harness now correctly returns
-  `edge_handled` instead of falling through to PIP/convergence comparisons
-  against null values. Fixes spurious `pip_value_incorrect` and false
-  `finemap_correct` verdicts on longitudinal sweeps spanning the SuSiE-inf
-  introduction commit.
-
 ## [0.1.2] — 2026-04-06
 
 ### Added
 
+- **Daily automated audit workflow.** `.github/workflows/daily-audit.yml`
+  cron (8 AM UTC daily + `workflow_dispatch`): smoke suite against ClawBio
+  HEAD, markdown + PDF delta reports, baseline promotion on improvement,
+  artifact upload (90/30-day retention), deduplicated regression issues,
+  per-commit attribution via `--regression-window 5`.
+- **`scripts/update_baseline.py`.** Baseline manager: promotes on strict
+  improvement, initializes on first run, handles corrupt baselines.
+- **`scripts/post_summary.py` with multi-model LLM swarm.** `--llm
+  openrouter` fans out to 3 analyst models (deepseek-v3.2-exp,
+  minimax-m2.7, qwen3-coder), synthesizes via mimo-v2-pro with number
+  verification. Thinking-model aware (extracts `reasoning` when `content`
+  is null). Consolidated daily reports (`--log-dir`) with 4 sections:
+  audit digest, ClawBio git diff analysis (`--clawbio-repo`),
+  clawbio-bench self-changelog (`--self-changelog`), and coverage
+  investigation (`--investigate`). Final polish pass for coherence.
+  Weekly/monthly trend summaries (`--weekly`, `--monthly`). Graceful
+  degradation to structured digest on any failure.
+- **`[all]` optional extra** — combines `viz`, `ui`, `finemapping`, and
+  `scikit-learn` for CI.
 - **`--tagged-commits` CLI mode.** New commit-selection mode that runs
   benchmarks against only tagged (release / milestone) commits. Works
   with both lightweight and annotated git tags. Usage:
