@@ -193,6 +193,23 @@ class TestCommittedSchemas:
     def test_schemas_directory_exists(self):
         assert SCHEMAS_DIR.exists(), f"schemas/ directory missing: {SCHEMAS_DIR}"
 
+    @staticmethod
+    def _normalize_descriptions(obj: object) -> object:
+        """Collapse whitespace in 'description' fields so Python 3.11 vs 3.14
+        docstring indentation differences don't cause false drift failures."""
+        if isinstance(obj, dict):
+            return {
+                k: (
+                    " ".join(v.split())
+                    if k == "description" and isinstance(v, str)
+                    else TestCommittedSchemas._normalize_descriptions(v)
+                )
+                for k, v in obj.items()
+            }
+        if isinstance(obj, list):
+            return [TestCommittedSchemas._normalize_descriptions(v) for v in obj]
+        return obj
+
     def test_committed_schemas_match_generator(self):
         current = generate_json_schemas()
         for name, schema in current.items():
@@ -202,7 +219,11 @@ class TestCommittedSchemas:
                 f"Run `python scripts/gen_schemas.py` and commit."
             )
             committed = json.loads(path.read_text())
-            assert committed == schema, (
+            # Normalize description whitespace for cross-version compatibility
+            # (Python 3.14 changed inspect.cleandoc behavior for class docstrings).
+            norm_committed = self._normalize_descriptions(committed)
+            norm_schema = self._normalize_descriptions(schema)
+            assert norm_committed == norm_schema, (
                 f"Committed schema {path.name} drifted from Struct definition. "
                 f"Run `python scripts/gen_schemas.py` and commit."
             )
