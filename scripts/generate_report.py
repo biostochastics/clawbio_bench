@@ -537,7 +537,8 @@ def emit_rubric_table(heatmap: dict[str, Any] | None) -> str:
     rows: list[str] = []
     for cat in sorted(legend.keys()):
         entry = legend[cat] or {}
-        color_hex = entry.get("color", DEFAULT_UNKNOWN_COLOR)
+        raw_color = entry.get("color", DEFAULT_UNKNOWN_COLOR)
+        color_hex = raw_color if _HEX_COLOR_RE.match(str(raw_color)) else DEFAULT_UNKNOWN_COLOR
         label = entry.get("label", cat.replace("_", " "))
         # Swatch is a bare `box(...)` expression — cells in a code-mode
         # `#table(...)` call are expressions, not markup blocks. Wrapping
@@ -896,7 +897,7 @@ def emit_findings_section(h: dict[str, Any]) -> str:
     failing = [v for v in verdicts if is_failing(v, pass_categories)]
     fail_categories = set(entry.get("fail_categories") or [])
 
-    def _severity_key(v: dict[str, Any]) -> tuple[int, str, str]:
+    def _severity_key(v: dict[str, Any]) -> tuple[int, str, str, str]:
         cat = v.get("verdict", {}).get("category", "zzz")
         if cat in fail_categories:
             tier = 0
@@ -906,7 +907,14 @@ def emit_findings_section(h: dict[str, Any]) -> str:
             tier = 1  # warning tier (non-pass, non-fail)
         else:
             tier = 2  # unknown / fallback
-        return (tier, v.get("test_case", {}).get("name", ""), v.get("commit", {}).get("short", ""))
+        # Include category in sort key so same-category findings are contiguous
+        # (required for the collapse-into-table logic to work correctly).
+        return (
+            tier,
+            cat,
+            v.get("test_case", {}).get("name", ""),
+            v.get("commit", {}).get("short", ""),
+        )
 
     failing.sort(key=_severity_key)
 

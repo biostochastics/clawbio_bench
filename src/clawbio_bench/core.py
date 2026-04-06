@@ -1496,12 +1496,17 @@ def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
         for c in raw:
             c = validate_commit_sha(c)
             if c == "HEAD":
-                result = subprocess.run(
-                    ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
+                try:
+                    result = subprocess.run(
+                        ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise BenchmarkConfigError("Timed out resolving HEAD commit") from exc
+                if result.returncode != 0 or not result.stdout.strip():
+                    raise BenchmarkConfigError(f"Failed to resolve HEAD: {result.stderr.strip()}")
                 c = result.stdout.strip()
             commits.append(c)
         return commits
@@ -1841,8 +1846,10 @@ def verify_verdict_file(verdict_path: Path) -> tuple[bool, str]:
 def save_execution_logs(execution: ExecutionResult, output_dir: Path) -> None:
     """Save stdout.log and stderr.log."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "stdout.log").write_text(execution.stdout, encoding="utf-8")
-    (output_dir / "stderr.log").write_text(execution.stderr, encoding="utf-8")
+    # Write as raw UTF-8 bytes so on-disk content matches hashed payload
+    # exactly — write_text() can normalize newlines on Windows.
+    (output_dir / "stdout.log").write_bytes(execution.stdout.encode("utf-8"))
+    (output_dir / "stderr.log").write_bytes(execution.stderr.encode("utf-8"))
 
 
 def verify_results_directory(results_dir: Path) -> tuple[int, int, list[str]]:

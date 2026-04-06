@@ -57,12 +57,14 @@ jobs:
           git -C /tmp/ClawBio checkout $CLAWBIO_REF
       - name: Run smoke benchmarks
         # Exit 0 or 1 are both valid (1 = findings exist, expected for ClawBio)
-        # Only exit >= 2 indicates a harness crash
+        # Only exit >= 2 indicates a harness crash.
+        # set +e prevents bash -e from aborting on exit 1 before we can check.
         run: |
+          set +e
           clawbio-bench --smoke --repo /tmp/ClawBio --output /tmp/results --allow-dirty
           exit_code=$?
+          set -e
           if [ $exit_code -ge 2 ]; then exit $exit_code; fi
-          exit 0
       - name: Verify artifacts generated
         run: |
           test -f /tmp/results/bio-orchestrator/manifest.json

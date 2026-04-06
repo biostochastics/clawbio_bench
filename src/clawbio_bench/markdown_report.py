@@ -295,6 +295,9 @@ def _render_detailed_finding(f: dict[str, str], index: int) -> str:
     derivation = f.get("derivation", "")
     if derivation:
         parts.append(f"  - **Derivation:** {_sanitize_rationale(derivation)}")
+    finding_category = f.get("finding_category", "")
+    if finding_category:
+        parts.append(f"  - **Finding category:** `{html.escape(finding_category, quote=False)}`")
     # Legacy clinical fields (pharmgx, equity harnesses)
     hazard_drug = f.get("hazard_drug", "")
     hazard_class = f.get("hazard_class", "")
