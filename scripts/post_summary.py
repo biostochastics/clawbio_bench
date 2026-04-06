@@ -604,13 +604,23 @@ def _read_month_files(log_dir: Path, year: int, month: int) -> list[tuple[str, s
     return entries
 
 
+def _extract_overall_rate(content: str) -> float | None:
+    """Extract the overall pass rate from a structured digest line.
+
+    Matches the specific pattern "NN/NN (XX.X%)" from the structured
+    digest header, not arbitrary percentages from narrative text.
+    """
+    m = re.search(r"\d+/\d+\s+\((\d+\.?\d*)%\)", content)
+    return float(m.group(1)) if m else None
+
+
 def _build_aggregate_summary(entries: list[tuple[str, str]]) -> str:
     """Structured summary from daily entries (no LLM)."""
     rates: list[float] = []
     for _, content in entries:
-        m = re.search(r"\((\d+\.?\d*)%\)", content)
-        if m:
-            rates.append(float(m.group(1)))
+        rate = _extract_overall_rate(content)
+        if rate is not None:
+            rates.append(rate)
     parts = [f"{len(entries)} daily runs."]
     if rates:
         avg = sum(rates) / len(rates)
@@ -796,8 +806,9 @@ def write_daily_log(
                 api_key,
                 temperature=0.1,
             )
-            # Verify the polish didn't mangle numbers
-            if _verify_numbers(polished, structured, {}):
+            # Verify against the full draft (not just structured) since
+            # the polished text includes numbers from all sections.
+            if _verify_numbers(polished, draft, {}):
                 draft = polished
                 print("  Log: final polish applied.", file=sys.stderr)
             else:
@@ -868,7 +879,10 @@ def write_monthly_log(
         print(f"  Log: no entries for {month_label}, skipping monthly.", file=sys.stderr)
         return None
 
-    structured = _build_aggregate_summary(entries)
+    # Use only daily entries for structured stats (weekly entries would
+    # double-count and distort averages/ranges).
+    daily_only = [(d, c) for d, c in entries if not d.startswith("weekly/")]
+    structured = _build_aggregate_summary(daily_only)
     narrative = None
     if api_key:
         narrative = _llm_aggregate(entries, MONTHLY_SYSTEM_PROMPT, api_key, synthesizer)

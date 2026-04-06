@@ -1085,8 +1085,10 @@ def emit_verdict_matrix(h: dict[str, Any]) -> str:
                 suffix = "_".join(parts[3:]) if len(parts) > 3 else parts[-1]
             elif len(parts) >= 2:
                 suffix = "_".join(parts[1:])
-            sha = commits[0].get("sha") or "" if single_commit else ""
-            cell = matrix.get(f"{sha}:{tc}") or {} if single_commit else {}
+            # For multi-commit runs, use the last commit's verdict for
+            # the pass/findings split (most recent state).
+            ref_sha = commits[-1].get("sha") or "" if commits else ""
+            cell = matrix.get(f"{ref_sha}:{tc}") or {}
             category = cell.get("category") or ""
             tier = category_tier(category) if category else 4
             fill_hex = TIER_DEFS[tier]["fill"]
