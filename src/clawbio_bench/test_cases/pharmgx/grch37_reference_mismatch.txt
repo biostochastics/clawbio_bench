@@ -2,12 +2,16 @@
 # GROUND_TRUTH_PHENOTYPE: CYP2D6 Indeterminate (reference genome mismatch)
 # GROUND_TRUTH_BEHAVIOR: Negative control for reference genome handling.
 #   This input uses GRCh37/hg19 coordinates for CYP2D6 variants. Specifically,
-#   rs3892097 is at chr22:42524947 (GRCh38) vs chr22:42522612 (GRCh37).
-#   If the tool expects GRCh38 coordinates but the header declares GRCh37,
-#   the tool must either (a) handle the coordinate difference correctly via
-#   rsid lookup (which is coordinate-independent), OR (b) explicitly reject
-#   or flag the mismatch. Silently interpreting GRCh37 positions as GRCh38
-#   would be a correctness failure — it could assign variants to wrong genes.
+#   rs3892097 is at chr22:42128945 (GRCh38) vs chr22:42524947 (GRCh37) —
+#   a ~396kb shift between assemblies due to the chromosome 22 centromere
+#   model revision. If the tool expects GRCh38 coordinates but the header
+#   declares GRCh37, the tool must either (a) handle the coordinate difference
+#   correctly via rsid lookup (which is coordinate-independent), OR (b)
+#   explicitly reject or flag the mismatch. Silently interpreting GRCh37
+#   positions as GRCh38 would place rs3892097 ~396kb from CYP2D6's actual
+#   GRCh38 locus — a correctness failure that could assign variants to wrong
+#   genes. Coordinate source: Ensembl GRCh37/GRCh38 REST API, accessed
+#   2026-04-05.
 # EXPECTED_TOOL_OUTPUT: Tool either correctly processes rsids (ignoring position
 #   for coordinate-independent matching) OR warns/errors that input reference
 #   does not match expected reference genome.

@@ -144,7 +144,10 @@ def _sanitize_rationale(raw: str) -> str:
     return html.escape(collapsed, quote=False)
 
 
-def _summary_table(aggregate: dict[str, Any]) -> list[str]:
+def _summary_table(
+    aggregate: dict[str, Any],
+    harness_filter: str | None = None,
+) -> list[str]:
     """Per-harness pass/fail table with a totals row. Harnesses sorted by name."""
     lines = [
         "| Harness | Pass | Fail | Harness errors | Rate |",
@@ -152,31 +155,38 @@ def _summary_table(aggregate: dict[str, Any]) -> list[str]:
     ]
     harnesses = aggregate.get("harnesses") or {}
     for name in sorted(harnesses.keys()):
+        if harness_filter and name != harness_filter:
+            continue
         data = harnesses[name] or {}
         evaluated = data.get("evaluated", 0)
         passed = data.get("pass_count", 0)
         failed = data.get("fail_count", 0)
         herr = data.get("harness_errors", 0)
         rate = _fmt_pct(data.get("pass_rate", 0.0))
-        lines.append(f"| `{name}` | {passed}/{evaluated} | {failed} | {herr} | {rate} |")
+        esc_name = html.escape(name, quote=False)
+        lines.append(f"| `{esc_name}` | {passed}/{evaluated} | {failed} | {herr} | {rate} |")
 
-    overall = aggregate.get("overall") or {}
-    total_pass = overall.get("total_pass", 0)
-    total_eval = overall.get("total_evaluated", 0)
-    total_fail = total_eval - total_pass
-    total_herr = overall.get("total_harness_errors", 0)
-    total_rate = _fmt_pct(overall.get("total_pass_rate", 0.0))
-    lines.append(
-        f"| **total** | **{total_pass}/{total_eval}** | **{total_fail}** | "
-        f"**{total_herr}** | **{total_rate}** |"
-    )
+    if not harness_filter:
+        overall = aggregate.get("overall") or {}
+        total_pass = overall.get("total_pass", 0)
+        total_eval = overall.get("total_evaluated", 0)
+        total_fail = total_eval - total_pass
+        total_herr = overall.get("total_harness_errors", 0)
+        total_rate = _fmt_pct(overall.get("total_pass_rate", 0.0))
+        lines.append(
+            f"| **total** | **{total_pass}/{total_eval}** | **{total_fail}** | "
+            f"**{total_herr}** | **{total_rate}** |"
+        )
     return lines
 
 
 def _render_finding(f: dict[str, str]) -> str:
     rationale = _sanitize_rationale(f.get("rationale", ""))
     suffix = f" — {rationale}" if rationale else ""
-    return f"- **`{f['harness']}` / `{f['test']}`** — `{f['category']}`{suffix}"
+    h = html.escape(f["harness"], quote=False)
+    t = html.escape(f["test"], quote=False)
+    c = html.escape(f["category"], quote=False)
+    return f"- **`{h}` / `{t}`** — `{c}`{suffix}"
 
 
 def _details_block(
@@ -206,11 +216,206 @@ def _details_block(
     return out
 
 
+def _category_breakdown(aggregate: dict[str, Any], harness_filter: str | None = None) -> list[str]:
+    """Per-harness category breakdown tables."""
+    lines: list[str] = []
+    harnesses = aggregate.get("harnesses") or {}
+    for name in sorted(harnesses.keys()):
+        if harness_filter and name != harness_filter:
+            continue
+        data = harnesses[name] or {}
+        cats = data.get("categories") or {}
+        if not cats:
+            continue
+        lines.append(f"**`{name}`** category breakdown:")
+        lines.append("")
+        lines.append("| Category | Count |")
+        lines.append("|---|---:|")
+        for cat in sorted(cats.keys()):
+            lines.append(f"| `{cat}` | {cats[cat]} |")
+        lines.append("")
+    return lines
+
+
+def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
+    """Derive severity tiers from the aggregate's pass/fail category lists.
+
+    Tier 0 = FAIL_CATEGORIES (red — correctness/safety failures)
+    Tier 1 = any non-pass, non-fail category that isn't harness_error (orange — warnings)
+    Tier 2 = harness_error (infrastructure)
+    Tier 3 = unknown/unclassified
+
+    This replaces a hardcoded category-to-tier dict, ensuring new harnesses
+    and categories sort correctly without code changes.
+    """
+    severity: dict[str, int] = {"harness_error": 2}
+    harnesses = aggregate.get("harnesses") or {}
+    for harness_data in harnesses.values():
+        if not isinstance(harness_data, dict):
+            continue
+        fail_cats = set(harness_data.get("fail_categories") or [])
+        pass_cats = set(harness_data.get("pass_categories") or [])
+        for cat in fail_cats:
+            severity.setdefault(cat, 0)
+        # Non-pass, non-fail categories that appear in the results are
+        # warnings (tier 1). We derive them from the actual category counts.
+        for cat in harness_data.get("categories") or {}:
+            if cat not in fail_cats and cat not in pass_cats and cat != "harness_error":
+                severity.setdefault(cat, 1)
+    return severity
+
+
+def _severity_key(
+    f: dict[str, str],
+    severity_map: dict[str, int],
+) -> tuple[int, str, str]:
+    return (
+        severity_map.get(f.get("category", ""), 3),
+        f.get("harness", ""),
+        f.get("test", ""),
+    )
+
+
+def _render_detailed_finding(f: dict[str, str], index: int) -> str:
+    """Render a single finding with clinical context for the detailed breakdown."""
+    h = html.escape(f["harness"], quote=False)
+    t = html.escape(f["test"], quote=False)
+    c = html.escape(f["category"], quote=False)
+    parts = [f"**{index}. `{h}` / `{t}`** — `{c}`"]
+    rationale = _sanitize_rationale(f.get("rationale", ""))
+    if rationale:
+        parts.append(f"  - **Rationale:** {rationale}")
+    # Surface ground-truth context if available
+    finding = f.get("finding", "")
+    if finding:
+        parts.append(f"  - **Finding:** {html.escape(finding, quote=False)}")
+    hazard_metric = f.get("hazard_metric", "")
+    if hazard_metric:
+        parts.append(f"  - **Hazard metric:** {_sanitize_rationale(hazard_metric)}")
+    derivation = f.get("derivation", "")
+    if derivation:
+        parts.append(f"  - **Derivation:** {_sanitize_rationale(derivation)}")
+    finding_category = f.get("finding_category", "")
+    if finding_category:
+        parts.append(f"  - **Finding category:** `{html.escape(finding_category, quote=False)}`")
+    # Legacy clinical fields (pharmgx, equity harnesses)
+    hazard_drug = f.get("hazard_drug", "")
+    hazard_class = f.get("hazard_class", "")
+    if hazard_drug:
+        drug_line = f"  - **Hazard drug:** {html.escape(hazard_drug, quote=False)}"
+        if hazard_class:
+            drug_line += f" ({html.escape(hazard_class, quote=False)})"
+        parts.append(drug_line)
+    target_gene = f.get("target_gene", "")
+    if target_gene:
+        parts.append(f"  - **Target gene:** {html.escape(target_gene, quote=False)}")
+    return "\n".join(parts)
+
+
+def _extract_detailed_findings(
+    aggregate: dict[str, Any],
+    harness_filter: str | None = None,
+    results_dir: Path | None = None,
+) -> list[dict[str, str]]:
+    """Extract findings with clinical ground-truth metadata from verdicts.
+
+    When ``results_dir`` is available, loads ``all_verdicts.json`` per harness
+    to pull ground-truth fields (FINDING, HAZARD_DRUG, TARGET_GENE, etc.)
+    into each finding entry. Falls back to the aggregate
+    ``critical_failures`` list when per-verdict data is not available.
+    """
+    # Build a lookup from all_verdicts.json if the results directory exists.
+    # Keyed by (harness_name, test_name) → ground_truth dict.
+    # Skip enrichment for multi-commit runs: the same (hname, tname) pair can
+    # appear at multiple commits and the last one would win silently — the MD
+    # renderer already warns about multi-commit mode being unreliable for diffs.
+    gt_lookup: dict[tuple[str, str], dict[str, str]] = {}
+    is_multi = _is_multi_commit(aggregate)
+    if results_dir is not None and not is_multi:
+        results_dir = results_dir.resolve()
+        harnesses = aggregate.get("harnesses") or {}
+        for hname in harnesses:
+            if harness_filter and hname != harness_filter:
+                continue
+            verdicts_path = results_dir / hname / "all_verdicts.json"
+            if not verdicts_path.exists():
+                continue
+            try:
+                with open(verdicts_path, encoding="utf-8") as f:
+                    vlist = json.load(f)
+            except (OSError, json.JSONDecodeError):
+                continue
+            for v in vlist:
+                tname = v.get("test_case", {}).get("name", "")
+                gt = v.get("ground_truth") or {}
+                if tname:
+                    gt_lookup[(hname, tname)] = gt
+
+    findings: list[dict[str, str]] = []
+    harnesses = aggregate.get("harnesses") or {}
+    for harness_name in sorted(harnesses.keys()):
+        if harness_filter and harness_name != harness_filter:
+            continue
+        harness_data = harnesses[harness_name] or {}
+        for cf in harness_data.get("critical_failures") or []:
+            test_name = cf.get("test") or "unknown"
+            entry: dict[str, str] = {
+                "harness": harness_name,
+                "test": test_name,
+                "category": cf.get("category") or "unknown",
+                "rationale": (cf.get("rationale") or "").strip(),
+            }
+            # Enrich from ground truth if available
+            gt = gt_lookup.get((harness_name, test_name)) or {}
+            gt_map = {
+                "finding": "FINDING",
+                "hazard_metric": "HAZARD_METRIC",
+                "derivation": "DERIVATION",
+                "finding_category": "FINDING_CATEGORY",
+                # Legacy keys for harnesses using the clinical schema
+                "hazard_drug": "HAZARD_DRUG",
+                "hazard_class": "HAZARD_CLASS",
+                "target_gene": "TARGET_GENE",
+            }
+            for out_key, gt_key in gt_map.items():
+                val = gt.get(gt_key) or cf.get(out_key)
+                if val:
+                    entry[out_key] = str(val)
+            findings.append(entry)
+    severity_map = _build_severity_map(aggregate)
+    findings.sort(key=lambda f: _severity_key(f, severity_map))
+    return findings
+
+
+def _detailed_findings_block(
+    findings: list[dict[str, str]],
+    title: str = "Detailed findings",
+    open_: bool = True,
+    cap: int | None = None,
+) -> list[str]:
+    """Render a ``<details>`` section with per-finding clinical context."""
+    if not findings:
+        return []
+    open_attr = " open" if open_ else ""
+    out = [f"<details{open_attr}><summary>{title} ({len(findings)})</summary>", ""]
+    shown = findings if cap is None or len(findings) <= cap else findings[:cap]
+    for i, f in enumerate(shown, 1):
+        out.append(_render_detailed_finding(f, i))
+        out.append("")
+    if cap is not None and len(findings) > cap:
+        remaining = len(findings) - cap
+        out.append(f"_+{remaining} more — see the full verdicts artifact_")
+        out.append("")
+    out.append("</details>")
+    return out
+
+
 def render_markdown_report(
     results_dir: Path,
     baseline: Path | None = None,
     artifact_url: str | None = None,
     repo_url: str = "https://github.com/biostochastics/clawbio_bench",
+    harness_filter: str | None = None,
 ) -> str:
     """Render a PR-comment-ready markdown report.
 
@@ -222,6 +427,8 @@ def render_markdown_report(
         artifact_url: Optional URL to the full verdicts artifact (e.g. the
             GitHub Actions artifact URL). Rendered in the footer.
         repo_url: Link back to the benchmark repository.
+        harness_filter: If set, render only the named harness (by its
+            benchmark name, e.g. ``"pharmgx-reporter"``).
 
     Returns:
         A single markdown string. The first line is the sticky marker comment
@@ -245,6 +452,15 @@ def render_markdown_report(
 
     current_findings = _extract_findings(current)
     baseline_findings = _extract_findings(baseline_data) if baseline_data else []
+    # Detailed findings with clinical context, severity-sorted.
+    # Pass results_dir so ground-truth metadata can be loaded from verdicts.
+    source_dir = results_dir.resolve() if results_dir.is_dir() else results_dir.parent.resolve()
+    detailed_findings = _extract_detailed_findings(current, harness_filter, results_dir=source_dir)
+
+    # Apply harness_filter to the diff sets too
+    if harness_filter:
+        current_findings = [f for f in current_findings if f["harness"] == harness_filter]
+        baseline_findings = [f for f in baseline_findings if f["harness"] == harness_filter]
 
     current_keys = {_finding_key(f): f for f in current_findings}
     baseline_keys = {_finding_key(f): f for f in baseline_findings}
@@ -257,9 +473,16 @@ def render_markdown_report(
     resolved_findings = [baseline_keys[k] for k in resolved_keys]
     unchanged_findings = [current_keys[k] for k in unchanged_keys]
 
-    overall = current.get("overall") or {}
-    overall_pass = bool(overall.get("pass"))
-    total_harness_errors = int(overall.get("total_harness_errors") or 0)
+    # When harness_filter is active, derive status from the filtered harness
+    # instead of the aggregate-level overall (which covers all harnesses).
+    if harness_filter:
+        h_data = (current.get("harnesses") or {}).get(harness_filter) or {}
+        overall_pass = bool(h_data.get("pass"))
+        total_harness_errors = int(h_data.get("harness_errors") or 0)
+    else:
+        overall = current.get("overall") or {}
+        overall_pass = bool(overall.get("pass"))
+        total_harness_errors = int(overall.get("total_harness_errors") or 0)
     # Three distinct status states matter in a PR comment:
     #   PASS             — everything green
     #   FINDINGS         — expected advisory state (exit 1)
@@ -280,7 +503,10 @@ def render_markdown_report(
 
     # ---- assemble ----
     lines: list[str] = [STICKY_MARKER, ""]
-    lines.append("## clawbio-bench audit")
+    title = "clawbio-bench audit"
+    if harness_filter:
+        title += f" — `{harness_filter}`"
+    lines.append(f"## {title}")
     lines.append("")
     lines.append(
         f"**Status:** {status} · **Commit:** `{commit}` · **Mode:** `{mode}` · "
@@ -306,8 +532,15 @@ def render_markdown_report(
 
     lines.append("### Summary")
     lines.append("")
-    lines.extend(_summary_table(current))
+    lines.extend(_summary_table(current, harness_filter))
     lines.append("")
+
+    # Per-harness category breakdown
+    cat_lines = _category_breakdown(current, harness_filter)
+    if cat_lines:
+        lines.append("### Category breakdown")
+        lines.append("")
+        lines.extend(cat_lines)
 
     if baseline_data is not None:
         baseline_commit = baseline_data.get("clawbio_commit", "unknown")
@@ -348,6 +581,31 @@ def render_markdown_report(
         else:
             lines.append("_No findings at this commit._")
             lines.append("")
+
+    # Detailed per-test breakdown with clinical context (severity-sorted).
+    # Cap to the same limit as unchanged findings to respect GitHub's comment
+    # size limit when baseline diffing produces large finding lists.
+    if detailed_findings:
+        lines.append("### Per-test breakdown")
+        lines.append("")
+        lines.extend(
+            _detailed_findings_block(
+                detailed_findings,
+                "Detailed findings",
+                open_=True,
+                cap=UNCHANGED_FINDINGS_CAP if baseline_data else None,
+            )
+        )
+        lines.append("")
+        # Scope disclosure: this section only covers FAIL-tier categories
+        # (critical_failures). Warning-tier verdicts appear in the full PDF
+        # audit report but are omitted here to keep PR comments focused.
+        lines.append(
+            "_This breakdown covers critical findings only. "
+            "Warning-tier verdicts and full ground-truth narratives are "
+            "available in the PDF audit report._"
+        )
+        lines.append("")
 
     # Footer
     lines.append("---")

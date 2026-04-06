@@ -36,7 +36,11 @@ from typing import Any
 # Constants & Exceptions
 # ---------------------------------------------------------------------------
 
-CORE_VERSION = "0.1.0"  # Unified with package version. Bumped on core API changes.
+CORE_VERSION: str  # Set from package metadata — no hardcoded string to drift.
+try:
+    from clawbio_bench import __version__ as CORE_VERSION
+except Exception:
+    CORE_VERSION = "0.0.0"  # Fallback if package not installed editable
 
 
 class BenchmarkConfigError(Exception):
@@ -1492,11 +1496,17 @@ def resolve_commits(args: argparse.Namespace, repo_path: Path) -> list[str]:
         for c in raw:
             c = validate_commit_sha(c)
             if c == "HEAD":
-                result = subprocess.run(
-                    ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
-                    capture_output=True,
-                    text=True,
-                )
+                try:
+                    result = subprocess.run(
+                        ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise BenchmarkConfigError("Timed out resolving HEAD commit") from exc
+                if result.returncode != 0 or not result.stdout.strip():
+                    raise BenchmarkConfigError(f"Failed to resolve HEAD: {result.stderr.strip()}")
                 c = result.stdout.strip()
             commits.append(c)
         return commits
@@ -1526,10 +1536,13 @@ def resolve_test_cases(inputs_path: Path, glob_pattern: str = "*") -> list[Path]
     if dirs:
         return dirs
 
-    # Model A fallback: glob for files
-    files = sorted(inputs_path.glob(glob_pattern))
+    # Model A fallback: glob for files. Filter dotfiles (macOS .DS_Store,
+    # editor swap files) so they cannot silently enter the test matrix.
+    files = sorted(
+        f for f in inputs_path.glob(glob_pattern) if f.is_file() and not f.name.startswith(".")
+    )
     if files:
-        return [f for f in files if f.is_file()]
+        return files
 
     raise BenchmarkConfigError(f"No test cases found in {inputs_path}")
 
@@ -1833,8 +1846,10 @@ def verify_verdict_file(verdict_path: Path) -> tuple[bool, str]:
 def save_execution_logs(execution: ExecutionResult, output_dir: Path) -> None:
     """Save stdout.log and stderr.log."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "stdout.log").write_text(execution.stdout)
-    (output_dir / "stderr.log").write_text(execution.stderr)
+    # Write as raw UTF-8 bytes so on-disk content matches hashed payload
+    # exactly — write_text() can normalize newlines on Windows.
+    (output_dir / "stdout.log").write_bytes(execution.stdout.encode("utf-8"))
+    (output_dir / "stderr.log").write_bytes(execution.stderr.encode("utf-8"))
 
 
 def verify_results_directory(results_dir: Path) -> tuple[int, int, list[str]]:

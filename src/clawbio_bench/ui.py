@@ -457,6 +457,11 @@ def render_suite_summary(
                 f"[red bold]HARNESS CRASH (infrastructure failure):[/red bold] "
                 f"{', '.join(infra_crashes)}"
             )
+        else:
+            print(
+                f"\n  HARNESS CRASH (infrastructure failure): {', '.join(infra_crashes)}",
+                file=sys.stderr,
+            )
 
 
 def _render_suite_summary_plain(

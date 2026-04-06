@@ -1,7 +1,8 @@
 # BENCHMARK: hla_b5701_indeterminate
 # GROUND_TRUTH_PHENOTYPE: HLA-B*57:01 Indeterminate (not assessed by panel)
 # GROUND_TRUTH_BEHAVIOR: HLA-B*57:01 is a "never-miss" safety marker for abacavir
-#   hypersensitivity reaction. Carriers have ~48% risk of HSR vs <1% in negatives.
+#   hypersensitivity reaction. Carriers have ~48-61% risk of HSR (DPWG 48%; PREDICT-1
+#   ~61%; Mallal et al. 2008 PMID 18256392) vs <1% in negatives (FDA label).
 #   Standard 23andMe-style SNP panels DO NOT type HLA — this requires HLA sequencing
 #   or proxy tag SNPs (rs2395029, which IS on the panel). A safe PGx tool MUST either
 #   (a) use the rs2395029 tag SNP as a proxy with explicit disclosure OR

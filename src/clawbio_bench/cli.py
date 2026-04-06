@@ -65,6 +65,7 @@ HARNESS_REGISTRY = {
         "run_fn": "run_single_pharmgx",
         "benchmark_name": "pharmgx-reporter",
         "default_inputs_dir": "pharmgx",
+        "glob_pattern": "*.txt",
         "description": "PharmGx pharmacogenomics phenotype + drug classification",
     },
     "metagenomics": {
@@ -118,7 +119,8 @@ def run_single_harness(
     info = HARNESS_REGISTRY[name]
 
     inputs_path = inputs_override or (TEST_CASES_ROOT / info["default_inputs_dir"])
-    test_cases = harness_core.resolve_test_cases(inputs_path)
+    glob_pattern = info.get("glob_pattern", "*")
+    test_cases = harness_core.resolve_test_cases(inputs_path, glob_pattern)
 
     harness_output = output_base / info["benchmark_name"]
     harness_output.mkdir(parents=True, exist_ok=True)
@@ -205,10 +207,10 @@ def run_single_harness(
     }
 
 
-def _count_test_cases(inputs_path: Path) -> int:
+def _count_test_cases(inputs_path: Path, glob_pattern: str = "*") -> int:
     """Count test cases using core's resolution logic."""
     try:
-        return len(harness_core.resolve_test_cases(inputs_path))
+        return len(harness_core.resolve_test_cases(inputs_path, glob_pattern))
     except harness_core.BenchmarkConfigError:
         return 0
 
@@ -219,7 +221,8 @@ def _harness_rows() -> list[tuple[str, int, str]]:
     rows: list[tuple[str, int, str]] = []
     for name, info in HARNESS_REGISTRY.items():
         inputs_path = TEST_CASES_ROOT / info["default_inputs_dir"]
-        count = _count_test_cases(inputs_path)
+        glob_pattern = info.get("glob_pattern", "*")
+        count = _count_test_cases(inputs_path, glob_pattern)
         rows.append((name, count, info["description"]))
     return rows
 
@@ -405,7 +408,8 @@ def main() -> None:
                         }
                     )
                     continue
-                tc_count = _count_test_cases(inputs_path)
+                glob_pattern = info.get("glob_pattern", "*")
+                tc_count = _count_test_cases(inputs_path, glob_pattern)
                 total_test_cases += tc_count
                 harness_docs.append(
                     {
@@ -453,7 +457,15 @@ def main() -> None:
 
     # Heatmap-only mode
     if args.heatmap:
-        from clawbio_bench.viz import render_heatmap
+        try:
+            from clawbio_bench.viz import render_heatmap
+        except ImportError:
+            print(
+                "ERROR: matplotlib is required for heatmap rendering.\n"
+                "  Install with: pip install clawbio-bench[viz]",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
         render_heatmap(args.heatmap, output_path=args.heatmap_output)
         return
@@ -475,10 +487,17 @@ def main() -> None:
     if args.render_markdown:
         from clawbio_bench.markdown_report import render_markdown_report
 
+        # --harness filter: translate registry key to benchmark_name for the
+        # markdown renderer, which indexes by harness benchmark_name.
+        md_harness_filter: str | None = None
+        if args.harness:
+            md_harness_filter = HARNESS_REGISTRY[args.harness]["benchmark_name"]
+
         md = render_markdown_report(
             args.render_markdown,
             baseline=args.baseline,
             artifact_url=args.artifact_url,
+            harness_filter=md_harness_filter,
         )
         if args.markdown_output:
             args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
@@ -535,8 +554,9 @@ def main() -> None:
         for name in harness_names:
             info = HARNESS_REGISTRY[name]
             inputs_path = args.inputs or (TEST_CASES_ROOT / info["default_inputs_dir"])
+            glob_pattern = info.get("glob_pattern", "*")
             try:
-                test_cases = harness_core.resolve_test_cases(inputs_path)
+                test_cases = harness_core.resolve_test_cases(inputs_path, glob_pattern)
             except harness_core.BenchmarkConfigError:
                 test_cases = []
             tc_names = [tc.stem if tc.is_file() else tc.name for tc in test_cases]
