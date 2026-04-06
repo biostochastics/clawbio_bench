@@ -77,6 +77,12 @@ GROUND_TRUTH_REFS = {
     "FDA_CODEINE": "FDA Boxed Warning: Codeine in CYP2D6 Ultra-rapid Metabolizers (2017)",
     "PHARMVAR_CYP2D6": "PharmVar CYP2D6 Allele Definitions (accessed 2026-04-03)",
     "PHARMVAR_CYP2C19": "PharmVar CYP2C19 Allele Definitions (accessed 2026-04-04)",
+    "DPWG_MTHFR": (
+        "DPWG Guideline for MTHFR and Folic Acid/Methotrexate "
+        "(van der Pol KH et al. 2024, Eur J Hum Genet, PMC10853275, PMID 36056234). "
+        "No CPIC guideline exists for MTHFR. ACMG 2013 (PMID 23288205): "
+        "lack of evidence for MTHFR polymorphism testing."
+    ),
 }
 
 CATEGORY_LEGEND = {

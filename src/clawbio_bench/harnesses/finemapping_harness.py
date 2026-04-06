@@ -101,6 +101,11 @@ GROUND_TRUTH_REFS = {
         "Statistical Society: Series B, 82(5), 1273-1300. "
         "doi:10.1111/rssb.12388"
     ),
+    "CUI_2023": (
+        "Cui, R., Elzur, R.A., Kanai, M., Fan, Z., Finucane, H.K., et al. "
+        "(2023). Improving fine-mapping by modeling infinitesimal effects. "
+        "Nature Genetics, 56(1), 162-169. doi:10.1038/s41588-023-01597-3"
+    ),
 }
 
 CATEGORY_LEGEND = {
@@ -298,6 +303,26 @@ def score_finemapping_verdict(
             ),
             "details": details,
         }
+
+    # ── Method-level import failure (e.g. susie_inf not yet added) ──
+    # The driver returns status="raised" with ImportError when a method
+    # module (like core.susie_inf) doesn't exist at the checked-out
+    # commit. This is distinct from a skill-dir-level import failure
+    # (exit code 2) — the skill dir exists but a specific algorithm
+    # module within it was added in a later commit. Treat as edge_handled
+    # for longitudinal sweeps so pre-SuSiE-inf commits don't produce
+    # spurious failures.
+    if status == "raised":
+        error_info = result.get("error") or {}
+        if error_info.get("type") == "ImportError":
+            return {
+                "category": "edge_handled",
+                "rationale": (
+                    "Method module not available at this commit: "
+                    f"{error_info.get('message', 'unknown')}"
+                ),
+                "details": details,
+            }
 
     # ── Category-specific scoring ──
 

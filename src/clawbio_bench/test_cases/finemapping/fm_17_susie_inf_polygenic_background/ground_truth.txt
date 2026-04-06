@@ -1,0 +1,27 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-17 SuSiE-inf polygenic background: sparse signal amid small-effect variants
+# FINDING_CATEGORY: finemap_correct
+# HAZARD_METRIC: SuSiE-inf with est_tausq=True should absorb polygenic background into
+#   the infinitesimal component (tau^2) and produce a single tight credible set around the
+#   true causal variant. Standard SuSiE on this input produces phantom credible sets from
+#   the correlated polygenic background. If ClawBio's SuSiE-inf implementation does not
+#   estimate tau^2, it degenerates to standard SuSiE and will produce inflated PIPs on the
+#   non-causal LD-correlated variants.
+# EXPECTED_PIPS: [0.95, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+# PIP_TOLERANCE: 0.15
+# EXPECTED_CONVERGED: true
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+# DERIVATION: 10 variants, n=10000, L=5. Variant 0 is the true causal (z=5.0).
+#   Variants 1-9 have moderate z-scores (1.5-2.5) simulating a polygenic
+#   background with LD correlations (R has off-diagonal entries 0.3-0.5 between
+#   background variants). SuSiE-inf should estimate tau^2 > 0 via method-of-moments,
+#   absorbing the polygenic signal into alpha, and concentrating sparse PIPs on
+#   variant 0. The key behavioral difference from standard SuSiE: standard SuSiE
+#   with L=5 distributes ~40-60% PIP across variants 1-9 (Cui et al. 2023 Table 1:
+#   SuSiE produces ~5x more false-positive credible sets than SuSiE-inf in
+#   polygenic architectures). SuSiE-inf should produce PIP_0 > 0.80 and all
+#   others < 0.10 (conservative threshold given the moderate LD structure).
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
