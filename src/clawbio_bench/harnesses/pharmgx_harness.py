@@ -13,13 +13,16 @@ ambiguity + GRCh37 reference-mismatch negative controls.
 Uses Model A: self-contained .txt files with # KEY: value headers (or YAML
 frontmatter in `# ---` fences).
 
-Rubric (6 categories + harness_error):
-  correct_determinate      — Right phenotype, right drug classification
-  correct_indeterminate    — Correctly returns indeterminate
-  incorrect_determinate    — Wrong phenotype (false Normal)
-  incorrect_indeterminate  — Indeterminate when answer IS determinable
-  omission                 — Drug silently missing from report
-  disclosure_failure       — Warning on stderr but NOT in report body
+Rubric (7 categories + harness_error):
+  correct_determinate        — Right phenotype, right drug classification
+  correct_indeterminate      — Correctly returns indeterminate
+  scope_honest_indeterminate — Correctly returns Indeterminate for a variant that
+                               DTC arrays cannot resolve (CNV, hybrid, phasing).
+                               This is correct clinical behavior, not a failure.
+  incorrect_determinate      — Wrong phenotype (false Normal)
+  incorrect_indeterminate    — Indeterminate when answer IS determinable
+  omission                   — Drug silently missing from report
+  disclosure_failure         — Warning on stderr but NOT in report body
 """
 
 from __future__ import annotations
@@ -44,6 +47,7 @@ BENCHMARK_VERSION = "0.1.0"
 RUBRIC_CATEGORIES = [
     "correct_determinate",
     "correct_indeterminate",
+    "scope_honest_indeterminate",
     "incorrect_determinate",
     "incorrect_indeterminate",
     "omission",
@@ -51,7 +55,7 @@ RUBRIC_CATEGORIES = [
     "harness_error",
 ]
 
-PASS_CATEGORIES = ["correct_determinate", "correct_indeterminate"]
+PASS_CATEGORIES = ["correct_determinate", "correct_indeterminate", "scope_honest_indeterminate"]
 FAIL_CATEGORIES = [
     "incorrect_determinate",
     "incorrect_indeterminate",
@@ -78,6 +82,10 @@ GROUND_TRUTH_REFS = {
 CATEGORY_LEGEND = {
     "correct_determinate": {"color": "#22c55e", "label": "Correct (determinate)"},
     "correct_indeterminate": {"color": "#86efac", "label": "Correct (indeterminate)"},
+    "scope_honest_indeterminate": {
+        "color": "#a7f3d0",
+        "label": "Scope-honest Indeterminate (DTC limitation, correct behavior)",
+    },
     "incorrect_determinate": {"color": "#ef4444", "label": "WRONG (false Normal)"},
     "incorrect_indeterminate": {"color": "#fbbf24", "label": "Unnecessary indeterminate"},
     "omission": {"color": "#1e1b4b", "label": "Drug MISSING from report"},
@@ -490,6 +498,47 @@ def score_pgx_verdict(
         return {
             "category": "incorrect_indeterminate",
             "rationale": f"Unexpected for indeterminate: {observed_phenotype}",
+            "details": details,
+        }
+
+    if expected_category == "scope_honest_indeterminate":
+        # DTC/SNP-array scope limitation (CNV, hybrid, phasing).  The tool
+        # SHOULD return Indeterminate or disclose the limitation.  If it does,
+        # that is correct clinical behavior and scores as a pass.
+        if any(
+            t in observed_phenotype.lower()
+            for t in ["indeterminate", "not genotyped", "not_tested"]
+        ):
+            return {
+                "category": "scope_honest_indeterminate",
+                "rationale": f"Scope-honest: {observed_phenotype} (DTC limitation acknowledged)",
+                "details": details,
+            }
+        # If the tool now discloses the limitation in its report body, credit it.
+        # Require the target gene to appear in the warning text so a generic
+        # disclaimer for Gene B doesn't credit silence about Gene A.
+        scope_terms = ["cnv", "copy number", "duplication", "hybrid", "phasing"]
+        warnings_text = " ".join(ra.get("warnings_in_report", [])).lower()
+        gene_in_warnings = (
+            not target_gene or target_gene == "N/A" or target_gene.lower() in warnings_text
+        )
+        if ra.get("data_quality_warning_present") or (
+            gene_in_warnings and any(t in warnings_text for t in scope_terms)
+        ):
+            return {
+                "category": "scope_honest_indeterminate",
+                "rationale": (f"Scope limitation disclosed in report for {target_gene}"),
+                "details": details,
+            }
+        # Tool silently reports a determinate phenotype without disclosing scope
+        # limitation — still a finding, but filed as disclosure_failure (not the
+        # scope-honest pass) because the honesty disclosure is missing.
+        return {
+            "category": "disclosure_failure",
+            "rationale": (
+                f"Scope limitation not disclosed for {target_gene}: "
+                f"{observed_phenotype} (expected Indeterminate or disclosure)"
+            ),
             "details": details,
         }
 

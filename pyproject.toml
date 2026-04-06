@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clawbio-bench"
-version = "0.1.1"
+version = "0.1.2"
 description = "ClawBio Benchmark Suite — machine-readable harnesses for auditing bioinformatics tools"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -72,6 +72,7 @@ dev = [
     # can be exercised end-to-end in CI without a second install step.
     "numpy>=1.26",
     "pandas>=2.0",
+    "scikit-learn>=1.4",
 ]
 
 [project.scripts]

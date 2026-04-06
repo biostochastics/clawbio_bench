@@ -34,6 +34,7 @@ pytest tests/ --repo /path/to/ClawBio -k "orchestrator"
 clawbio-bench --smoke --repo /path/to/ClawBio
 clawbio-bench --smoke --harness equity --repo /path/to/ClawBio
 clawbio-bench --regression-window 10 --repo /path/to/ClawBio
+clawbio-bench --tagged-commits --repo /path/to/ClawBio
 clawbio-bench --heatmap results/suite/20260404_120000/
 clawbio-bench --list
 clawbio-bench --dry-run --smoke --repo /path/to/ClawBio
@@ -53,7 +54,7 @@ The shared engine that all harnesses use. Provides:
 
 ### CLI (`cli.py`)
 
-Entry point (`clawbio-bench`). Contains `HARNESS_REGISTRY` mapping harness names to their modules. Orchestrates running one or all harnesses, writing aggregate reports. Modes: `--smoke` (HEAD only), `--regression-window N`, `--all-commits`, `--commits SHA,...`.
+Entry point (`clawbio-bench`). Contains `HARNESS_REGISTRY` mapping harness names to their modules. Orchestrates running one or all harnesses, writing aggregate reports. Modes: `--smoke` (HEAD only), `--regression-window N`, `--all-commits`, `--tagged-commits` (releases only), `--commits SHA,...`.
 
 ### Harnesses (`harnesses/*.py`)
 

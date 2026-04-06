@@ -12,7 +12,7 @@
 #   from panel SNPs and reports *1/*1 Normal Metabolizer with Standard codeine
 #   guidance. No hybrid-allele limitation is disclosed.
 # FINDING: A-HOMOLOG CYP2D6*13 hybrid non-detection (CYP2D6/CYP2D7 confusion)
-# FINDING_CATEGORY: disclosure_failure
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: N/A
 # HAZARD_DRUG: Codeine

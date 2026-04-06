@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.%22requires-python%22&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-224%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-244%20passing-brightgreen)](tests/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy: checked](https://img.shields.io/badge/mypy-checked-blue)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -149,6 +149,9 @@ clawbio-bench --regression-window 10 --repo ~/src/ClawBio -q
 # Full longitudinal sweep on a specific branch
 clawbio-bench --all-commits --branch main --repo ~/src/ClawBio
 
+# Tagged commits only — benchmark at each release/milestone
+clawbio-bench --tagged-commits --repo ~/src/ClawBio
+
 # Custom test case directory
 clawbio-bench --smoke --harness equity --inputs /my/test_cases --repo ~/src/ClawBio
 
@@ -176,6 +179,7 @@ clawbio-bench --version
 | `--smoke` | Fast check: HEAD commit only, all harnesses. The default CI gate. |
 | `--regression-window N` | Replay every test case across the last `N` commits on the current branch. |
 | `--all-commits` | Every commit on a branch from the first audit-era commit forward (slowest). |
+| `--tagged-commits` | Run against tagged commits only (releases / milestones). Heatmaps annotate release names on the timeline. |
 | `--commits SHA,SHA,...` | Explicit commit list (diagnostic mode). |
 | `--branch NAME` | Which branch to walk (default: the repo's current `HEAD`). |
 | `--harness NAME` | Run only one harness (e.g. `equity`, `pharmgx`). Omit to run all six. |
@@ -235,7 +239,8 @@ Step by step:
 
 1. **Resolve the commit set.** `--smoke` → `[HEAD]`. `--regression-window N`
    → last `N` commits on the branch. `--all-commits` → every commit from
-   the audit-era root. `--commits SHA,...` → an explicit list.
+   the audit-era root. `--tagged-commits` → only tagged (release) commits.
+   `--commits SHA,...` → an explicit list.
 2. **Isolate each commit.** Every commit is checked out in a git worktree
    so the user's working tree is never modified, and submodules are
    recursively reset between commits so a dirty submodule from commit *N*
@@ -837,7 +842,7 @@ CSV mode honesty, edge cases.
 | `edge_crash` | No | Edge case crash |
 | `harness_error` | — | Infrastructure error |
 
-### PharmGx Reporter (33 tests, 6 categories)
+### PharmGx Reporter (33 tests, 7 categories)
 
 **In plain English.** Given a genotype file, does the tool call the right
 pharmacogenomic phenotype (e.g. "CYP2C19 Poor Metabolizer"), classify the
@@ -852,6 +857,7 @@ against CPIC guidelines.
 |---|:---:|---|
 | `correct_determinate` | Yes | Right phenotype + drug class |
 | `correct_indeterminate` | Yes | Correctly indeterminate |
+| `scope_honest_indeterminate` | Yes | Tool correctly returns Indeterminate for a variant DTC arrays cannot resolve (CNV, hybrid, phasing) — correct clinical behavior |
 | `incorrect_determinate` | No | Wrong phenotype (false Normal) |
 | `incorrect_indeterminate` | No | Unnecessary indeterminate |
 | `omission` | No | Drug missing from report |
@@ -1063,9 +1069,11 @@ before deciding to use this tool.
   ground-truth file, stdout, stderr, and on the verdict document itself.
   `clawbio-bench --verify` runs a three-layer reconciliation (per-verdict
   self-hash, sidecar index, log-file integrity).
-- **Longitudinal sweeps across git history.** `--regression-window N`
-  and `--all-commits` replay every test case against every selected
-  commit so you can see exactly when a finding was introduced or fixed.
+- **Longitudinal sweeps across git history.** `--regression-window N`,
+  `--all-commits`, and `--tagged-commits` replay every test case against
+  every selected commit so you can see exactly when a finding was
+  introduced or fixed. Tagged-commit mode annotates releases on the
+  heatmap timeline.
 - **JSON Schema as external contract.** `schemas/verdict-*.schema.json`
   are committed artifacts — auditors can validate verdicts in any
   language without running Python.
@@ -1227,9 +1235,9 @@ is hidden:
   **false failures on small-sample studies** where estimator variance
   is high. A Z-score-based replacement is on the [Roadmap](#roadmap).
 - **`--smoke` is HEAD-only by design.** Smoke mode runs a single commit
-  (the current `HEAD`). Use `--regression-window N` or `--all-commits`
-  for longitudinal findings; findings from a smoke run say nothing
-  about trajectory.
+  (the current `HEAD`). Use `--regression-window N`, `--all-commits`,
+  or `--tagged-commits` for longitudinal findings; findings from a
+  smoke run say nothing about trajectory.
 - **Markdown rendering is designed for smoke-mode aggregates.**
   Non-smoke runs still render, but the markdown renderer identifies
   findings by `(harness, test, category)` — which **collapses

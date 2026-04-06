@@ -5,7 +5,103 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] — 2026-04-06
+
+### Added
+
+- **`--tagged-commits` CLI mode.** New commit-selection mode that runs
+  benchmarks against only tagged (release / milestone) commits. Works
+  with both lightweight and annotated git tags. Usage:
+  `clawbio-bench --tagged-commits --repo /path/to/ClawBio`.
+- **Release markers on heatmap timeline.** When heatmap data includes
+  tag metadata (automatically captured in all modes), tagged commits
+  are highlighted with purple bold labels, and dashed horizontal lines
+  demarcate releases on the Y-axis.
+- **Hierarchical harness grouping in aggregate heatmaps.** Multi-harness
+  heatmaps now draw vertical separator lines between harnesses and label
+  each harness above the X-axis, making large grids easier to navigate.
+- **Per-harness sub-heatmaps.** When rendering an aggregate (multi-harness)
+  heatmap, individual per-harness heatmap PNGs are also generated in each
+  harness subdirectory alongside the aggregate view.
+- **`get_tagged_commits()` and `get_commit_tags()` in core.** Two new git
+  helper functions for resolving tagged commits and mapping SHAs to tag
+  names. Both handle annotated and lightweight tags correctly.
+- **Missing-cell color in heatmaps.** Cells with no data (e.g. test cases
+  that didn't exist at earlier commits) now render in a distinct light
+  slate color (`#f1f5f9`) instead of falling through to category zero.
+- **Delta comparison in Typst report.** `--baseline` CLI flag on
+  `generate_report.py` accepts a baseline results directory or
+  `aggregate_report.json`. When provided, a "Delta vs. baseline" section
+  appears on the executive summary page with new/resolved/unchanged
+  finding counts, per-finding lists with tier-colored cells, and
+  checkmarks for resolved items.
+- **Unified 5-tier severity system.** All ~50 verdict categories across 7
+  harnesses now map to exactly one of five tiers: Pass, Advisory,
+  Warning, Critical, Infra. `SEVERITY_TIERS` and `TIER_DEFS` in
+  `generate_report.py` provide the canonical mapping; colors are
+  tier-consistent across all harnesses instead of per-category ad-hoc.
+- **Bento-grid executive dashboard.** Page 2 of the PDF report is now a
+  6-cell instrument-panel dashboard: suite status (pass/total),
+  blocking harnesses (count + names), persistent failures (count),
+  top failure classes (category × count), per-harness pass rates
+  (color-coded), and audit target metadata — all above the existing
+  per-harness summary table.
+- **Two-column pass/findings verdict matrix.** The flat single-column
+  verdict list is replaced by a split layout: passing tests grouped by
+  gene/module on the left, findings on the right. Colored heatmap
+  squares (8 pt) replace verbose text badges. Single-test groups are
+  merged into an "OTHER" bucket. Group headers show name, pass rate,
+  and test count inline.
+- **Severity indicators in markdown report.** Summary table gains a
+  Status column with pass/fail emoji (✅/❌). Detailed findings gain
+  per-tier colored circle indicators (🔴 critical, 🟠 warning, ⚪ infra).
+- **`scope_honest_indeterminate` category in PharmGx harness.** Split the
+  former `disclosure_failure` bucket into two distinct categories:
+  - `disclosure_failure` (4 cases) — tool returns a wrong determinate
+    answer with a stderr warning that is NOT surfaced in the user-facing
+    report. This remains a safety failure.
+  - `scope_honest_indeterminate` (5 cases) — tool correctly returns
+    Indeterminate (or discloses the limitation) for variants that DTC/SNP
+    arrays fundamentally cannot resolve: whole-gene CNV, hybrid alleles,
+    phasing ambiguity. This is correct clinical behavior and now scores
+    as a **pass**.
+  Reclassified cases: `cyp2d6_star5_deletion`, `cyp2d6_phase_ambiguous`,
+  `cyp2d6_duplication_xn`, `cyp2d6_star13_hybrid`, `cyp2d6_normal`.
+- **Gene-specific scope disclosure check.** The `scope_honest_indeterminate`
+  scoring branch now requires that a report warning names the target gene,
+  preventing a generic disclaimer for Gene B from crediting silence about
+  Gene A.
+- **scikit-learn** added to `[dev]` optional dependencies.
+
+### Changed
+
+- **Typst PDF report redesign.** Industrial audit-console aesthetic with
+  tighter margins (1.5 cm), two-column layouts, instrument-panel finding
+  cards, and pass/findings split verdict matrix. 29 → 21 pages for the
+  same 7-harness / 140-test suite.
+- **`category_color()` uses tier-based lookup** instead of per-category
+  legend colors.
+- **`--branch` help text** now mentions `--tagged-commits` alongside
+  `--all-commits` and `--regression-window`.
+- **Standalone harness entry point (`run_harness_main`)** now resolves
+  tag metadata and passes it to `build_heatmap_data`, matching the
+  suite CLI behavior.
+
+### Fixed
+
+- **`get_commit_tags()` no longer silently swallows git failures.**
+  Returns an empty dict on error (tag enrichment is best-effort) but
+  now prints a stderr warning so users can distinguish "no tags exist"
+  from "tag resolution broke."
+- **`get_commit_tags()` warns on malformed tag lines** instead of
+  silently skipping them.
+- **`cli.py` tag resolution wrapped in try/except.** A
+  `subprocess.TimeoutExpired` from a hanging `git for-each-ref` no
+  longer crashes the entire benchmark run; it degrades gracefully with
+  a warning and an empty tag map.
+- **All-missing heatmap matrix** now prints a stderr warning when no
+  verdict data matched any commit/test combination, instead of
+  rendering a blank gray rectangle with no explanation.
 
 ## [0.1.1] — 2026-04-06
 
@@ -293,5 +389,6 @@ set before interpolation into `pip install`.
   roadmap.
 - Platform coverage: Linux and macOS only. Windows is untested.
 
+[0.1.2]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.2
 [0.1.1]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.1
 [0.1.0]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.0
