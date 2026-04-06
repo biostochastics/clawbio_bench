@@ -84,8 +84,11 @@ def build_digest(
     pass_rate = overall.get("total_pass_rate", 0.0)
     harness_errors = overall.get("total_harness_errors", 0)
 
+    suite_version = aggregate.get("benchmark_suite_version", "?")
     parts: list[str] = [
-        f"ClawBio HEAD at commit {commit}: {total_pass}/{total_eval} ({pass_rate:.1f}%)."
+        f"ClawBio HEAD at commit {commit} ({date}): "
+        f"{total_pass}/{total_eval} ({pass_rate:.1f}%). "
+        f"Suite v{suite_version}."
     ]
 
     if harness_errors:
@@ -105,14 +108,25 @@ def build_digest(
 
     # Delta vs baseline
     if baseline is not None:
+        baseline_commit = baseline.get("clawbio_commit", "unknown")
+        baseline_date = baseline.get("date", "")
+        baseline_overall = baseline.get("overall") or {}
+        baseline_rate = baseline_overall.get("total_pass_rate", 0.0)
+        baseline_pass = baseline_overall.get("total_pass", 0)
+        baseline_eval = baseline_overall.get("total_evaluated", 0)
+
         current_keys = _extract_finding_keys(aggregate)
         baseline_keys = _extract_finding_keys(baseline)
         new_count = len(current_keys - baseline_keys)
         resolved_count = len(baseline_keys - current_keys)
 
-        baseline_rate = (baseline.get("overall") or {}).get("total_pass_rate", 0.0)
         delta = pass_rate - baseline_rate
         direction = "up" if delta > 0 else "down" if delta < 0 else "flat"
+
+        parts.append(
+            f"Baseline: {baseline_commit} ({baseline_date}) "
+            f"{baseline_pass}/{baseline_eval} ({baseline_rate:.1f}%)."
+        )
 
         delta_parts = []
         if new_count:
@@ -132,9 +146,6 @@ def build_digest(
                 regression_harnesses.append(f"{hname} regression")
         if regression_harnesses:
             parts.append(", ".join(regression_harnesses) + ".")
-
-    if date:
-        parts.append(f"[{date}]")
 
     return " ".join(parts)
 
