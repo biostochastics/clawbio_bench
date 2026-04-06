@@ -118,6 +118,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`get_tagged_commits()` handles `TimeoutExpired`.** Wraps `git tag`
+  subprocess in try/except and re-raises as `BenchmarkConfigError` for
+  consistent CLI error handling.
+- **Finemapping ImportError restricted to `susie_inf` sentinel.** The
+  `edge_handled` downgrade now requires `method == "susie_inf"` AND
+  `"core.susie_inf"` in the error message, preventing unrelated import
+  failures from being silently credited as passes.
+- **Finemapping driver `susie_inf` import narrowed.** Only suppresses
+  `ImportError` when `"core.susie_inf"` is in the message; transitive
+  dependency failures now re-raise correctly.
+- **PharmGx scope_terms expanded.** Added `"deletion"`, `"structural
+  variant"`, `"cannot interpret"` to match the warning extraction
+  vocabulary, preventing legitimate disclosures from being scored as
+  `disclosure_failure`.
+- **PharmGx DQW requires gene-specific match.** `data_quality_warning_present`
+  alone no longer credits `scope_honest_indeterminate` — the warning
+  text must also name the target gene, preventing a generic disclaimer
+  for Gene B from crediting silence about Gene A.
+- **Markdown status icons account for harness_errors.** Per-harness and
+  total-row status icons now show `\u274c` when `harness_errors > 0`,
+  even if `pass` is True.
+- **Severity map fallback for missing `fail_categories`.** When
+  `fail_categories` is absent from aggregate data (older baselines),
+  categories from `critical_failures` are inferred as tier 0 (critical)
+  instead of defaulting to tier 1 (warning).
 - **`get_commit_tags()` no longer silently swallows git failures.**
   Returns an empty dict on error (tag enrichment is best-effort) but
   now prints a stderr warning so users can distinguish "no tags exist"

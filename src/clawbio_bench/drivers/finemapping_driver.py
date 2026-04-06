@@ -507,8 +507,12 @@ def main() -> int:
         # If absent, susie_inf method calls will fail with import_error status.
         try:
             core_susie_inf = __import__("core.susie_inf", fromlist=["run_susie_inf"])
-        except ImportError:
-            core_susie_inf = None
+        except ImportError as ie:
+            # Only suppress if the module itself is absent (not a transitive dep failure).
+            if "core.susie_inf" in str(ie):
+                core_susie_inf = None
+            else:
+                raise
     except Exception as exc:  # noqa: BLE001 — we intentionally catch everything
         _emit(
             {

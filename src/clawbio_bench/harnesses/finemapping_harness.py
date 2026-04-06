@@ -314,13 +314,15 @@ def score_finemapping_verdict(
     # spurious failures.
     if status == "raised":
         error_info = result.get("error") or {}
-        if error_info.get("type") == "ImportError":
+        error_message = str(error_info.get("message", ""))
+        if (
+            result.get("method") == "susie_inf"
+            and error_info.get("type") == "ImportError"
+            and "core.susie_inf" in error_message
+        ):
             return {
                 "category": "edge_handled",
-                "rationale": (
-                    "Method module not available at this commit: "
-                    f"{error_info.get('message', 'unknown')}"
-                ),
+                "rationale": (f"SuSiE-inf module not available at this commit: {error_message}"),
                 "details": details,
             }
 

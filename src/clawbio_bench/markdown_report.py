@@ -163,7 +163,7 @@ def _summary_table(
         failed = data.get("fail_count", 0)
         herr = data.get("harness_errors", 0)
         rate = _fmt_pct(data.get("pass_rate", 0.0))
-        is_pass = bool(data.get("pass"))
+        is_pass = bool(data.get("pass")) and herr == 0
         status = "\u2705" if is_pass else "\u274c"
         esc_name = html.escape(name, quote=False)
         lines.append(
@@ -177,7 +177,7 @@ def _summary_table(
         total_fail = total_eval - total_pass
         total_herr = overall.get("total_harness_errors", 0)
         total_rate = _fmt_pct(overall.get("total_pass_rate", 0.0))
-        all_pass = bool(overall.get("pass"))
+        all_pass = bool(overall.get("pass")) and total_herr == 0
         total_status = "\u2705" if all_pass else "\u274c"
         lines.append(
             f"| **total** | {total_status} | **{total_pass}/{total_eval}** | "
@@ -263,6 +263,14 @@ def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
         pass_cats = set(harness_data.get("pass_categories") or [])
         for cat in fail_cats:
             severity.setdefault(cat, 0)
+        # When fail_categories is missing from the aggregate (e.g. older
+        # baselines or stripped JSON), infer critical tier from categories
+        # that appear in critical_failures.
+        if not fail_cats:
+            for cf in harness_data.get("critical_failures") or []:
+                cat = cf.get("category")
+                if cat and cat != "harness_error":
+                    severity.setdefault(cat, 0)
         # Non-pass, non-fail categories that appear in the results are
         # warnings (tier 1). We derive them from the actual category counts.
         for cat in harness_data.get("categories") or {}:

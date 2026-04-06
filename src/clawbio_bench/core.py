@@ -232,19 +232,22 @@ def get_tagged_commits(repo_path: Path, branch: str = "main") -> list[str]:
     all_shas = get_all_commits(repo_path, branch=branch)
 
     # 2. Resolve every tag to its target commit SHA.
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(repo_path),
-            "tag",
-            "--list",
-            "--format=%(objectname) %(*objectname)",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=15,
-    )
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo_path),
+                "tag",
+                "--list",
+                "--format=%(objectname) %(*objectname)",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise BenchmarkConfigError("Timed out resolving tagged commits") from exc
     if result.returncode != 0:
         raise BenchmarkConfigError(f"git tag failed: {result.stderr.strip()}")
 
