@@ -316,12 +316,30 @@ def score_finemapping_verdict(
 
     # ── Driver-level failures ──
     if execution.exit_code == 1 or status == "driver_error":
+        error_message = str((result.get("error") or {}).get("message", "unknown"))
+        # The most common driver_error in CI is a missing numpy/pandas in the
+        # subprocess interpreter — i.e. the user installed clawbio_bench
+        # without the [finemapping] (or [dev]) extra. Surface this as a
+        # specific actionable rationale instead of a generic infrastructure
+        # error so downstream auditors don't waste time triaging it as a
+        # tool-side bug.
+        if "numpy" in error_message or "pandas" in error_message:
+            return {
+                "category": "harness_error",
+                "rationale": (
+                    "Fine-mapping driver subprocess is missing numpy/pandas: "
+                    f"{error_message}. The driver is launched with the same "
+                    "Python interpreter as clawbio_bench itself, so this means "
+                    "the bench was installed without the [finemapping] or "
+                    '[dev] extra. Fix: `pip install -e ".[finemapping]"` (or '
+                    '".[dev]"). This is a CI / install-environment issue, '
+                    "NOT a bug in the audited fine-mapping skill."
+                ),
+                "details": details,
+            }
         return {
             "category": "harness_error",
-            "rationale": (
-                "Driver infrastructure error: "
-                f"{(result.get('error') or {}).get('message', 'unknown')}"
-            ),
+            "rationale": (f"Driver infrastructure error: {error_message}"),
             "details": details,
         }
 

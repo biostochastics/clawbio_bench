@@ -3,29 +3,60 @@
 # METHOD: susie_inf
 # FINDING: FM-20 SuSiE-inf activation guard: est_tausq=False should produce standard SuSiE output
 # FINDING_CATEGORY: finemap_correct
+# KNOWN_LIMITATION: susie_inf_infinitesimal_prior_pip_instability
 # HAZARD_METRIC: The critical activation switch for SuSiE-inf is est_tausq. When
-#   est_tausq=False (default in the reference implementation), the method is
-#   algebraically identical to standard SuSiE-RSS regardless of whether the code
-#   path is labeled "susie_inf". A tool that claims to run SuSiE-inf but does not
-#   actually estimate tau^2 will produce identical output to standard SuSiE. This
-#   is the most important honesty check: is the infinitesimal component actually
-#   active? This test runs the same polygenic-background input as fm_17 but with
-#   est_tausq=False. The expected result is standard SuSiE behavior (inflated PIPs
-#   across background variants, multiple credible sets). If the output matches fm_17
-#   (concentrated PIPs), the tool is ignoring est_tausq and the switch is broken.
-# EXPECTED_PIPS: [0.60, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
-# PIP_TOLERANCE: 0.25
-# SECONDARY_PIP_THRESHOLD: 0.05
+#   est_tausq=False, the method is algebraically identical to standard SuSiE-RSS.
+#   When est_tausq=True, MoM is supposed to estimate tau^2 > 0 and absorb
+#   polygenic background effects. The honesty check this test was supposed to
+#   enforce: does the tool actually toggle the infinitesimal component?
+#
+#   STRUCTURAL LIMITATION: On the fm_17 / fm_20 input geometry (one strong z,
+#   nine moderate z's, n=10000, L=5), Cui 2023's MoM linear system returns a
+#   non-positive tau^2 solution which is correctly truncated to 0. This means
+#   est_tausq=True and est_tausq=False BOTH produce tau^2=0 and identical
+#   PIPs by construction, so the activation toggle is structurally untestable
+#   on this input. fm_17 and fm_20 produce byte-identical driver output. The
+#   test as designed cannot distinguish a tool that honors est_tausq from one
+#   that ignores it on these specific inputs.
+#
+#   To make the activation toggle discriminating, this test would need an
+#   input geometry that forces MoM tau^2 > 0 cleanly: large p (e.g., p=200),
+#   two-block LD (within-block rho ~0.2-0.3, between-block 0), alternating
+#   z-scores at moderate magnitude (e.g., z_i = (-1)^i * 1.5 with two small
+#   localized bumps), n=5000, L=5, w=0.01. That construction makes sum(z^2)
+#   clearly inflated above null expectation and z'Rz non-redundant with z'z,
+#   which is the geometry where MoM's nonnegativity constraint is not active.
+#   Fix scoped for v0.1.4 fine-mapping pass; until then, this test verifies
+#   only that the est_tausq=False path runs to completion and produces output
+#   consistent with the diffuse-row baseline derived in fm_17.
+# EXPECTED_PIPS: [0.95, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34]
+# PIP_TOLERANCE: 0.15
+# SECONDARY_PIP_THRESHOLD: 0.50
 # EXPECTED_EXIT_STATUS: ok
+# EXPECTED_TAUSQ: 0.0
 # CUI_REF: CUI_2023
-# DERIVATION: Same input as fm_17 (10 variants, polygenic LD structure, z=[5, 2,
-#   1.8, ...], n=10000, L=5) but est_tausq=False. Without the infinitesimal
-#   component, SuSiE distributes posterior mass across LD-correlated background
-#   variants. PIP_0 should still be highest (~0.4-0.7) but background PIPs will be
-#   substantially higher than in the SuSiE-inf case (fm_17). The tolerance is wide
-#   (0.25) because exact PIP values depend on the SuSiE implementation's convergence
-#   behavior, but the qualitative difference — multiple non-trivial PIPs vs.
-#   concentrated on variant 0 — is the auditable signal. If the tool does not
-#   distinguish est_tausq=True from est_tausq=False, both fm_17 and fm_20 will
-#   produce the same output, which the harness can detect by cross-referencing.
+# DERIVATION: Same input as fm_17 (10 variants, polygenic LD structure, z=[5,
+#   2, 1.8, ...], n=10000, L=5) but est_tausq=False. Without the infinitesimal
+#   component, SuSiE-inf is algebraically identical to standard SuSiE-RSS, and
+#   per Wang et al. 2020 Eq. 3 the diffuse-row baseline for non-causal variants
+#   is PIP_i = 1 - (1 - 1/p)^(L-1) = 1 - 0.9^4 = 0.3439, plus modest LD-induced
+#   inflation. PIP_0 collapses to ~1 because variant 0 is nearly independent of
+#   the rest and dominates the first IBSS row. The observed tool output
+#   (PIP_0=0.9998, others ~0.30-0.46, mean 0.351) is the exact textbook
+#   standard-SuSiE diffuse-row baseline.
+#
+#   Corrected 2026-04-07: EXPECTED_PIPS field previously said
+#   [0.60, 0.10, 0.10, ...] which assumed inflated phantom PIPs across LD
+#   neighbors. That assumption was wrong: with one nearly-independent strong
+#   signal (variant 0 has off-diagonal R entries 0.0-0.1 to all other
+#   variants), there is no LD path for the strong signal to leak across, so
+#   PIP_0 stays near 1 and the L-1 unused rows produce a uniform diffuse
+#   baseline at 0.344. Caught by Manuel/POP during v0.1.3 remediation re-run.
+#
+#   This test is also marked KNOWN_LIMITATION because the activation-toggle
+#   honesty check is structurally untestable on this input (see HAZARD_METRIC
+#   above). v0.1.4 will redesign with the recommended large-p / two-block LD
+#   geometry to restore discriminating power. Recipe sourced from GPT-5.2-pro
+#   consultation cross-checked against Cui 2023 Methods.
 # CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
+# WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)
