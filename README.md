@@ -1432,7 +1432,12 @@ every morning at 8 AM UTC against ClawBio HEAD:
 
 Secrets: `NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
 (optional, enables LLM swarm digest). The workflow also supports
-`workflow_dispatch` for manual triggering.
+`workflow_dispatch` for manual triggering with an optional `clawbio_ref`
+input to audit a specific ClawBio commit, tag, or branch (e.g.
+`clawbio_ref: 349fb98` to audit the pre-remediation state). Historical
+runs produce full reports, baselines, and digests but suppress automatic
+issue creation to avoid false alarms. The ref input is validated against
+a conservative character set before use.
 
 ---
 

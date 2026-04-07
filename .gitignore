@@ -50,3 +50,6 @@ report.pdf
 # Coverage
 htmlcov/
 .coverage
+
+# Conversation analysis artifacts (generated, not committed)
+conversation_analysis/

@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cron (8 AM UTC daily + `workflow_dispatch`): smoke suite against ClawBio
   HEAD, markdown + PDF delta reports, baseline promotion on improvement,
   artifact upload (90/30-day retention), deduplicated regression issues,
-  per-commit attribution via `--regression-window 5`.
+  per-commit attribution via `--regression-window 5`. Accepts an optional
+  `clawbio_ref` input for auditing historical commits (e.g.
+  `clawbio_ref: 349fb98` to audit the pre-remediation state). Historical
+  runs produce full reports, baselines, and digests but suppress automatic
+  issue creation to avoid false alarms.
 - **`scripts/update_baseline.py`.** Baseline manager: promotes on strict
   improvement, initializes on first run, handles corrupt baselines.
 - **`scripts/post_summary.py` with multi-model LLM swarm.** `--llm
