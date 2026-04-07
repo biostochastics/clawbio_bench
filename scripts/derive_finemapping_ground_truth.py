@@ -88,6 +88,44 @@ def _block_uniform_z(p: int, base: float, bumps: dict[int, float]) -> np.ndarray
     return z
 
 
+def fm_18_inputs() -> dict[str, Any]:
+    """fm_18: SuSiE-inf null locus, tausq should collapse to 0 via MoM fallback.
+
+    Geometry: p=5, n=5000, L=3, R=I, z near zero. All z values have
+    magnitude < 0.2, so there is no sparse signal and no polygenic
+    inflation — MoM should return a non-positive tausq solution which
+    is correctly truncated to 0.
+
+    With null_weight=1/(L+1)=0.25 (ClawBio's default since 237cbd9 and
+    now also the oracle's default in scripts/_reference/), each of the
+    L=3 single-effect rows spreads ~0.75/p = 0.15 prior mass per variant
+    plus 0.25 null mass. The per-row inclusion alpha on this null locus
+    is therefore ~0.15 (not the 0.2 that the p=5 uniform prior would
+    give without a null bucket), and the aggregated PIP is
+      PIP_i = 1 - (1 - 0.15)^3 = 1 - 0.614 = 0.386
+    per variant. That is what the oracle produces; the test expects it.
+
+    This test does not probe the est_tausq toggle — fm_20 and fm_21
+    own that function. fm_18's purpose is to pin the null-locus PIP
+    aggregation so any regression in the null_weight handling or the
+    MoM truncation rule is caught immediately.
+    """
+    return {
+        "method": "susie_inf",
+        "z": [0.1, -0.05, 0.08, -0.12, 0.03],
+        "R": np.eye(5).tolist(),
+        "n": 5000,
+        "L": 3,
+        "w": 0.04,
+        "est_tausq": True,
+        "null_weight": 1.0 / (3 + 1),
+        "max_iter": 200,
+        "tol": 0.001,
+        "min_purity": 0.5,
+        "rsids": [f"rs_null_{i}" for i in range(5)],
+    }
+
+
 def fm_20_inputs() -> dict[str, Any]:
     """fm_20: SuSiE-inf est_tausq=True activation honesty test.
 
@@ -97,15 +135,21 @@ def fm_20_inputs() -> dict[str, Any]:
 
     Expected behavior on the gentropy reference (with est_tausq=True):
       tausq estimated > 0 via method-of-moments
-      bumps at 17 and 123 are SUPPRESSED to PIP ~0.03 because the
+      bumps at 17 and 123 are SUPPRESSED to PIP ~0.02 because the
         polygenic background is absorbed into the infinitesimal component
       max|PIP_T - PIP_F| > 0.10 across all variants
 
-    A tool that ignores est_tausq (e.g. ClawBio's current build) will
-    produce identical output to fm_21 with tausq=0 and PIP[17]/PIP[123]
-    around 0.16, which the harness flags as susie_inf_est_tausq_ignored.
+    A tool that ignores est_tausq (e.g. ClawBio's current build where
+    the effective_tausq >= 1e-3 threshold nullifies activation across
+    all realistic geometries) will produce identical output to fm_21
+    with tausq=0 and PIP[17]/PIP[123] around 0.16, which the harness
+    flags as susie_inf_est_tausq_ignored.
+
+    null_weight=1/(L+1)=1/6 is pinned here so the oracle and ClawBio's
+    post-237cbd9 run_susie_inf agree on the per-row normalization.
     """
     p = 200
+    L = 5
     R = _block_R(p, n_blocks=2, rho=0.20)
     z = _block_uniform_z(p, base=1.5, bumps={17: 3.5, 123: -3.5})
     return {
@@ -113,9 +157,10 @@ def fm_20_inputs() -> dict[str, Any]:
         "z": z.tolist(),
         "R": R.tolist(),
         "n": 5000,
-        "L": 5,
+        "L": L,
         "w": 0.04,
         "est_tausq": True,
+        "null_weight": 1.0 / (L + 1),
         "max_iter": 200,
         "tol": 0.001,
         "min_purity": 0.5,
@@ -142,6 +187,7 @@ def fm_21_inputs() -> dict[str, Any]:
 
 
 GEOMETRIES = {
+    "fm_18_susie_inf_null_locus": fm_18_inputs,
     "fm_20_susie_inf_est_tausq_activation": fm_20_inputs,
     "fm_21_susie_inf_est_tausq_guard": fm_21_inputs,
 }
@@ -167,16 +213,33 @@ def _aggregate_pip(per_effect_pip: np.ndarray) -> list[float]:
 def _run_oracle(inputs: dict[str, Any]) -> dict[str, Any]:
     z = np.asarray(inputs["z"], dtype=float)
     R = np.asarray(inputs["R"], dtype=float)
+    null_weight_raw = inputs.get("null_weight")
+    null_weight = float(null_weight_raw) if null_weight_raw is not None else None
+
+    # Mirror the bench driver's prior-effect initialization so the oracle
+    # and the runtime configuration are aligned. The driver computes
+    # `ssq_init = float(inputs.get("ssq_init", w))` and broadcasts it to
+    # length-L; do the same here. Without this the oracle would use
+    # gentropy's default ssq = ones(L) * 0.2, which can drift from the
+    # bench driver's w-based init (typically 0.04) and produce expected
+    # values that no longer match what the harness scores against.
+    L_val = int(inputs["L"])
+    w_val = float(inputs.get("w", 0.04))
+    ssq_init = float(inputs.get("ssq_init", w_val))
+    ssq_array = np.full(L_val, ssq_init, dtype=float)
+
     out = oracle.susie_inf(
         z=z,
         LD=R,
         n=int(inputs["n"]),
-        L=int(inputs["L"]),
+        L=L_val,
+        ssq=ssq_array,
         est_tausq=bool(inputs["est_tausq"]),
         est_sigmasq=True,
         method="moments",
         maxiter=int(inputs.get("max_iter", 200)),
         PIP_tol=float(inputs.get("tol", 0.001)),
+        null_weight=null_weight,
     )
     pip_aggr = _aggregate_pip(out["PIP"])
     return {
@@ -291,6 +354,168 @@ def _write_fm21_ground_truth(tc_dir: Path, oracle_out: dict[str, Any]) -> None:
     (tc_dir / "ground_truth.txt").write_text(body, encoding="utf-8")
 
 
+def _write_fm18_ground_truth(tc_dir: Path, oracle_out: dict[str, Any]) -> None:
+    """Write the fm_18 ground_truth.txt with oracle-derived EXPECTED_PIPS."""
+    pip_array = _format_pip_array(oracle_out["pip_aggregated"])
+    tausq = oracle_out["tausq"]
+    sigmasq = oracle_out["sigmasq"]
+    body = f"""# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-18 SuSiE-inf null locus: tau^2 should collapse to zero via MoM fallback
+# FINDING_CATEGORY: finemap_correct
+#
+# HAZARD_METRIC: On a null locus (all z near zero), SuSiE-inf's method-of-
+#   moments variance estimator should produce a non-positive tau^2
+#   solution, triggering the automatic fallback to tau^2 = 0 (Cui et
+#   al. 2023, Methods section). With tau^2 = 0, SuSiE-inf degenerates
+#   to standard SuSiE-RSS. The output tausq field should be 0.0 and
+#   all PIPs should converge to the null-weighted diffuse-row baseline
+#
+#     PIP_i = 1 - (1 - (1 - null_weight) / p)^L
+#
+#   With p=5, L=3, null_weight = 1/(L+1) = 0.25:
+#     per-variant prior (1 - 0.25)/5 = 0.15
+#     PIP_i = 1 - (1 - 0.15)^3 = 1 - 0.614 = 0.386
+#
+#   A tool that does NOT implement the MoM fallback will produce
+#   non-zero tau^2 estimates and miscalibrated PIPs. A tool that ignores
+#   the null_weight parameter will produce PIPs at 0.488 (the L=3 diffuse
+#   baseline without null bucket) instead of 0.386.
+#
+# DERIVED_FROM: derived/oracle_expected.json (run scripts/derive_finemapping_ground_truth.py
+#               to regenerate from the gentropy SuSiE-inf reference port)
+#
+# EXPECTED_PIPS: {pip_array}
+# PIP_TOLERANCE: 0.03
+# EXPECTED_TAUSQ_MAX: 1.0e-9
+# NULL_PIP_THRESHOLD: 0.6
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+#
+# DERIVATION:
+#   Geometry: p=5, n=5000, L=3, R=I, z=[0.1, -0.05, 0.08, -0.12, 0.03],
+#   null_weight=1/(L+1)=0.25. No polygenic signal, no sparse causals —
+#   MoM should truncate to tau^2=0 and the SuSiE inner loop should
+#   produce per-row alpha ~ (1-null_weight)/p and aggregate to the
+#   null-weighted baseline PIP per variant.
+#
+#   Reference ground truth (gentropy oracle with null_weight=1/(L+1)):
+#     tausq    = {tausq}
+#     sigmasq  = {sigmasq:.6f}
+#     PIPs     = (see EXPECTED_PIPS)
+#
+#   Corrected 2026-04-07: earlier versions of this test used the
+#   upstream gentropy baseline PIP = 0.488 (1 - (4/5)^3), which is
+#   correct for null_weight=None but wrong for null_weight=0.25 which
+#   is ClawBio's default since 237cbd9. The oracle was extended to
+#   support null_weight so both implementations can be exercised
+#   against a single canonical reference.
+#
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
+# WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)
+"""
+    (tc_dir / "ground_truth.txt").write_text(body, encoding="utf-8")
+
+
+def _write_fm20_ground_truth(tc_dir: Path, oracle_out: dict[str, Any]) -> None:
+    """Write the fm_20 ground_truth.txt with oracle-derived bump PIPs.
+
+    fm_20 uses the `susie_inf_est_tausq_ignored` category which scores
+    against `EXPECTED_BUMP_INDICES` + `EXPECTED_BUMP_PIPS` (not the full
+    PIP array). The oracle output feeds both fields directly so
+    regenerating the ground truth is trivially reproducible from the
+    inputs.
+    """
+    pip = oracle_out["pip_aggregated"]
+    bump_indices = [17, 123]
+    bump_pips = [round(pip[i], 4) for i in bump_indices]
+    tausq = oracle_out["tausq"]
+    sigmasq = oracle_out["sigmasq"]
+    non_bump = [pip[i] for i in range(len(pip)) if i not in bump_indices]
+    non_bump_max = max(non_bump)
+    non_bump_mean = sum(non_bump) / len(non_bump)
+
+    body = f"""# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-20 SuSiE-inf est_tausq=True activation honesty test
+# FINDING_CATEGORY: susie_inf_est_tausq_ignored
+#
+# HAZARD_METRIC: SuSiE-inf is supposed to estimate tau^2 by method-of-moments
+#   when est_tausq=True (Cui et al. 2023, Methods). A correct implementation
+#   solves a 2x2 linear system A*[sigma^2, tau^2]' = x at every IBSS iteration
+#   and, when the solution is non-positive, falls back to tau^2 = 0 per the
+#   paper. The bench detects two distinct failure modes both as
+#   `susie_inf_est_tausq_ignored`:
+#
+#   Failure mode A — dead code in the IBSS loop:
+#     The internal _mom_update call site hardcodes est_tausq=False, OR
+#     run_susie_inf doesn't expose the est_tausq parameter at all, OR the
+#     parameter is never propagated from the public API into _mom_update.
+#     The tau^2-estimation branch becomes literally unreachable. ClawBio's
+#     pre-237cbd9 build had this defect.
+#
+#   Failure mode B — defensive threshold suppression:
+#     A "noise filter" that zeros out the correctly-estimated tau^2 before
+#     applying it to the variance structure (e.g.
+#     effective_tausq = tausq if tausq >= 1e-3 else 0.0). In practice the
+#     gentropy reference produces tau^2 estimates in the 1e-5 to 1e-4 range
+#     on realistic SuSiE-inf inputs, so any threshold above ~1e-4 nullifies
+#     activation across all geometries. The output is byte-equivalent to
+#     mode A. ClawBio's post-237cbd9 build exhibits this defect.
+#
+#   In both cases the tool returns standard SuSiE-RSS output while
+#   advertising itself as SuSiE-inf. The two modes are observationally
+#   indistinguishable to a downstream consumer reading the result dict.
+#
+# DERIVED_FROM: derived/oracle_expected.json (run scripts/derive_finemapping_ground_truth.py
+#               to regenerate from the gentropy SuSiE-inf reference port)
+#
+# ── Activation honesty thresholds ──
+# A tool that estimates tau^2 correctly on this geometry produces tau^2
+# in the 5e-5 range. The threshold is set conservatively at 1e-9 — any
+# positive value indicates the MoM solver actually ran and the result
+# was applied to the variance structure.
+# EXPECTED_TAUSQ_MIN: 1.0e-9
+#
+# Bump indices (the discriminating signal). Variant 17 is in block 1
+# (the +1.5 block) with z = +3.5; variant 123 is in block 2 (the -1.5
+# block) with z = -3.5. Both are deliberate "outlier" markers whose
+# PIPs differ sharply between MoM-active and MoM-inactive runs.
+# EXPECTED_BUMP_INDICES: {bump_indices}
+# EXPECTED_BUMP_PIPS: {bump_pips}
+# PIP_TOLERANCE: 0.05
+#
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+#
+# DERIVATION:
+#   Geometry: p=200, n=5000, L=5, two-block LD rho=0.20, block-uniform
+#   alternating z (±1.5) with bumps at indices 17, 123 (±3.5).
+#   null_weight=1/(L+1)=1/6 pinned to match ClawBio's post-237cbd9 default.
+#
+#   Reference ground truth (gentropy oracle, est_tausq=True):
+#     tausq    = {tausq:.7f}   (MoM activated)
+#     sigmasq  = {sigmasq:.6f}
+#     PIP[17]  = {pip[17]:.4f}   (bump, suppressed by infinitesimal absorption)
+#     PIP[123] = {pip[123]:.4f}   (bump, suppressed similarly)
+#     non-bump max   = {non_bump_max:.4f}
+#     non-bump mean  = {non_bump_mean:.4f}
+#
+#   ClawBio's current build (HEAD as of 2026-04-07) returns
+#   PIP[17] = PIP[123] ~= 0.154 and tausq = 0.0 — the byte-equivalent
+#   of est_tausq=False because its internal `effective_tausq >= 1e-3`
+#   threshold zeros the MoM estimate (which is in the 1e-5 range on
+#   every realistic geometry).
+#
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
+# WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)
+# UPSTREAM_REF: FinucaneLab/fine-mapping-inf (master branch); gentropy port at opentargets/gentropy/main/src/gentropy/method/susie_inf.py
+"""
+    (tc_dir / "ground_truth.txt").write_text(body, encoding="utf-8")
+
+
 def main() -> int:
     print("=" * 78)
     print("Fine-mapping ground-truth derivation")
@@ -334,11 +559,14 @@ def main() -> int:
             encoding="utf-8",
         )
 
-        # fm_21's ground_truth.txt has a 200-element EXPECTED_PIPS array
-        # which is too error-prone to maintain by hand. Generate it
-        # deterministically from the oracle output so the array length
-        # and bump positions can never drift from the inputs.
-        if tc_name == "fm_21_susie_inf_est_tausq_guard":
+        # Templated ground_truth.txt files are written deterministically
+        # from the oracle output so the EXPECTED fields cannot drift from
+        # the inputs.
+        if tc_name == "fm_18_susie_inf_null_locus":
+            _write_fm18_ground_truth(tc_dir, oracle_out)
+        elif tc_name == "fm_20_susie_inf_est_tausq_activation":
+            _write_fm20_ground_truth(tc_dir, oracle_out)
+        elif tc_name == "fm_21_susie_inf_est_tausq_guard":
             _write_fm21_ground_truth(tc_dir, oracle_out)
 
         # Pretty-print the salient values

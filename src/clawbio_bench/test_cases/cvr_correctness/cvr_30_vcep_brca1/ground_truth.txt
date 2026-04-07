@@ -1,10 +1,19 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: false
+# KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_VCEP_SUPERSESSION: true
 # EXPECTED_VCEP: ENIGMA
 # CHECK_PP3_OVERCOUNTING: true
+#
+# Status as of 2026-04-07 against ClawBio HEAD e7590141: ClawBio's
+# CVR demo emits no VCEP citations in report.md or result.json. The
+# demo panel includes 3 BRCA1 + 1 BRCA2 variants but applies generic
+# ACMG criteria rather than ENIGMA VCEP specifications (which would
+# modify PM2 thresholds and PS1/PM5 application rules). Marked
+# KNOWN_LIMITATION; the test will auto-flip when ClawBio adds VCEP
+# annotation to the demo report.
 #
 # Gold standard (clinical correctness):
 #   BRCA1/2 have approved ClinGen VCEP (ENIGMA). ENIGMA modifies PM2

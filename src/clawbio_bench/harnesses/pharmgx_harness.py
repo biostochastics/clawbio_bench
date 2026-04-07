@@ -387,6 +387,25 @@ def _phenotype_matches(observed: str, expected: str) -> bool:
     exp = expected.lower().strip()
     if not obs or not exp:
         return False
+    # Identity fast path. A tool that reports the exact expected phenotype
+    # string verbatim must always score as a match, regardless of whether
+    # the vocabulary maps onto any of the CPIC-oriented key terms below.
+    # This covers gene families like MTHFR whose DPWG phenotype labels
+    # ("Strongly reduced MTHFR enzyme activity (677TT)") do not use the
+    # CPIC "metabolizer" / "function" vocabulary and therefore fall
+    # through to the substring fallback, which rejects strings longer
+    # than _MAX_SUBSTRING_MATCH_LEN and would otherwise return False on
+    # byte-identical inputs.
+    if obs == exp:
+        return True
+    # Horizontal-whitespace-insensitive identity. Tab-vs-space divergence
+    # between tool output and ground truth must also match. Run this
+    # before the key-pattern / negation / substring logic so that
+    # whitespace-normalised-identical strings always score as a match.
+    obs_ws = regex.sub(r"\h+", " ", obs)
+    exp_ws = regex.sub(r"\h+", " ", exp)
+    if obs_ws == exp_ws:
+        return True
     for pat in _KEY_PATTERNS:
         if pat.search(obs) and pat.search(exp):
             return True
@@ -397,12 +416,10 @@ def _phenotype_matches(observed: str, expected: str) -> bool:
         if term in obs and term in exp:
             if _has_negated(obs, term) != _has_negated(exp, term):
                 return False
-    # Normalize horizontal whitespace before substring comparison so
-    # equivalent strings like "not normal metabolizer" and
-    # "not\tnormal metabolizer" are recognized as matches instead of
-    # tripping on tab-vs-space divergence.
-    obs_n = regex.sub(r"\h+", " ", obs)
-    exp_n = regex.sub(r"\h+", " ", exp)
+    # Reuse the whitespace-normalised strings from the identity fast path
+    # above for the substring fallback rather than recomputing them.
+    obs_n = obs_ws
+    exp_n = exp_ws
     # Second-pass negation guard: the same-term check above only catches cases
     # where the negated word appears in _KEY_TERMS. For shorter substrings
     # like "normal" inside "not normal metabolizer", the substring fallback

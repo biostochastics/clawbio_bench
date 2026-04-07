@@ -77,7 +77,11 @@ def susie_inf(  # noqa: C901
     Dsq: np.ndarray | None = None,
     est_ssq: bool = True,
     ssq: np.ndarray | None = None,
-    ssq_range: tuple[float, float] = (0, 1),
+    # Strictly positive lower bound: at exactly 0 the SuSiE inner loop
+    # computes 1/ssq and log(ssq) which would propagate Inf/NaN if the
+    # bounded optimizer ever lands on the boundary. 1e-12 is well below
+    # the smallest meaningful prior effect variance.
+    ssq_range: tuple[float, float] = (1e-12, 1),
     pi0: np.ndarray | None = None,
     est_sigmasq: bool = True,
     est_tausq: bool = False,
@@ -90,6 +94,7 @@ def susie_inf(  # noqa: C901
     method: str = "moments",
     maxiter: int = 100,
     PIP_tol: float = 0.001,
+    null_weight: float | None = None,
 ) -> dict[str, Any]:
     """SuSiE with random effects (gentropy reference implementation).
 
@@ -150,8 +155,18 @@ def susie_inf(  # noqa: C901
         mu = np.zeros((p, L))
     lbf_variable = np.zeros((p, L))
     omega = diagXtOmegaX[:, np.newaxis] + 1 / ssq
+    # Null-weight handling, ported from ClawBio's core/susie_inf.py 237cbd9
+    # as an extension to the upstream gentropy susie_inf. When `null_weight`
+    # is set, each single-effect row's posterior normalizes over p+1
+    # categories (p variants plus an explicit "no effect" bucket), and
+    # each per-variant prior is (1 - null_weight) / p. Setting
+    # null_weight=None (or 0) reproduces the gentropy upstream behavior.
+    # A `null_weight` of 1/(L+1) is ClawBio's default.
+    nw: float = float(null_weight) if null_weight is not None else 0.0
+    use_null = nw > 0
+    log_prior_null = float(np.log(nw)) if use_null else 0.0
     if pi0 is None:
-        logpi0 = np.ones(p) * np.log(1.0 / p)
+        logpi0 = np.ones(p) * np.log((1.0 - nw) / p) if use_null else np.ones(p) * np.log(1.0 / p)
     else:
         logpi0 = -np.ones(p) * np.inf
         inds = np.nonzero(pi0 > 0)[0]
@@ -160,13 +175,16 @@ def susie_inf(  # noqa: C901
     XtOmegar = np.zeros(p)  # initialised on first inner-loop iter
 
     def f(x: float) -> float:
-        return float(
-            -scipy.special.logsumexp(
-                -0.5 * np.log(1 + x * diagXtOmegaX)
-                + x * XtOmegar**2 / (2 * (1 + x * diagXtOmegaX))
-                + logpi0
-            )
+        # scipy.special.logsumexp has an overload that returns a tuple
+        # when return_sign=True; we always use the scalar form here, but
+        # pyright cannot resolve which overload fires without seeing the
+        # call site, so cast through Any to suppress the false positive.
+        lse_raw: Any = scipy.special.logsumexp(
+            -0.5 * np.log(1 + x * diagXtOmegaX)
+            + x * XtOmegar**2 / (2 * (1 + x * diagXtOmegaX))
+            + logpi0
         )
+        return -float(lse_raw)
 
     for _it in range(maxiter):
         PIP_prev = PIP.copy()
@@ -184,7 +202,16 @@ def susie_inf(  # noqa: C901
                 omega[:, _l] * ssq[_l]
             )
             logPIP = lbf_variable[:, _l] + logpi0
-            PIP[:, _l] = np.exp(logPIP - scipy.special.logsumexp(logPIP))
+            if use_null:
+                # Include the null hypothesis in the normalisation so
+                # posterior mass is shared between the p variants and
+                # the null "no effect" bucket. Matches ClawBio's 237cbd9
+                # null_weight implementation.
+                all_log = np.append(logPIP, log_prior_null)
+                log_norm = scipy.special.logsumexp(all_log)
+                PIP[:, _l] = np.exp(logPIP - log_norm)
+            else:
+                PIP[:, _l] = np.exp(logPIP - scipy.special.logsumexp(logPIP))
         if est_sigmasq or est_tausq:
             if method == "moments":
                 (sigmasq, tausq) = _MoM(
@@ -305,11 +332,12 @@ def _MLE(
     yty: float,
     est_sigmasq: bool,
     est_tausq: bool,
-    it: int,
+    _it: int,
     sigmasq_range: tuple[float, float] | None = None,
     tausq_range: tuple[float, float] | None = None,
 ) -> tuple[float, float]:
     """Maximum-likelihood σ²/τ² estimator. Verbatim gentropy implementation."""
+    del _it  # vestigial in gentropy upstream; kept in signature for parity
     (p, L) = mu.shape
     if sigmasq_range is None:
         sigmasq_range = (0.2 * yty / n, 1.2 * yty / n)

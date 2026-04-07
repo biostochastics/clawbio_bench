@@ -1,23 +1,42 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: true
-# EXPECTED_CRITERIA: BS1,BP1
+# TARGET_GENE: APC
+# EXPECTED_CRITERIA: BS1,BP4
 # EXPECTED_CLASSIFICATION: Likely Benign
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_PP3_OVERCOUNTING: true
 #
 # Gold standard (clinical correctness):
 #   Richards 2015 Table 5, Likely Benign rule #1: "1 Strong (BS1-BS4) and
-#   1 Supporting (BP1-BP7)." BS1 + BP1 = Likely Benign.
+#   1 Supporting (BP1-BP7)." A strong benign + a supporting benign yields
+#   "Likely Benign."
+#
+# Originally this test asserted BS1 + BP1 specifically. ClawBio's demo
+# panel does not contain any variant with BP1 (in silico computational
+# evidence for benign impact); the closest available variant is the APC
+# entry, which carries BS1 + BP4. BS1+BP4 is also a valid Richards 2015
+# Table 5 LB combination ("1 Strong + 1 Supporting") and exercises the
+# same combination-logic codepath. Test rewritten 2026-04-07 to target
+# APC + BS1/BP4 so it pins what the demo actually expresses.
 #
 # Tool expectation (self-consistency):
-#   Demo panel should include a variant with BS1 + BP1 evidence. Tool
-#   should classify as Likely Benign per its own combination logic.
+#   APC variant should carry BS1 + BP4 and be classified Likely Benign
+#   per its own combination logic.
 # EXPECTED_TOOL_CLASSIFICATION: Likely Benign
-# EXPECTED_TOOL_CRITERIA: BS1,BP1
+# EXPECTED_TOOL_CRITERIA: BS1,BP4
+#
+# Cross-variant aggregation note:
+#   Without TARGET_GENE filtering, the harness aggregates criteria
+#   across all 20 panel variants and finds the union {BA1, BP4, BP6,
+#   BP7, BS1, PM1, PM2, PP3, PP5, PS1, PVS1} — which is missing BP1
+#   regardless of what individual variants do, firing
+#   classification_aggregation_error. The TARGET_GENE filter restricts
+#   the check to APC's actual criteria (BS1 + BP4) and the test now
+#   passes against ClawBio's real demo output.
 #
 # FINDING: Phase 2a Gold — Richards Table 5 benign combination: BS + BP = Likely Benign
 # FINDING_CATEGORY: classification_correct
-# HAZARD_METRIC: Richards 2015 Table 5 benign combination rules: one strong benign (BS1) plus one supporting benign (BP1) criterion yields "Likely Benign." This tests the benign pathway of the combination logic, complementing cvr_28 which tests the pathogenic pathway.
+# HAZARD_METRIC: Richards 2015 Table 5 benign combination rules: one strong benign (BS1) plus one supporting benign (BP1-BP7) criterion yields "Likely Benign." This tests the benign pathway of the combination logic, complementing cvr_28 which tests the pathogenic pathway.
 # REFERENCE: RICHARDS_2015
 # EXPECTED_EXIT_CODE: 0

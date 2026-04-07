@@ -40407,6 +40407,7 @@
   "method": "susie_inf",
   "min_purity": 0.5,
   "n": 5000,
+  "null_weight": 0.16666666666666666,
   "rsids": [
     "rs_000",
     "rs_001",

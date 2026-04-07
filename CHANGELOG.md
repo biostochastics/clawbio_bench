@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.4] — 2026-04-07
 
+### Fixed (post-PDF-review batch)
+
+The first v0.1.4 PDF report against ClawBio HEAD `e7590141` surfaced
+five incorrect bench findings that were misclassifying tool behavior.
+All five are now fixed and the suite-level pass rate improved from
+158/175 (90.3%) to **163/175 (93.1%)**.
+
+- **`_phenotype_matches` rejected byte-identical phenotype strings.**
+  When `observed == expected` (e.g. MTHFR `"Strongly reduced MTHFR
+  enzyme activity (677TT)"`), the function lowercased + stripped both
+  sides, then iterated CPIC-oriented `_KEY_PATTERNS` and `_KEY_TERMS`,
+  found no match (because MTHFR uses DPWG vocabulary not CPIC), and
+  fell through to the substring fallback — which is gated by
+  `_MAX_SUBSTRING_MATCH_LEN = 40` and rejects strings longer than that.
+  Both equal strings then returned `False`, producing the absurd verdict
+  `"Wrong: X (expected: X)"`. Added a byte-equality fast path at the
+  top of `_phenotype_matches` plus a whitespace-normalised identity
+  check immediately after. Affects: `mthfr_677tt_methotrexate`.
+
+- **`phi_patient_identifiers_in_header` had an invalid rs5030655
+  genotype.** The test wrote `rs5030655 22 42524244 CC` thinking C was
+  the reference allele. dbSNP `rs5030655` is the CYP2D6*6 frameshift
+  deletion (1707delT, NCBI `delA` on the forward strand, `delT` on the
+  minus / 23andMe strand). The reference genotype on the 23andMe
+  convention is `TT`, not `CC`. ClawBio's `pharmgx_reporter` lookup
+  table also has a latent data bug — it lists `{"alt": "C"}` for
+  rs5030655, which is incorrect — and the bug compounds: ClawBio
+  interprets the bench's invalid `CC` as homozygous *6 → Poor
+  Metabolizer, defeating the PHI test's *1/*1 ground truth.
+  Corrected the bench input to `TT` (the actual reference per
+  SNPedia + dbSNP); ClawBio now correctly returns *1/*1 Normal
+  Metabolizer for the panel and PHI is still blocked from all output
+  files. The ClawBio-side rs5030655 mis-encoding is a separate
+  pharmgx finding to be filed against the harness rather than the
+  PHI test.
+
+- **fm_18 ground truth was the standard-SuSiE PIP baseline (0.488)
+  but ClawBio now uses null-weighted SuSiE (0.385).** Manuel's
+  237cbd9 patch added a `null_weight = 1/(L+1)` default to ClawBio's
+  `run_susie_inf`, which puts prior mass on a "no effect" bucket
+  alongside the p variants. The per-row inclusion alpha drops from
+  `1/p` to `(1 - null_weight)/p` and the aggregated PIP for a null
+  locus drops from `1 - (1 - 1/p)^L` to `1 - (1 - (1-nw)/p)^L`. Ported
+  Manuel's `null_weight` extension into the vendored gentropy oracle
+  (`scripts/_reference/gentropy_susie_inf.py`), pinned `null_weight =
+  1/(L+1)` in fm_18 / fm_20 / fm_21 inputs.json so the oracle and
+  ClawBio agree, and re-derived all three test cases via
+  `scripts/derive_finemapping_ground_truth.py`. fm_18 now passes
+  `finemap_correct` against ClawBio HEAD.
+
+- **CVR-ACMG harness aggregated criteria across the entire 20-variant
+  demo panel.** `analyze_acmg_correctness` iterated all variants and
+  merged their `triggered_criteria` into a single panel-wide
+  `criteria_found` dict. Tests like `cvr_29_benign_combo` (asserting
+  BS1+BP1 = Likely Benign) then saw the union of criteria across all
+  20 variants — `{BA1, BP4, BP6, BP7, BS1, PM1, PM2, PP3, PP5, PS1,
+  PVS1}` — and fired `classification_aggregation_error` even when the
+  intended single variant carried the right criteria. Added optional
+  `target_rsid` and `target_gene` parameters to
+  `analyze_acmg_correctness`; the variant loop now restricts criterion
+  / classification extraction to the matching variant. Ground truth
+  files declare `TARGET_RSID:` or `TARGET_GENE:` to scope each test.
+  Affects: `cvr_24_pvs1_wrong_mechanism` (now targets RYR2 — a
+  textbook gain-of-function gene where PVS1 should NOT apply),
+  `cvr_29_benign_combo` (now targets APC and asserts BS1+BP4 instead
+  of BS1+BP1, since ClawBio's demo doesn't include any BP1 variants).
+
+- **Four CVR-ACMG tests asserted evidence that ClawBio's demo panel
+  cannot express.** `cvr_25_pvs1_strength_mod` (PVS1_Moderate),
+  `cvr_26_pp3_single_tool` (PP3 at calibrated strength),
+  `cvr_30_vcep_brca1` (ENIGMA VCEP citation), and
+  `cvr_31_vcep_lynch_mlh1` (InSiGHT VCEP citation) all probe ACMG
+  features that ClawBio's `--demo` mode does not currently emit.
+  These were firing as critical findings but should have been advisory
+  pending data. Added a `KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true`
+  ground-truth flag and a harness check that routes such tests to the
+  existing advisory `criteria_not_machine_parseable` category. Each
+  test will auto-flip to a real verdict the moment ClawBio's demo
+  grows the missing evidence (or the bench gains a per-variant input
+  mode for CVR tests).
+
+- **`scripts/_reference/gentropy_susie_inf.py` `ssq_range` lower bound
+  was 0** — flagged by CodeAnt review on PR #13 as a possible
+  divide-by-zero bug. The bounded optimizer can land on the boundary
+  and feed `ssq=0` into `1/ssq` and `log(ssq*omega)` downstream,
+  producing Inf/NaN. Tightened the lower bound to `1e-12`.
+
+- **Oracle / driver `ssq` initialization mismatch** — second CodeAnt
+  finding on PR #13. The bench driver computes `ssq_init = w` (from
+  `inputs.json`, typically 0.04) but `_run_oracle` was calling
+  gentropy's `susie_inf` with the default `ssq=None` which becomes
+  `np.ones(L) * 0.2`. Threading `ssq_init = inputs.get("ssq_init",
+  inputs.get("w"))` into the oracle call so derived ground truth
+  matches the runtime configuration on every test.
+
 ### Added
 
 #### Fine-mapping: SuSiE-inf est_tausq activation honesty test (fm_20 + fm_21)

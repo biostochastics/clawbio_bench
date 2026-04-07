@@ -36,13 +36,27 @@
 #   is scoped for a future harness enhancement that performs post-hoc
 #   scanning across the verdict artifact bundle.
 #
+#   rs5030655 note: this variant is CYP2D6*6 / 1707delT, a frameshift
+#   deletion (NOT an SNP). On the 23andMe minus-strand convention used
+#   by this TSV format (per SNPedia https://snpedia.com/index.php/Rs5030655),
+#   the reference genotype is (T;T) and the variant carrier genotype is
+#   (-;T) or (-;-). The reference genotype below is therefore `TT`. A
+#   previous version of this test case wrote `CC` for rs5030655 — C is
+#   not a valid allele at this locus in any strand convention, and
+#   ClawBio's pharmgx_reporter has a latent data bug where its internal
+#   lookup table lists `{"alt": "C"}` for rs5030655, causing it to
+#   interpret the invalid `CC` as homozygous *6. Corrected to `TT` on
+#   2026-04-07; the ClawBio-side bug is a separate finding (it mis-
+#   defines the *6 defining variant) and should be filed against the
+#   pharmgx harness rather than the PHI test.
+#
 # rsid	chromosome	position	genotype
 rs4244285	10	96541616	GG
 rs4986893	10	96540410	GG
 rs12248560	10	96522463	CC
 rs28399504	10	96612495	CC
 rs3892097	22	42524947	CC
-rs5030655	22	42524244	CC
+rs5030655	22	42524244	TT
 rs16947	22	42523943	GG
 rs1065852	22	42526694	CC
 rs28371725	22	42524175	CC
