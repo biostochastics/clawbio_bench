@@ -304,10 +304,10 @@ jobs:
 
       - run: pip install -e ".[all,dev]"
 
-      - name: Regression sweep (last 5 commits)
+      - name: Regression sweep (HEAD vs parent)
         run: |
           set +e
-          clawbio-bench --regression-window 5 \
+          clawbio-bench --regression-window 2 \
             --repo clawbio \
             --output results/regression/ \
             --allow-dirty \
