@@ -33,6 +33,68 @@ from types import SimpleNamespace
 from typing import Any
 
 # ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+# Names exposed to downstream importers. Anything not listed here is
+# considered internal and may change without a deprecation period. Standalone
+# harness scripts that build on the matrix runner should pin against these.
+
+__all__ = [
+    # Version + tier system
+    "CORE_VERSION",
+    "TIER_NAMES",
+    "TIER_RANKS",
+    "tier_rank",
+    "derive_tier_from_category_sets",
+    # Exceptions
+    "BenchmarkConfigError",
+    "DirtyRepoError",
+    "VerdictSchemaError",
+    # Validators
+    "validate_timeout",
+    "validate_commit_sha",
+    "validate_weights",
+    "validate_payload_path",
+    "validate_repo",
+    "validate_verdict_schema",
+    # Hashing / artifacts
+    "sha256_file",
+    "sha256_string",
+    "artifact_info",
+    # Git helpers
+    "get_commit_metadata",
+    "get_commit_tags",
+    "get_tagged_commits",
+    "safe_checkout",
+    "clean_workspace",
+    "check_repo_clean",
+    # Test case + ground truth resolution
+    "resolve_test_cases",
+    "resolve_test_case",
+    "parse_ground_truth",
+    # Execution + verdicts
+    "ExecutionResult",
+    "capture_execution",
+    "build_verdict_doc",
+    "save_verdict",
+    "save_execution_logs",
+    "harness_error_verdict",
+    # Aggregation + matrix runner
+    "run_benchmark_matrix",
+    "run_harness_main",
+    "build_summary",
+    "build_heatmap_data",
+    "write_manifest",
+    "write_verdict_hashes",
+    # Verification
+    "verify_verdict_file",
+    "verify_results_directory",
+    # CLI helpers
+    "add_common_args",
+    "resolve_commits",
+]
+
+# ---------------------------------------------------------------------------
 # Constants & Exceptions
 # ---------------------------------------------------------------------------
 
@@ -1714,9 +1776,13 @@ def resolve_test_cases(inputs_path: Path, glob_pattern: str = "*") -> list[Path]
         return dirs
 
     # Model A fallback: glob for files. Filter dotfiles (macOS .DS_Store,
-    # editor swap files) so they cannot silently enter the test matrix.
+    # editor swap files) and underscore-prefixed files (README_, _NOTES, etc.)
+    # so non-test-case documentation cannot silently enter the test matrix
+    # when a harness uses a permissive glob like "*.txt".
     files = sorted(
-        f for f in inputs_path.glob(glob_pattern) if f.is_file() and not f.name.startswith(".")
+        f
+        for f in inputs_path.glob(glob_pattern)
+        if f.is_file() and not f.name.startswith(".") and not f.name.startswith("_")
     )
     if files:
         return files

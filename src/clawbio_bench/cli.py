@@ -546,6 +546,18 @@ def main() -> None:
         render_startup_banner,
     )
 
+    # ``--inputs PATH`` is a per-harness override; in a multi-harness run it
+    # would be broadcast to every registered harness, which scans the same
+    # directory for all of them and produces 0 test cases for those whose
+    # naming convention does not match. Require an explicit ``--harness``
+    # filter so the user opts in to the single-harness scope.
+    if args.inputs is not None and not args.harness:
+        render_error(
+            "ERROR: --inputs requires --harness NAME (cannot broadcast a single "
+            "input directory across all harnesses)"
+        )
+        sys.exit(1)
+
     try:
         harness_core.validate_repo(repo_path)
         commits = harness_core.resolve_commits(args, repo_path)

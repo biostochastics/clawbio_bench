@@ -77,8 +77,12 @@ PALETTE = {
 # Unknown categories fall back to the algorithmic derivation that matches
 # the markdown renderer — fail → critical, pass → pass, other → warning.
 
-TIER_NAMES: tuple[str, ...] = ("pass", "advisory", "warning", "critical", "infra")
-TIER_RANKS: dict[str, int] = {name: idx for idx, name in enumerate(TIER_NAMES)}
+# Imported from clawbio_bench.core so the Typst renderer cannot drift from
+# the runtime tier numbering.
+from clawbio_bench.core import TIER_RANKS  # noqa: E402
+from clawbio_bench.core import (  # noqa: E402
+    derive_tier_from_category_sets as _derive_tier,
+)
 
 TIER_DEFS: dict[int, dict[str, str]] = {
     0: {"name": "Pass", "fill": "#166534", "bg": "#dcfce7", "text": "#166534"},
@@ -151,7 +155,9 @@ def build_tier_lookup(
 
     # Source 3: algorithmic fallback for any categories not covered above.
     # We walk the aggregate's categories counts so we cover everything that
-    # actually appeared in the run, not just those in the legend.
+    # actually appeared in the run, not just those in the legend. Delegates
+    # to ``core.derive_tier_from_category_sets`` so this module and the
+    # markdown renderer cannot disagree on the fallback rule.
     for hdata in aggregate_harnesses.values():
         if not isinstance(hdata, dict):
             continue
@@ -160,14 +166,8 @@ def build_tier_lookup(
         for cat in hdata.get("categories") or {}:
             if cat in lookup:
                 continue
-            if cat == "harness_error":
-                _promote(cat, TIER_RANKS["infra"])
-            elif cat in pass_set:
-                _promote(cat, TIER_RANKS["pass"])
-            elif cat in fail_set:
-                _promote(cat, TIER_RANKS["critical"])
-            else:
-                _promote(cat, TIER_RANKS["warning"])
+            tier_name = _derive_tier(cat, pass_set, fail_set)
+            _promote(cat, TIER_RANKS[tier_name])
 
     return lookup
 

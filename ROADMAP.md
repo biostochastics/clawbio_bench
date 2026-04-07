@@ -45,7 +45,8 @@
 |---------|------|------------|
 | **v0.1.0** | 2026-04-04 | Initial release. 7 harnesses, 140 tests, full framework. |
 | **v0.1.1** | 2026-04-06 | Report redesign (80→30pp), CPIC citation corrections, PharmGx test fixes. |
-| **v0.1.2** | 2026-04-06 | `--tagged-commits`, 5-tier severity, bento dashboard, `scope_honest_indeterminate`, delta comparison. *(dev, not yet tagged)* |
+| **v0.1.2** | 2026-04-06 | `--tagged-commits`, 5-tier severity, bento dashboard, `scope_honest_indeterminate`, delta comparison. |
+| **v0.1.3** | 2026-04-07 | CVR Phase 2c (variant identity, 6 tests) + Phase 2a (ACMG correctness, 13 tests), PharmGx 36→44 tests, multi-line REFERENCE headers, `tier_rank` core utilities, live inventory-driven executable detection. |
 
 ---
 

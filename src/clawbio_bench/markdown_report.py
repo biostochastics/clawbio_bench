@@ -243,17 +243,13 @@ def _category_breakdown(aggregate: dict[str, Any], harness_filter: str | None = 
     return lines
 
 
-# Canonical 5-tier severity ranks — mirrors core.TIER_RANKS and
-# generate_report.TIER_RANKS. The markdown renderer carries its own copy so
-# this module stays importable without touching the package path (useful for
-# PR-comment hooks that run it as a standalone script).
-_TIER_RANKS: dict[str, int] = {
-    "pass": 0,
-    "advisory": 1,
-    "warning": 2,
-    "critical": 3,
-    "infra": 4,
-}
+# Canonical 5-tier severity ranks. Imported from ``core`` so the markdown
+# renderer cannot drift from the runtime tier numbering. The local alias
+# keeps existing call sites short.
+from clawbio_bench.core import TIER_RANKS as _TIER_RANKS  # noqa: E402
+from clawbio_bench.core import (  # noqa: E402
+    derive_tier_from_category_sets as _derive_tier,
+)
 
 
 def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
@@ -293,7 +289,9 @@ def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
 
         # Source 2 — algorithmic fallback for any category we haven't
         # resolved yet. Covers runtime-observed categories that lack a
-        # legend entry (e.g. a malformed harness module).
+        # legend entry (e.g. a malformed harness module). Delegates to
+        # ``core.derive_tier_from_category_sets`` so this module and core
+        # cannot disagree on the fallback rule.
         fail_cats = set(harness_data.get("fail_categories") or [])
         pass_cats = set(harness_data.get("pass_categories") or [])
         seen: set[str] = set()
@@ -305,14 +303,8 @@ def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
         for cat in seen:
             if cat in severity:
                 continue
-            if cat == "harness_error":
-                severity[cat] = _TIER_RANKS["infra"]
-            elif cat in pass_cats:
-                severity[cat] = _TIER_RANKS["pass"]
-            elif cat in fail_cats:
-                severity[cat] = _TIER_RANKS["critical"]
-            else:
-                severity[cat] = _TIER_RANKS["warning"]
+            tier_name = _derive_tier(cat, pass_cats, fail_cats)
+            severity[cat] = _TIER_RANKS[tier_name]
     return severity
 
 
