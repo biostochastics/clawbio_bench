@@ -31,8 +31,9 @@ every step.
 - **For external auditors**: use the rubric design, ground-truth methodology,
   and verdict format as a reference for auditing other computational biology
   tools.
-- **[Sample audit report (PDF)](sample_audit_report.pdf)** — a full 30-page
-  report from a 7-harness smoke run against ClawBio HEAD.
+- **[Audit report (PDF)](clawbio_audit_report_20260406.pdf)** — a 21-page
+  report from a 7-harness smoke run against ClawBio HEAD (v0.1.2,
+  125/147 tests passing).
 
 ### The three audit dimensions
 
