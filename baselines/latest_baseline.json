@@ -1,0 +1,348 @@
+{
+  "benchmark_suite_version": "0.1.2",
+  "date": "2026-04-07",
+  "clawbio_commit": "bb9ffff",
+  "mode": "smoke",
+  "wall_clock_seconds": 116.8,
+  "environment": {
+    "python": "3.13.12",
+    "platform": "Linux-6.17.0-1008-azure-x86_64-with-glibc2.39"
+  },
+  "harnesses": {
+    "bio-orchestrator": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 54,
+      "evaluated": 54,
+      "harness_errors": 0,
+      "pass_count": 50,
+      "fail_count": 4,
+      "pass_rate": 92.6,
+      "pass_categories": [
+        "routed_correct",
+        "stub_warned",
+        "unroutable_handled"
+      ],
+      "categories": {
+        "routed_correct": 28,
+        "unroutable_handled": 13,
+        "stub_warned": 9,
+        "stub_silent": 3,
+        "unroutable_crash": 1
+      },
+      "critical_failures": [
+        {
+          "test": "ext_09_pdb",
+          "category": "stub_silent",
+          "rationale": "Correctly routed to stub 'struct-predictor' but NO warning that it's a stub (expected_executable=False)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "ext_10_cif",
+          "category": "stub_silent",
+          "rationale": "Correctly routed to stub 'struct-predictor' but NO warning that it's a stub (expected_executable=False)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "inj_03_flock_routing_hijack",
+          "category": "unroutable_crash",
+          "rationale": "No skill detected (expected 'equity-scorer')",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "kw_05_alphafold",
+          "category": "stub_silent",
+          "rationale": "Correctly routed to stub 'struct-predictor' but NO warning that it's a stub (expected_executable=False)",
+          "commit": "bb9ffffd"
+        }
+      ]
+    },
+    "equity-scorer": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 15,
+      "evaluated": 15,
+      "harness_errors": 0,
+      "pass_count": 11,
+      "fail_count": 4,
+      "pass_rate": 73.3,
+      "pass_categories": [
+        "fst_correct",
+        "heim_bounded",
+        "csv_honest",
+        "edge_handled"
+      ],
+      "categories": {
+        "fst_mislabeled": 2,
+        "edge_handled": 4,
+        "heim_bounded": 5,
+        "edge_crash": 1,
+        "csv_honest": 2,
+        "fst_incorrect": 1
+      },
+      "critical_failures": [
+        {
+          "test": "eq_01_fst_known_af",
+          "category": "fst_mislabeled",
+          "rationale": "FST value 1.0000 correct, but no estimator label was emitted (expected 'Nei's GST')",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "eq_02_fst_identical",
+          "category": "fst_mislabeled",
+          "rationale": "FST value 0.0000 correct, but no estimator label was emitted (expected 'Nei's GST')",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "eq_12_haploid_x",
+          "category": "edge_crash",
+          "rationale": "Tool crashed (exit 1) with traceback",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "eq_15_three_populations",
+          "category": "fst_incorrect",
+          "rationale": "FST 1.0000 outside tolerance of expected 0.5000 (tol=0.02)",
+          "commit": "bb9ffffd"
+        }
+      ]
+    },
+    "nutrigx-advisor": {
+      "version": "0.1.0",
+      "pass": true,
+      "total_cases": 10,
+      "evaluated": 10,
+      "harness_errors": 0,
+      "pass_count": 10,
+      "fail_count": 0,
+      "pass_rate": 100.0,
+      "pass_categories": [
+        "score_correct",
+        "repro_functional",
+        "snp_valid",
+        "threshold_consistent"
+      ],
+      "categories": {
+        "score_correct": 4,
+        "threshold_consistent": 2,
+        "repro_functional": 1,
+        "snp_valid": 3
+      },
+      "critical_failures": []
+    },
+    "pharmgx-reporter": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 36,
+      "evaluated": 36,
+      "harness_errors": 0,
+      "pass_count": 22,
+      "fail_count": 14,
+      "pass_rate": 61.1,
+      "pass_categories": [
+        "correct_determinate",
+        "correct_indeterminate",
+        "scope_honest_indeterminate"
+      ],
+      "categories": {
+        "correct_determinate": 18,
+        "disclosure_failure": 9,
+        "correct_indeterminate": 4,
+        "incorrect_determinate": 5
+      },
+      "critical_failures": [
+        {
+          "test": "cyp2d6_del",
+          "category": "disclosure_failure",
+          "rationale": "Disclosure failure for CYP2D6",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp2d6_duplication_xn",
+          "category": "disclosure_failure",
+          "rationale": "Scope limitation not disclosed for CYP2D6: Normal Metabolizer (expected Indeterminate or disclosure)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp2d6_normal",
+          "category": "disclosure_failure",
+          "rationale": "Scope limitation not disclosed for CYP2D6: Normal Metabolizer (expected Indeterminate or disclosure)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp2d6_phase_ambiguous",
+          "category": "disclosure_failure",
+          "rationale": "Scope limitation not disclosed for CYP2D6: Intermediate Metabolizer (expected Indeterminate or disclosure)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp2d6_star13_hybrid",
+          "category": "disclosure_failure",
+          "rationale": "Scope limitation not disclosed for CYP2D6: Normal Metabolizer (expected Indeterminate or disclosure)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp2d6_star5_deletion",
+          "category": "disclosure_failure",
+          "rationale": "Scope limitation not disclosed for CYP2D6: Normal Metabolizer (expected Indeterminate or disclosure)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "cyp3a5_7_ins",
+          "category": "disclosure_failure",
+          "rationale": "Disclosure failure for CYP3A5",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "grch37_reference_mismatch",
+          "category": "incorrect_determinate",
+          "rationale": "Wrong: Poor Metabolizer (expected: CYP2D6 Indeterminate (reference genome mismatch))",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "mthfr_677cc_normal",
+          "category": "incorrect_determinate",
+          "rationale": "Wrong: Unknown (unmapped diplotype: 677GG/1298TT) (expected: Normal MTHFR enzyme activity (677CC))",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "mthfr_677ct_het",
+          "category": "incorrect_determinate",
+          "rationale": "Wrong: Unknown (unmapped diplotype: 677AG/1298TT) (expected: Reduced MTHFR enzyme activity (677CT))",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "mthfr_677tt_methotrexate",
+          "category": "incorrect_determinate",
+          "rationale": "Wrong: Unknown (unmapped diplotype: 677AA/1298TT) (expected: Strongly reduced MTHFR enzyme activity (677TT))",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "ugt1a1_28_absent",
+          "category": "incorrect_determinate",
+          "rationale": "Incorrect as expected: Normal Metabolizer",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "ugt1a1_28_het",
+          "category": "disclosure_failure",
+          "rationale": "Disclosure failure for UGT1A1",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "ugt1a1_28_hom",
+          "category": "disclosure_failure",
+          "rationale": "Disclosure failure for UGT1A1",
+          "commit": "bb9ffffd"
+        }
+      ]
+    },
+    "claw-metagenomics": {
+      "version": "0.1.0",
+      "pass": true,
+      "total_cases": 7,
+      "evaluated": 7,
+      "harness_errors": 0,
+      "pass_count": 7,
+      "fail_count": 0,
+      "pass_rate": 100.0,
+      "pass_categories": [
+        "injection_blocked",
+        "exit_handled",
+        "demo_functional"
+      ],
+      "categories": {
+        "demo_functional": 2,
+        "injection_blocked": 4,
+        "exit_handled": 1
+      },
+      "critical_failures": []
+    },
+    "clawbio-finemapping": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 20,
+      "evaluated": 20,
+      "harness_errors": 0,
+      "pass_count": 16,
+      "fail_count": 4,
+      "pass_rate": 80.0,
+      "pass_categories": [
+        "finemap_correct",
+        "edge_handled"
+      ],
+      "categories": {
+        "finemap_correct": 10,
+        "edge_handled": 6,
+        "susie_nonconvergence_suppressed": 1,
+        "pip_value_incorrect": 3
+      },
+      "critical_failures": [
+        {
+          "test": "fm_12_susie_nonconvergence",
+          "category": "susie_nonconvergence_suppressed",
+          "rationale": "SuSiE returned scored PIPs despite converged=False (n_iter=1)",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "fm_17_susie_inf_polygenic_background",
+          "category": "pip_value_incorrect",
+          "rationale": "max |PIP - expected| = 0.449007 exceeds tolerance 0.15",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "fm_18_susie_inf_null_locus",
+          "category": "pip_value_incorrect",
+          "rationale": "max |PIP - expected| = 0.288042 exceeds tolerance 0.15",
+          "commit": "bb9ffffd"
+        },
+        {
+          "test": "fm_20_susie_inf_est_tausq_activation",
+          "category": "pip_value_incorrect",
+          "rationale": "max |PIP - expected| = 0.399862 exceeds tolerance 0.25",
+          "commit": "bb9ffffd"
+        }
+      ]
+    },
+    "clinical-variant-reporter": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 5,
+      "evaluated": 5,
+      "harness_errors": 0,
+      "pass_count": 4,
+      "fail_count": 1,
+      "pass_rate": 80.0,
+      "pass_categories": [
+        "report_structure_complete"
+      ],
+      "categories": {
+        "data_source_version_missing": 1,
+        "report_structure_complete": 4
+      },
+      "critical_failures": [
+        {
+          "test": "cvr_01_demo_structure",
+          "category": "data_source_version_missing",
+          "rationale": "Report does not pin a ClinVar release/version",
+          "commit": "bb9ffffd"
+        }
+      ]
+    }
+  },
+  "overall": {
+    "pass": false,
+    "total_cases": 147,
+    "total_evaluated": 147,
+    "total_harness_errors": 0,
+    "total_pass": 120,
+    "total_pass_rate": 81.6,
+    "blocking_skills": [
+      "bio-orchestrator",
+      "equity-scorer",
+      "pharmgx-reporter",
+      "clawbio-finemapping",
+      "clinical-variant-reporter"
+    ]
+  }
+}
