@@ -3,38 +3,53 @@
 # METHOD: susie_inf
 # FINDING: FM-18 SuSiE-inf null locus: tau^2 should collapse to zero via MoM fallback
 # FINDING_CATEGORY: finemap_correct
-# HAZARD_METRIC: On a null locus (all z near zero), SuSiE-inf's method-of-moments
-#   variance estimator should produce a negative tau^2 solution, triggering the
-#   automatic fallback to tau^2=0 (Cui et al. 2023, Methods section). With tau^2=0,
-#   SuSiE-inf degenerates to standard SuSiE-RSS. The output tausq field (if exposed)
-#   should be 0.0 or near-zero. All PIPs should be near the standard-SuSiE
-#   diffuse-row baseline 1 - (1 - 1/p)^L (NOT 1/p — see correction note).
-#   No credible set should pass the coverage threshold. This tests the MoM fallback
-#   path, which fires silently — a tool that does NOT implement the fallback will
-#   produce nonsensical tau^2 estimates and miscalibrated PIPs.
-# EXPECTED_PIPS: [0.488, 0.488, 0.488, 0.488, 0.488]
-# PIP_TOLERANCE: 0.05
+#
+# HAZARD_METRIC: On a null locus (all z near zero), SuSiE-inf's method-of-
+#   moments variance estimator should produce a non-positive tau^2
+#   solution, triggering the automatic fallback to tau^2 = 0 (Cui et
+#   al. 2023, Methods section). With tau^2 = 0, SuSiE-inf degenerates
+#   to standard SuSiE-RSS. The output tausq field should be 0.0 and
+#   all PIPs should converge to the null-weighted diffuse-row baseline
+#
+#     PIP_i = 1 - (1 - (1 - null_weight) / p)^L
+#
+#   With p=5, L=3, null_weight = 1/(L+1) = 0.25:
+#     per-variant prior (1 - 0.25)/5 = 0.15
+#     PIP_i = 1 - (1 - 0.15)^3 = 1 - 0.614 = 0.386
+#
+#   A tool that does NOT implement the MoM fallback will produce
+#   non-zero tau^2 estimates and miscalibrated PIPs. A tool that ignores
+#   the null_weight parameter will produce PIPs at 0.488 (the L=3 diffuse
+#   baseline without null bucket) instead of 0.386.
+#
+# DERIVED_FROM: derived/oracle_expected.json (run scripts/derive_finemapping_ground_truth.py
+#               to regenerate from the gentropy SuSiE-inf reference port)
+#
+# EXPECTED_PIPS: [0.384699, 0.384664, 0.384682, 0.384719, 0.384657]
+# PIP_TOLERANCE: 0.03
+# EXPECTED_TAUSQ_MAX: 1.0e-9
 # NULL_PIP_THRESHOLD: 0.6
 # EXPECTED_EXIT_STATUS: ok
 # CUI_REF: CUI_2023
-# DERIVATION: 5 variants, z=[0.1, -0.05, 0.08, -0.12, 0.03], R=I, n=5000, L=3.
-#   With z near zero the marginal likelihood is nearly uniform across variants.
-#   MoM system A*[sigma^2, tau^2]' = c yields tau^2 < 0 because the observed
-#   variance is less than expected under any positive infinitesimal contribution.
-#   The implementation should detect the negative solution and fall back to
-#   (c[0]/n, 0). With tau^2=0, the IBSS loop runs standard SuSiE, producing
-#   approximately uniform per-row inclusion alpha_{l,i} ~ 1/p = 0.2, but the
-#   *aggregated per-variant PIP* across L=3 single-effect rows is the union
-#   1 - prod_l (1 - alpha_{l,i}) = 1 - (1 - 1/5)^3 = 1 - 0.512 = 0.488
-#   per variant (Wang et al. 2020 Eq. 3, susieR's `susie_get_pip`). The audit
-#   threshold NULL_PIP_THRESHOLD=0.6 is set above 0.488 so any PIP > 0.6 with
-#   tau^2 active on a null locus is a red flag.
 #
-#   Corrected 2026-04-07: EXPECTED_PIPS field previously said [0.2, ...] which
-#   confused per-row inclusion alpha (1/p) with aggregated PIP. The DERIVATION
-#   block already had the correct formula PIP_i = 1 - (1 - 1/p)^L = 0.488; only
-#   the EXPECTED_PIPS scalar was wrong. Caught by Manuel/POP during v0.1.3
-#   remediation re-run; cross-checked against Wang et al. 2020 Eq. 3 and
-#   independently confirmed by GPT-5.2-pro consultation. Same bug class as eq_15.
+# DERIVATION:
+#   Geometry: p=5, n=5000, L=3, R=I, z=[0.1, -0.05, 0.08, -0.12, 0.03],
+#   null_weight=1/(L+1)=0.25. No polygenic signal, no sparse causals —
+#   MoM should truncate to tau^2=0 and the SuSiE inner loop should
+#   produce per-row alpha ~ (1-null_weight)/p and aggregate to the
+#   null-weighted baseline PIP per variant.
+#
+#   Reference ground truth (gentropy oracle with null_weight=1/(L+1)):
+#     tausq    = 0.0
+#     sigmasq  = 1.000013
+#     PIPs     = (see EXPECTED_PIPS)
+#
+#   Corrected 2026-04-07: earlier versions of this test used the
+#   upstream gentropy baseline PIP = 0.488 (1 - (4/5)^3), which is
+#   correct for null_weight=None but wrong for null_weight=0.25 which
+#   is ClawBio's default since 237cbd9. The oracle was extended to
+#   support null_weight so both implementations can be exercised
+#   against a single canonical reference.
+#
 # CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
 # WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)

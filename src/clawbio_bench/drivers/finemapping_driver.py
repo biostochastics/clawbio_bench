@@ -286,26 +286,47 @@ def _run_susie_inf(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, An
     est_ssq = inputs.get("est_ssq", True)
     ssq_init = float(inputs.get("ssq_init", w))
 
+    # null_weight: optional prior mass on the "no single effect" bucket in
+    # each SuSiE row. ClawBio's post-237cbd9 run_susie_inf defaults to
+    # 1/(L+1); passing it explicitly from inputs.json pins the value so
+    # ground-truth derivation against the vendored gentropy oracle can
+    # match. When absent, we forward None so run_susie_inf uses its own
+    # default. Older ClawBio builds don't accept this kwarg — the
+    # try/except below keeps the driver portable across commits.
+    null_weight = inputs.get("null_weight")
+
     warnings: list[str] = []
     with np.errstate(all="warn"):
         import warnings as _w
 
         with _w.catch_warnings(record=True) as caught:
             _w.simplefilter("always")
-            out = run_susie_inf(
-                z=z,
-                R=R,
-                n=n,
-                L=L,
-                meansq=meansq,
-                ssq_init=ssq_init,
-                est_ssq=est_ssq,
-                est_sigmasq=est_sigmasq,
-                sigmasq=sigmasq,
-                tausq=tausq_init,
-                max_iter=max_iter,
-                tol=tol,
-            )
+            kwargs = {
+                "z": z,
+                "R": R,
+                "n": n,
+                "L": L,
+                "meansq": meansq,
+                "ssq_init": ssq_init,
+                "est_ssq": est_ssq,
+                "est_sigmasq": est_sigmasq,
+                "sigmasq": sigmasq,
+                "tausq": tausq_init,
+                "max_iter": max_iter,
+                "tol": tol,
+            }
+            if null_weight is not None:
+                kwargs["null_weight"] = float(null_weight)
+            try:
+                out = run_susie_inf(**kwargs)
+            except TypeError as exc:
+                # Fall back for commits predating the null_weight kwarg
+                # (ClawBio ≤ 237cbd9 doesn't accept it yet).
+                if "null_weight" in str(exc) and "null_weight" in kwargs:
+                    kwargs.pop("null_weight")
+                    out = run_susie_inf(**kwargs)
+                else:
+                    raise
             for entry in caught:
                 warnings.append(f"{entry.category.__name__}: {entry.message}")
 

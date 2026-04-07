@@ -1,6 +1,7 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: true
+# TARGET_GENE: RYR2
 # EXPECTED_ABSENT_CRITERIA: PVS1
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_PP3_OVERCOUNTING: true
@@ -11,11 +12,26 @@
 #   SVI PVS1 decision tree (Abou Tayoun 2018, PMID 30192042) requires
 #   mechanism verification BEFORE applying PVS1.
 #
+# RYR2 (cardiac ryanodine receptor) is a textbook gain-of-function gene
+# in catecholaminergic polymorphic ventricular tachycardia (CPVT). LoF
+# mutations do NOT cause CPVT — only gain-of-function missense changes
+# do. ClinGen Cardiomyopathy / Channelopathy VCEPs explicitly exclude
+# PVS1 application to RYR2. ClawBio's demo panel contains a RYR2
+# variant (Uncertain Significance, criteria PM2+PP3) — this test
+# verifies that PVS1 is correctly NOT applied to that variant.
+#
 # Tool expectation (self-consistency):
 #   If tool correctly implements the PVS1 decision tree, it should NOT
-#   apply PVS1 for this variant. Tool and gold standard agree.
+#   apply PVS1 to the RYR2 variant. Tool and gold standard agree.
 #
-# FINDING: Phase 2a Gold — PVS1 must NOT be applied when LoF is not disease mechanism
+# Cross-variant aggregation note:
+#   Without TARGET_GENE filtering the harness would aggregate criteria
+#   across all 20 panel variants and see PVS1 applied (correctly) to
+#   BRCA1, MSH2, PTEN, BRCA2, DPYD — and incorrectly fire
+#   pvs1_applicability_error. The TARGET_GENE filter restricts the
+#   check to RYR2 only.
+#
+# FINDING: Phase 2a Gold — PVS1 must NOT be applied to RYR2 (gain-of-function gene)
 # FINDING_CATEGORY: classification_correct
 # HAZARD_METRIC: PVS1 is the single most impactful pathogenic criterion (very strong). Misapplication to genes where LoF is NOT the established mechanism (e.g., gain-of-function genes, dominant-negative) is a critical classification error. The ClinGen SVI PVS1 decision tree (Abou Tayoun 2018, PMID 30192042) requires verification that LoF is the mechanism BEFORE applying PVS1.
 # REFERENCE: ABOU_TAYOUN_2018

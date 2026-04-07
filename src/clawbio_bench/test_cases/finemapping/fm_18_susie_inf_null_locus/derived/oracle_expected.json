@@ -1,0 +1,17 @@
+{
+  "expected_pip_aggregated": [
+    0.38469884713209546,
+    0.38466424732302384,
+    0.38468223894083553,
+    0.3847191467417962,
+    0.3846568663238068
+  ],
+  "expected_sigmasq": 1.0000128033958564,
+  "expected_tausq": 0.0,
+  "inputs_sha256_canonical": "b92fcfcc3f683508fcd0a29286b2fd6b422fcf354bb482a4570521dd0df21e72",
+  "n_effects": 3,
+  "n_variants": 5,
+  "oracle": "gentropy_susie_inf (vendored from opentargets/gentropy)",
+  "oracle_method": "moments",
+  "test_case": "fm_18_susie_inf_null_locus"
+}

@@ -1,11 +1,21 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: true
+# KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true
 # EXPECTED_CRITERIA: PVS1
 # CHECK_PVS1_STRENGTH: true
 # EXPECTED_PVS1_STRENGTH: Moderate
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_PP3_OVERCOUNTING: true
+#
+# Status as of 2026-04-07 against ClawBio HEAD e7590141: ClawBio's
+# demo panel applies PVS1 to 5 variants (BRCA1, MSH2, PTEN, BRCA2, DPYD)
+# all at the default Very_Strong tier. The demo does not contain a
+# variant requiring PVS1_Moderate (e.g., a last-exon splice variant or
+# an in-frame deletion that triggers the Abou Tayoun 2018 decision-tree
+# downgrade). Marked KNOWN_LIMITATION until either ClawBio's demo grows
+# such a variant or the bench gains a per-variant input mode for CVR
+# tests; will auto-flip to a real verdict once that happens.
 #
 # Gold standard (clinical correctness):
 #   PVS1 strength modulation per Abou Tayoun 2018 decision tree. Four tiers:

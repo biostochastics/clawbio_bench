@@ -1,10 +1,20 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: true
+# KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true
 # EXPECTED_CRITERIA: PP3
 # EXPECTED_CRITERIA_STRENGTH: PP3_Moderate
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_PP3_OVERCOUNTING: true
+#
+# Status as of 2026-04-07 against ClawBio HEAD e7590141: ClawBio's
+# demo panel emits PP3 only at the default Supporting tier with no
+# `strength` annotation in result.json. Pejaver 2022 calibrated REVEL
+# thresholds (PMID 36413997) require Moderate when REVEL ∈ [0.773,
+# 0.932) and Strong when REVEL ≥ 0.932; the demo does not include such
+# a variant. Marked KNOWN_LIMITATION; will auto-flip when ClawBio adds
+# a calibrated PP3_Moderate variant or the bench supports per-variant
+# inputs.
 #
 # Gold standard (clinical correctness):
 #   PP3 from a single calibrated tool at correct strength per Pejaver 2022

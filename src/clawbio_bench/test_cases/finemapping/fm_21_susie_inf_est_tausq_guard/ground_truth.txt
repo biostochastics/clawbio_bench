@@ -1,0 +1,76 @@
+# BENCHMARK: clawbio-finemapping v0.1.0
+# PAYLOAD: inputs.json
+# METHOD: susie_inf
+# FINDING: FM-21 SuSiE-inf est_tausq=False guard partner to fm_20
+# FINDING_CATEGORY: finemap_correct
+#
+# HAZARD_METRIC: This is the est_tausq=False half of the SuSiE-inf
+#   activation honesty test (paired with fm_20). With est_tausq=False
+#   the algorithm should NOT estimate tau^2 — it should leave tausq at
+#   its initial value (0) and produce standard SuSiE-RSS output. This
+#   test verifies two things:
+#     (1) The tool can correctly run standard SuSiE-RSS when the toggle
+#         is off (sanity check that est_tausq=False is honored).
+#     (2) Cross-checked against fm_20 (same input, est_tausq=True), the
+#         outputs should DIFFER. Specifically, the bump variants 17 and
+#         123 should have PIP ~0.16 here (no infinitesimal absorption)
+#         vs ~0.026 in fm_20 (with infinitesimal absorption). A tool
+#         that ignores the est_tausq parameter will produce identical
+#         output for fm_20 and fm_21 — that diagnosis lives in fm_20's
+#         susie_inf_est_tausq_ignored category.
+#
+#   On ClawBio's current build (HEAD as of 2026-04-07), fm_21 PASSES
+#   because the buggy "always est_tausq=False" behavior coincidentally
+#   matches what est_tausq=False is supposed to produce. Only fm_20
+#   catches the defect. fm_21's job is to confirm the cross-check
+#   diagnosis from a second angle and to keep the toggle test
+#   discriminating after ClawBio fixes the dead code.
+#
+# DERIVED_FROM: derived/oracle_expected.json
+#               (re-generate via scripts/derive_finemapping_ground_truth.py)
+#
+# ── Expected output (gentropy oracle, est_tausq=False) ──
+# Bumps at variants 17 and 123 stand out at PIP ~0.1609. All other
+# variants are at the diffuse-row baseline ~0.0233. PIP_TOLERANCE 0.05
+# is loose enough to absorb minor numerical differences between scipy
+# versions and tight enough to catch a real divergence.
+#
+# EXPECTED_PIPS: [0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.154265, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.154265, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563, 0.019563]
+# PIP_TOLERANCE: 0.05
+#
+# ── tau^2 upper bound ──
+# With est_tausq=False the algorithm should not modify tau^2 from its
+# initial value (0). Any positive tau^2 here would indicate the
+# parameter is being ignored in the OPPOSITE direction (estimating
+# despite the user asking for it not to be).
+# EXPECTED_TAUSQ_MAX: 1.0e-9
+#
+# EXPECTED_EXIT_STATUS: ok
+# CUI_REF: CUI_2023
+#
+# DERIVATION:
+#   Geometry: identical to fm_20 (p=200, n=5000, L=5, block LD rho=0.20,
+#   block-uniform alternating z with bumps at 17, 123) but with
+#   est_tausq=False.
+#
+#   Reference ground truth (gentropy SuSiE-inf port, est_tausq=False):
+#     tausq      = 0.0
+#     sigmasq    = 0.998841
+#     PIP[17]    = 0.154265
+#     PIP[123]   = 0.154265
+#
+#   ClawBio's current build returns identical output for fm_20 and
+#   fm_21 (PIP[17] = PIP[123] = 0.1609, tausq = 0.0). On fm_21 this
+#   coincidentally matches the correct est_tausq=False output, so
+#   fm_21 PASSES on the buggy build. After ClawBio fixes the dead-
+#   code defect (propagating est_tausq from the public API into the
+#   _mom_update call site), fm_20 will start passing too and the
+#   fm_20/fm_21 pair becomes a discriminating regression test.
+#
+#   The reference oracle is the gentropy port of FinucaneLab/fine-mapping-inf,
+#   vendored under scripts/_reference/gentropy_susie_inf.py. To re-derive
+#   the expected values run scripts/derive_finemapping_ground_truth.py.
+#
+# CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
+# WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)
+# UPSTREAM_REF: FinucaneLab/fine-mapping-inf (master branch); gentropy port at opentargets/gentropy/main/src/gentropy/method/susie_inf.py

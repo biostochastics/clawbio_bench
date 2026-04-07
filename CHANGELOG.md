@@ -5,6 +5,246 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-04-07
+
+### Fixed (post-PDF-review batch)
+
+The first v0.1.4 PDF report against ClawBio HEAD `e7590141` surfaced
+five incorrect bench findings that were misclassifying tool behavior.
+All five are now fixed and the suite-level pass rate improved from
+158/175 (90.3%) to **163/175 (93.1%)**.
+
+- **`_phenotype_matches` rejected byte-identical phenotype strings.**
+  When `observed == expected` (e.g. MTHFR `"Strongly reduced MTHFR
+  enzyme activity (677TT)"`), the function lowercased + stripped both
+  sides, then iterated CPIC-oriented `_KEY_PATTERNS` and `_KEY_TERMS`,
+  found no match (because MTHFR uses DPWG vocabulary not CPIC), and
+  fell through to the substring fallback — which is gated by
+  `_MAX_SUBSTRING_MATCH_LEN = 40` and rejects strings longer than that.
+  Both equal strings then returned `False`, producing the absurd verdict
+  `"Wrong: X (expected: X)"`. Added a byte-equality fast path at the
+  top of `_phenotype_matches` plus a whitespace-normalised identity
+  check immediately after. Affects: `mthfr_677tt_methotrexate`.
+
+- **`phi_patient_identifiers_in_header` had an invalid rs5030655
+  genotype.** The test wrote `rs5030655 22 42524244 CC` thinking C was
+  the reference allele. dbSNP `rs5030655` is the CYP2D6*6 frameshift
+  deletion (1707delT, NCBI `delA` on the forward strand, `delT` on the
+  minus / 23andMe strand). The reference genotype on the 23andMe
+  convention is `TT`, not `CC`. ClawBio's `pharmgx_reporter` lookup
+  table also has a latent data bug — it lists `{"alt": "C"}` for
+  rs5030655, which is incorrect — and the bug compounds: ClawBio
+  interprets the bench's invalid `CC` as homozygous *6 → Poor
+  Metabolizer, defeating the PHI test's *1/*1 ground truth.
+  Corrected the bench input to `TT` (the actual reference per
+  SNPedia + dbSNP); ClawBio now correctly returns *1/*1 Normal
+  Metabolizer for the panel and PHI is still blocked from all output
+  files. The ClawBio-side rs5030655 mis-encoding is a separate
+  pharmgx finding to be filed against the harness rather than the
+  PHI test.
+
+- **fm_18 ground truth was the standard-SuSiE PIP baseline (0.488)
+  but ClawBio now uses null-weighted SuSiE (0.385).** Manuel's
+  237cbd9 patch added a `null_weight = 1/(L+1)` default to ClawBio's
+  `run_susie_inf`, which puts prior mass on a "no effect" bucket
+  alongside the p variants. The per-row inclusion alpha drops from
+  `1/p` to `(1 - null_weight)/p` and the aggregated PIP for a null
+  locus drops from `1 - (1 - 1/p)^L` to `1 - (1 - (1-nw)/p)^L`. Ported
+  Manuel's `null_weight` extension into the vendored gentropy oracle
+  (`scripts/_reference/gentropy_susie_inf.py`), pinned `null_weight =
+  1/(L+1)` in fm_18 / fm_20 / fm_21 inputs.json so the oracle and
+  ClawBio agree, and re-derived all three test cases via
+  `scripts/derive_finemapping_ground_truth.py`. fm_18 now passes
+  `finemap_correct` against ClawBio HEAD.
+
+- **CVR-ACMG harness aggregated criteria across the entire 20-variant
+  demo panel.** `analyze_acmg_correctness` iterated all variants and
+  merged their `triggered_criteria` into a single panel-wide
+  `criteria_found` dict. Tests like `cvr_29_benign_combo` (asserting
+  BS1+BP1 = Likely Benign) then saw the union of criteria across all
+  20 variants — `{BA1, BP4, BP6, BP7, BS1, PM1, PM2, PP3, PP5, PS1,
+  PVS1}` — and fired `classification_aggregation_error` even when the
+  intended single variant carried the right criteria. Added optional
+  `target_rsid` and `target_gene` parameters to
+  `analyze_acmg_correctness`; the variant loop now restricts criterion
+  / classification extraction to the matching variant. Ground truth
+  files declare `TARGET_RSID:` or `TARGET_GENE:` to scope each test.
+  Affects: `cvr_24_pvs1_wrong_mechanism` (now targets RYR2 — a
+  textbook gain-of-function gene where PVS1 should NOT apply),
+  `cvr_29_benign_combo` (now targets APC and asserts BS1+BP4 instead
+  of BS1+BP1, since ClawBio's demo doesn't include any BP1 variants).
+
+- **Four CVR-ACMG tests asserted evidence that ClawBio's demo panel
+  cannot express.** `cvr_25_pvs1_strength_mod` (PVS1_Moderate),
+  `cvr_26_pp3_single_tool` (PP3 at calibrated strength),
+  `cvr_30_vcep_brca1` (ENIGMA VCEP citation), and
+  `cvr_31_vcep_lynch_mlh1` (InSiGHT VCEP citation) all probe ACMG
+  features that ClawBio's `--demo` mode does not currently emit.
+  These were firing as critical findings but should have been advisory
+  pending data. Added a `KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true`
+  ground-truth flag and a harness check that routes such tests to the
+  existing advisory `criteria_not_machine_parseable` category. Each
+  test will auto-flip to a real verdict the moment ClawBio's demo
+  grows the missing evidence (or the bench gains a per-variant input
+  mode for CVR tests).
+
+- **`scripts/_reference/gentropy_susie_inf.py` `ssq_range` lower bound
+  was 0** — flagged by CodeAnt review on PR #13 as a possible
+  divide-by-zero bug. The bounded optimizer can land on the boundary
+  and feed `ssq=0` into `1/ssq` and `log(ssq*omega)` downstream,
+  producing Inf/NaN. Tightened the lower bound to `1e-12`.
+
+- **Oracle / driver `ssq` initialization mismatch** — second CodeAnt
+  finding on PR #13. The bench driver computes `ssq_init = w` (from
+  `inputs.json`, typically 0.04) but `_run_oracle` was calling
+  gentropy's `susie_inf` with the default `ssq=None` which becomes
+  `np.ones(L) * 0.2`. Threading `ssq_init = inputs.get("ssq_init",
+  inputs.get("w"))` into the oracle call so derived ground truth
+  matches the runtime configuration on every test.
+
+### Added
+
+#### Fine-mapping: SuSiE-inf est_tausq activation honesty test (fm_20 + fm_21)
+
+- **New harness category `susie_inf_est_tausq_ignored`** (critical
+  tier).  Catches a subtle but consequential defect: a tool that
+  advertises SuSiE-inf but never actually estimates and applies the
+  infinitesimal variance component τ². The category covers two
+  observationally identical failure modes:
+    * **Mode A — dead code in the IBSS loop:** `_mom_update` is called
+      with `est_tausq=False` hardcoded, OR `run_susie_inf` doesn't
+      expose the `est_tausq` parameter at all, OR the parameter is
+      never propagated from the public API. The τ²-estimation branch
+      is literally unreachable. ClawBio's pre-237cbd9 build exhibited
+      this defect.
+    * **Mode B — defensive threshold suppression:** A "noise filter"
+      that zeros out the correctly-estimated τ² before applying it to
+      the variance structure (e.g.
+      `effective_tausq = tausq if tausq >= 1e-3 else 0.0`). In
+      practice the gentropy reference produces τ² estimates in the
+      1e-5 to 1e-4 range on realistic SuSiE-inf inputs, so any
+      threshold above ~1e-4 nullifies activation across all
+      geometries. The output is byte-equivalent to mode A. ClawBio's
+      post-237cbd9 build exhibits this defect.
+- **fm_20 redesigned** as a deterministic activation honesty test.
+  New geometry: p=200, n=5000, L=5, two-block LD with ρ=0.20,
+  block-uniform alternating z (±1.5) with two opposite-sign bumps at
+  variant indices 17 and 123 (±3.5).  Test passes iff the tool reports
+  `tausq > 0` AND PIP[17] / PIP[123] match the gentropy reference
+  oracle within tolerance 0.05.  ClawBio's current build fires
+  `susie_inf_est_tausq_ignored` because both conditions fail
+  simultaneously (the dead-code signature).
+- **fm_21 added** as the est_tausq=False guard partner.  Same input
+  geometry but with `est_tausq=False`.  On a correct implementation
+  this produces τ²=0 and PIPs at the standard-SuSiE diffuse-row
+  baseline ~0.16 for the bumps.  ClawBio's buggy build coincidentally
+  passes fm_21 because its "always est_tausq=False" behavior matches
+  what est_tausq=False is supposed to produce — fm_21's job is to
+  cross-check the dead-code diagnosis from a second angle and to
+  preserve toggle test discriminating power once ClawBio fixes the
+  defect.
+
+#### Reference oracle vendoring
+
+- **`scripts/_reference/gentropy_susie_inf.py`.**  Vendored copy of
+  Open Targets gentropy's SuSiE-inf reference port (Apache-2.0,
+  attribution preserved in-file).  Pure numpy/scipy — no PySpark, no
+  Hail, no GCP libs.  Used **only** by the offline ground-truth
+  derivation script and never imported by `clawbio_bench` at runtime,
+  preserving the loose-coupling invariant.  The gentropy port is
+  itself a copy of FinucaneLab/fine-mapping-inf (the Cui 2023
+  reference implementation) with the algorithm methods promoted out
+  of their Spark wrapper class.
+- **`scripts/derive_finemapping_ground_truth.py`.**  Deterministic
+  ground-truth derivation for fm_20 and fm_21.  Constructs the
+  geometry from typed Python (no random seeds), runs the gentropy
+  oracle in both `est_tausq=True` and `est_tausq=False` modes,
+  captures full PIP arrays, and writes both `inputs.json` and
+  `derived/oracle_expected.json` to each test case directory.  Also
+  templates fm_21's full 200-element `EXPECTED_PIPS` directly into
+  its `ground_truth.txt` so the array length and bump positions can
+  never drift from the inputs.  Cross-pair sanity checks (max ‖dPIP‖,
+  τ²(20)>0, τ²(21)==0) run inline.
+
+### Fixed
+
+- **fm_18 EXPECTED_PIPS transcription bug.**  Was `[0.2, ...]`,
+  corrected to `[0.488, ...]`.  The 0.2 value confused per-row
+  inclusion alpha (1/p) with the aggregated SuSiE PIP across L=3
+  single-effect rows; the correct formula is `1 − (1 − 1/p)^L =
+  1 − 0.8^3 = 0.488` (Wang et al. 2020 Eq. 3, matches
+  `susieR::susie_get_pip`).  The DERIVATION block in the same file
+  already had this formula correct; only the EXPECTED scalar was
+  wrong.  Tightened `PIP_TOLERANCE` 0.15 → 0.05.
+- **fm_17 EXPECTED_PIPS transcription bug.**  Was
+  `[0.95, 0.01, 0.01, ...]`, corrected to `[0.95, 0.34, 0.34, ...]`.
+  The original "0.01" expectation implicitly assumed MoM activates
+  τ²>0 and absorbs the polygenic background.  On this geometry MoM
+  correctly truncates to 0 per Cui 2023 Methods, so SuSiE-inf
+  collapses to standard SuSiE-RSS, and the L−1=4 unused single-effect
+  rows produce a diffuse baseline `1 − 0.9^4 = 0.3439` per non-causal
+  variant.  Tool's observed mean for variants 1-9 = 0.3514 — textbook
+  diffuse-row baseline + small LD-induced inflation.
+- **fm_20 (old design) EXPECTED_PIPS transcription bug.**  Was
+  `[0.60, 0.10, ...]`, corrected during the redesign.  The old test
+  is fully replaced by the new activation honesty test (above).
+- **eq_15 GROUND_TRUTH_FST transcription bug.**  Was `0.500`,
+  corrected to `1.000`.  Caught by Manuel/POP during the v0.1.3
+  remediation re-run against ClawBio HEAD.  Nei's GST for
+  POP_A_vs_POP_B on the eq_15 VCF is mathematically 1.0 (perfect
+  differentiation of POP_A all `1/1` vs POP_B all `0/0`); the test's
+  own DERIVATION comment already had this correct.  See PR #11.
+- **README test counts corrected throughout.**  Total test cases
+  170 → 174 → 175 (with the addition of fm_21).  Fine-mapping count
+  16 → 20 → 21.  "Six harnesses" / "all six" → nine, where it was
+  claimed.  Unit tests 223 → 245.  CVR Phase 2 status updated to
+  reflect that all three CVR harnesses (Phase 1 / 2c / 2a) shipped
+  in v0.1.3.  See PR #10.
+- **Fine-mapping harness rationale for missing-numpy errors.**  When
+  the driver subprocess can't import numpy/pandas (because the bench
+  was installed without the `[finemapping]` or `[dev]` extra), the
+  verdict now returns an actionable rationale pointing at the
+  install command instead of the generic "Driver infrastructure
+  error" — preventing future auditors from wasting time triaging it
+  as a tool-side bug.
+
+### Changed
+
+- **`[finemapping]` extra now requires scipy.**  ClawBio's
+  `core/susie_inf.py` imports `scipy.linalg` and `scipy.special` at
+  module load time, so the driver subprocess interpreter needs scipy
+  available.  Without it, fm_17..fm_21 all report `harness_error`
+  with "ModuleNotFoundError: No module named 'scipy'".  Added
+  `scipy>=1.11` to both the `[finemapping]` and `[dev]` extras.
+- **All harness `BENCHMARK_VERSION` constants bumped to 0.1.1.**
+  Marks the v0.1.4 release across orchestrator, equity, pharmgx,
+  nutrigx, metagenomics, finemapping, clinical_variant_reporter,
+  cvr_identity, and cvr_correctness.  No verdict-shape changes; the
+  bump exists so longitudinal sweeps can identify which fine-mapping
+  test cases were derived from the gentropy oracle vs hand-written.
+
+### Process notes
+
+- **Triple-checked the dead-code finding.**  Confirmed by reading
+  ClawBio's `core/susie_inf.py` directly (line 158: `est_tausq=False`
+  hardcoded at the only `_mom_update` call site, and `run_susie_inf`
+  has no `est_tausq` parameter at all in its public signature),
+  cross-checked against the upstream gentropy reference (which
+  exposes `est_tausq` and propagates it through `_MoM`), and
+  validated end-to-end by running ClawBio's driver against the new
+  fm_20 / fm_21 inputs and confirming byte-identical output between
+  the two modes (stdout SHA-256 collision).  Notified the dev
+  separately; this PR is bench-side only and does not patch ClawBio.
+- **Ground-truth derivation methodology change.**  Three of the four
+  fine-mapping ground-truth fixes in this release (fm_17, fm_18, the
+  old fm_20) plus eq_15 in PR #11 were the same class of bug:
+  hand-transcription of EXPECTED_* fields produced values
+  inconsistent with the test's own DERIVATION comments.  Going
+  forward, fm_20 and fm_21 derive their ground truth from the
+  vendored gentropy oracle via `derive_finemapping_ground_truth.py`,
+  and the ground truth files carry `DERIVED_FROM` annotations so
+  drift is detectable by re-running the script.
+
 ## [0.1.3] — 2026-04-07
 
 ### Added

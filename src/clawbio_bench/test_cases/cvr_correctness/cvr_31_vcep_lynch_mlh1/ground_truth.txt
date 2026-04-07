@@ -1,10 +1,19 @@
 # BENCHMARK: cvr-acmg-correctness v0.1.0
 # MODE: demo
 # GOLD_TIER: false
+# KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true
 # EXPECTED_ASSEMBLY: GRCh38
 # CHECK_VCEP_SUPERSESSION: true
 # EXPECTED_VCEP: InSiGHT
 # CHECK_PP3_OVERCOUNTING: true
+#
+# Status as of 2026-04-07 against ClawBio HEAD e7590141: ClawBio's
+# CVR demo emits no VCEP citations. The demo includes 2 MLH1 variants
+# but applies generic ACMG criteria rather than InSiGHT VCEP rules
+# (which would modify functional assay interpretation, segregation
+# requirements, and population frequency cutoffs). Marked
+# KNOWN_LIMITATION; the test will auto-flip when ClawBio adds VCEP
+# annotation to the demo report.
 #
 # Gold standard (clinical correctness):
 #   MLH1, MSH2, MSH6, PMS2 have approved ClinGen VCEPs (InSiGHT). InSiGHT

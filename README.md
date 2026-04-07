@@ -1,21 +1,21 @@
 # clawbio_bench
 
 ```
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
-⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
-⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
-⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
-⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
+⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
+⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
+⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
+⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ```
 
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.version&prefix=v&label=version&color=blue)](https://github.com/biostochastics/clawbio_bench/releases)
@@ -51,8 +51,11 @@ every step.
   tools.
 - **[Audit report (PDF)](clawbio_audit_report_20260406.pdf)** — a 21-page
   report from a 7-harness smoke run against ClawBio HEAD captured at
-  v0.1.2 (125/147 tests passing). The current suite (v0.1.3) runs nine
-  harnesses with 174 test cases (see [Coverage Scope](#coverage-scope)).
+  v0.1.2 (125/147 tests passing). The current suite (v0.1.4) runs nine
+  harnesses with 175 test cases (see [Coverage Scope](#coverage-scope))
+  and reports **163/175 (93.1%)** against ClawBio HEAD `e7590141`
+  (2026-04-07), with the open finding spotlighted in
+  [Confirmed Findings](#confirmed-findings-at-clawbio-head) below.
 
 ### The three audit dimensions
 
@@ -283,8 +286,8 @@ Step by step:
    suite-level `aggregate_report.json`, `heatmap_data.json`, and a
    tamper-evident `verdict_hashes.json` sidecar.
 
-The matrix model is why `--smoke` is ~30 seconds (1 commit × 174 tests)
-but `--regression-window 20` is several minutes (20 × 174).
+The matrix model is why `--smoke` is ~30 seconds (1 commit × 175 tests)
+but `--regression-window 20` is several minutes (20 × 175).
 
 ---
 
@@ -783,7 +786,7 @@ field, which is the sole authoritative source.
 | `illumina-bridge` | — | Yes |
 | `bioconductor-bridge` | — | Yes |
 | `diff-visualizer` | — | Yes |
-| `fine-mapping` | Yes (20 tests, out-of-registry) | — (executable, not auto-detected) |
+| `fine-mapping` | Yes (21 tests, out-of-registry) | — (executable, not auto-detected) |
 | `ukb-navigator` | — | — (executable, not auto-detected) |
 | `galaxy-bridge` | — | — (executable, not auto-detected) |
 | `genome-match`, `recombinator`, `soul2dna` | — | — (synthetic genome generation; privacy/consent review pending) |
@@ -797,7 +800,7 @@ field, which is the sole authoritative source.
 - Skills reachable via orchestrator auto-detection: **23 / 43**
 - Skills reachable via `--skill NAME` direct invocation: **43 / 43 (100%)** — five previously-unreachable clinical skills (`clinical-variant-reporter`, `variant-annotation`, `clinical-trial-finder`, `target-validation-scorer`, `methylation-clock`) now have dedicated force-routing tests
 - Total harnesses: **9** (6 ClawBio-skill audits + 1 fine-mapping + 2 CVR Phase 2)
-- Total test cases: **174** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 20 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness)
+- Total test cases: **175** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 21 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness)
 
 See [`docs/plans/GAP_ANALYSIS_2026-04-04.md`](docs/plans/GAP_ANALYSIS_2026-04-04.md)
 for the full audit-framework-aligned gap analysis, including the
@@ -936,7 +939,7 @@ the audited source (no external bioinformatics tools required).
 | `demo_broken` | No | Demo mode fails |
 | `harness_error` | — | Infrastructure error |
 
-### Fine-Mapping (20 tests)
+### Fine-Mapping (21 tests)
 
 **In plain English.** Does Approximate Bayes Factor (ABF) and SuSiE
 fine-mapping produce mathematically valid posterior inclusion
@@ -1095,7 +1098,7 @@ before deciding to use this tool.
   genetics, nutrigenomics, metagenomics, orchestration routing,
   fine-mapping, and three layers of clinical-variant-reporter audit
   (Phase 1 structural, Phase 2c identity, Phase 2a ACMG correctness).
-  **174 test cases total** with analytically derived or
+  **175 test cases total** with analytically derived or
   authority-referenced ground truth.
 - **Category-level verdicts, not just pass/fail.** Each harness rubric
   has 6–10 named categories; a `fst_mislabeled` finding carries
@@ -1129,7 +1132,7 @@ before deciding to use this tool.
   `--list` and the final summary, with `--no-rich` as a kill switch
   and a byte-stable plain-text fallback when piped.
 - **Type-safe.** Full `mypy --strict` compliance across all source files.
-- **245 unit tests** at `v0.1.3` covering scoring, validators, parser
+- **245 unit tests** at `v0.1.4` covering scoring, validators, parser
   edge cases, tamper detection, schema drift, YAML frontmatter hardening,
   canonical byte determinism, and deep-verify chain-of-custody
   reconciliation.
@@ -1504,18 +1507,49 @@ compatible baselines.
 
 ## Confirmed Findings at ClawBio HEAD
 
-Real bugs found by this suite in the audit target. All are reproducible
-from the corresponding test cases at `v0.1.0`.
+Real bugs found by this suite in the audit target. The historical
+findings below are reproducible from the test cases at `v0.1.0` (most
+have been remediated upstream as of ClawBio HEAD `e7590141`); the
+fm_20 finding below is a fresh `v0.1.4` discovery still open.
 
-| ID | Finding | Harness Evidence |
-|---|---|---|
-| C-06 | FST labeled "Hudson" but computes Nei's GST | `eq_01`, `eq_02`: `fst_mislabeled` |
-| U-2  | HEIM unbounded with custom weights | `eq_09`: `heim_unbounded` |
-| F-29 | Haploid genotypes crash equity scorer | `eq_12`: `edge_crash` |
-| M-3  | PharmGx / NutriGx / metagenomics unreachable via orchestrator | `kw_16-18`: `unroutable_handled` |
-| NEW  | NutriGx hom-ref `allele_mismatch` bug | `ng_09`: `score_incorrect` |
-| NEW  | Metagenomics `exit_suppressed` (`critical=False` default) | `mg_05`: `exit_suppressed` |
-| PGx  | CPIC compliance audit: expanded to 44 tests, 13 genes, CPIC Level A scope | Multiple findings |
+| ID | Finding | Harness Evidence | Status |
+|---|---|---|---|
+| C-06 | FST labeled "Hudson" but computes Nei's GST | `eq_01`, `eq_02`: `fst_mislabeled` | fixed |
+| U-2  | HEIM unbounded with custom weights | `eq_09`: `heim_unbounded` | fixed |
+| F-29 | Haploid genotypes crash equity scorer | `eq_12`: `edge_crash` | fixed |
+| M-3  | PharmGx / NutriGx / metagenomics unreachable via orchestrator | `kw_16-18`: `unroutable_handled` | fixed |
+| NEW  | NutriGx hom-ref `allele_mismatch` bug | `ng_09`: `score_incorrect` | fixed |
+| NEW  | Metagenomics `exit_suppressed` (`critical=False` default) | `mg_05`: `exit_suppressed` | fixed |
+| PGx  | CPIC compliance audit: 44 tests, 13 genes, CPIC Level A scope | Multiple findings | mostly fixed (41/44 at HEAD) |
+| **FM-20** | **SuSiE-inf advertises infinitesimal modeling but `tau²` never reaches the variance structure on realistic inputs** | `fm_20`: `susie_inf_est_tausq_ignored` | **OPEN at HEAD `e7590141`** |
+
+### Spotlight: FM-20 (`susie_inf_est_tausq_ignored`)
+
+`fm_20` is the v0.1.4 SuSiE-inf activation honesty test. It detects two
+observationally identical failure modes that both nullify the
+infinitesimal component of "SuSiE-inf":
+
+1. **Dead code in the IBSS loop** — `_mom_update` called with
+   `est_tausq=False` hardcoded, OR `run_susie_inf` doesn't expose the
+   `est_tausq` parameter at all, OR the parameter is never propagated
+   from the public API into the MoM call site. Pre-237cbd9 ClawBio
+   exhibited this defect.
+2. **Defensive threshold suppression** — a "noise filter" zeroes out
+   the correctly-estimated `tau²` before applying it to the variance
+   structure (e.g. `effective_tausq = tausq if tausq >= 1e-3 else 0.0`).
+   In practice the gentropy reference produces `tau²` estimates in the
+   1e-5 to 1e-4 range on realistic SuSiE-inf inputs, so any threshold
+   above ~1e-4 nullifies activation across all geometries. Post-237cbd9
+   ClawBio exhibits this defect.
+
+In both cases, calling `run_susie_inf(z, R, n, est_tausq=True)`
+produces output **byte-equivalent** to calling it with
+`est_tausq=False`. The user gets standard SuSiE-RSS while the tool
+advertises SuSiE-inf — a textbook honesty failure of the kind this
+benchmark exists to detect. Ground truth is derived from the gentropy
+port of `FinucaneLab/fine-mapping-inf` (vendored under
+`scripts/_reference/gentropy_susie_inf.py` and exercised offline by
+`scripts/derive_finemapping_ground_truth.py`).
 
 ---
 
@@ -1542,7 +1576,7 @@ from the corresponding test cases at `v0.1.0`.
 
 - 9 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
   nutrigx, metagenomics, clinical-variant-reporter Phase 1/2c/2a,
-  finemapping) covering **174 test cases**.
+  finemapping) covering **175 test cases**.
 - Dynamic skill inventory, `--skill NAME` force-routing, `--skills
   A,B,C` composition mode, prompt-injection regression pins.
 - CYP2D6 CNV/hybrid/*5/*10, NUDT15, CYP2B6, CYP1A2, CYP2C9, G6PD, MT-RNR1, HLA-A*31:01, HLA-B*58:01 pharmgx tests.

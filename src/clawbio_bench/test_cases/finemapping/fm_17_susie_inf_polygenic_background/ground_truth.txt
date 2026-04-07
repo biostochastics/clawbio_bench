@@ -1,9 +1,9 @@
 # BENCHMARK: clawbio-finemapping v0.1.0
 # PAYLOAD: inputs.json
 # METHOD: susie_inf
-# FINDING: FM-17 SuSiE-inf polygenic background: sparse signal amid small-effect variants
+# FINDING: FM-17 SuSiE-inf polygenic background: standard-SuSiE diffuse-row baseline regression test
 # FINDING_CATEGORY: finemap_correct
-# KNOWN_LIMITATION: susie_inf_infinitesimal_prior_pip_instability
+# RELATED_TESTS: fm_20 (est_tausq activation honesty), fm_21 (est_tausq guard)
 # HAZARD_METRIC: SuSiE-inf with est_tausq=True is supposed to absorb polygenic
 #   background into the infinitesimal component (tau^2) and produce a single
 #   tight credible set around the true causal variant. On THIS input geometry,

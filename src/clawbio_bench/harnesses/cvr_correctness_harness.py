@@ -73,7 +73,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "cvr-acmg-correctness"
-BENCHMARK_VERSION = "0.1.0"
+BENCHMARK_VERSION = "0.1.1"
 
 RUBRIC_CATEGORIES = [
     "classification_correct",
@@ -308,18 +308,43 @@ _VCEP_RE = re.compile(
 # ---------------------------------------------------------------------------
 
 
-def analyze_acmg_correctness(report_dir: Path) -> dict[str, Any]:
+def analyze_acmg_correctness(
+    report_dir: Path,
+    target_rsid: str | None = None,
+    target_gene: str | None = None,
+) -> dict[str, Any]:
     """Parse CVR output for ACMG classification correctness signals.
 
     Examines report.md, result.json, and tables/acmg_classifications.tsv
     for criterion codes, classification labels, evidence sources, and
     structural signals of correctness or error.
+
+    Args:
+        report_dir: Directory containing report.md, result.json, and the
+          tables/ subdirectory.
+        target_rsid: If provided, restrict per-variant criterion / class
+          extraction to the variant whose ``rsid`` field matches. This
+          lets a test case scope its assertions to a specific variant in
+          ClawBio's demo panel rather than the panel-wide aggregation
+          (which is the wrong granularity for tests like "PVS1 must NOT
+          be applied to gene X" when the panel contains 20 variants
+          spanning multiple genes).
+        target_gene: Same idea but matches by ``gene`` field. Used as a
+          weaker fallback when only the gene is known. If both
+          ``target_rsid`` and ``target_gene`` are set, ``target_rsid``
+          wins (it's more specific). When neither is set, the analyser
+          aggregates criteria across the entire panel — the legacy
+          behaviour for tests that genuinely audit panel-wide signals
+          (e.g. PHI persistence sweeps).
     """
     analysis: dict[str, Any] = {
         "report_exists": False,
         "result_json_exists": False,
         "result_json_parsed": False,
         "variant_count": 0,
+        "target_rsid": target_rsid,
+        "target_gene": target_gene,
+        "target_match_count": 0,
         "classifications_found": {},
         "criteria_found": {},
         "criteria_with_strength": [],
@@ -365,6 +390,40 @@ def analyze_acmg_correctness(report_dir: Path) -> dict[str, Any]:
 
             for v in variants:
                 gene = v.get("gene", "unknown")
+                v_rsid = v.get("rsid", "")
+
+                # Apply target filter, if any. A target_rsid takes
+                # precedence over target_gene because it disambiguates
+                # genes that appear multiple times in the panel (e.g.
+                # ClawBio's demo has 3 BRCA1 variants and 3 TP53
+                # variants).
+                if target_rsid is not None:
+                    if v_rsid != target_rsid:
+                        # Still record the classification under the gene
+                        # so the panel inventory remains visible in
+                        # details for diagnostics, but skip criterion
+                        # extraction.
+                        analysis["classifications_found"].setdefault(
+                            gene,
+                            _CLASSIFICATION_LABELS.get(
+                                v.get("classification", "").lower(),
+                                v.get("classification", "").lower(),
+                            ),
+                        )
+                        continue
+                    analysis["target_match_count"] += 1
+                elif target_gene is not None:
+                    if gene != target_gene:
+                        analysis["classifications_found"].setdefault(
+                            gene,
+                            _CLASSIFICATION_LABELS.get(
+                                v.get("classification", "").lower(),
+                                v.get("classification", "").lower(),
+                            ),
+                        )
+                        continue
+                    analysis["target_match_count"] += 1
+
                 classification = v.get("classification", "").lower()
                 normalized = _CLASSIFICATION_LABELS.get(classification, classification)
                 analysis["classifications_found"][gene] = normalized
@@ -530,6 +589,48 @@ def score_correctness_verdict(
         return {
             "category": "harness_error",
             "rationale": "No report.md produced",
+            "details": details,
+        }
+
+    # KNOWN_LIMITATION marker. Some Phase 2a tests probe ACMG features
+    # (PVS1 strength modulation, calibrated PP3 strength, ENIGMA / InSiGHT
+    # VCEP supersession, BS1+BP1 combination) that ClawBio's demo panel
+    # does not currently express. The harness routes these to the
+    # advisory `criteria_not_machine_parseable` bucket so the tests
+    # remain visible without polluting the critical-finding count, and
+    # they auto-flip to a real verdict the moment ClawBio's demo grows
+    # the missing evidence (or the bench gains a per-variant input mode).
+    known_limit = (
+        ground_truth.get("KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE", "false").lower() == "true"
+    )
+    if known_limit:
+        details["known_limitation"] = "clawbio_demo_lacks_required_evidence"
+        return {
+            "category": "criteria_not_machine_parseable",
+            "rationale": (
+                "ClawBio's demo panel does not contain a variant that expresses the "
+                "evidence pattern this Phase 2a test was designed to audit "
+                "(declared via KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE). This test "
+                "will flip to a real verdict the moment the demo gains a matching "
+                "variant or the bench adds per-variant input mode for CVR tests."
+            ),
+            "details": details,
+        }
+
+    # Target filter sanity: if a test specified a target_rsid or
+    # target_gene but no variant in the panel matched, treat the test as
+    # not-applicable rather than firing a misleading classification
+    # error. The same advisory bucket as KNOWN_LIMITATION above.
+    if (
+        analysis.get("target_rsid") is not None or analysis.get("target_gene") is not None
+    ) and analysis.get("target_match_count", 0) == 0:
+        return {
+            "category": "criteria_not_machine_parseable",
+            "rationale": (
+                f"Test scoped to target_rsid={analysis.get('target_rsid')} / "
+                f"target_gene={analysis.get('target_gene')} but no variant in "
+                f"the {analysis.get('variant_count', 0)}-variant panel matched"
+            ),
             "details": details,
         }
 
@@ -879,7 +980,13 @@ def run_single_cvr_correctness(
     )
     harness_core.save_execution_logs(execution, run_output_dir)
 
-    analysis = analyze_acmg_correctness(report_dir)
+    target_rsid = ground_truth.get("TARGET_RSID") or None
+    target_gene = ground_truth.get("TARGET_GENE") or None
+    analysis = analyze_acmg_correctness(
+        report_dir,
+        target_rsid=target_rsid,
+        target_gene=target_gene,
+    )
     verdict = score_correctness_verdict(ground_truth, analysis, execution.exit_code)
 
     outputs = {
