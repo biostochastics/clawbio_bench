@@ -1,6 +1,6 @@
 # BENCHMARK: equity-scorer v0.1.0
 # PAYLOAD: input.vcf
-# GROUND_TRUTH_FST: 0.500
+# GROUND_TRUTH_FST: 1.000
 # GROUND_TRUTH_FST_ESTIMATOR: Nei's GST
 # GROUND_TRUTH_FST_PAIR: POP_A_vs_POP_B
 # FST_TOLERANCE: 0.02
@@ -12,10 +12,20 @@
 # REFERENCE_GENOME: GRCh38
 # NEI_REF: NEI_1973
 # DERIVATION: 3 pops x 5 samples. POP_A all 1/1, POP_B all 0/0, POP_C all 0/1.
-#   Targets: POP_A_vs_POP_B=1.0 (perfect differentiation),
-#            POP_A_vs_POP_C=0.33, POP_B_vs_POP_C=0.33.
-#   This test verifies the harness catches silent fallback to the first pair
-#   when ground truth has no GROUND_TRUTH_FST_PAIR — but here we DO specify
-#   the pair, so scoring must use POP_A_vs_POP_B specifically. A tool that
-#   emits POP_A_vs_POP_C as first pair must not be credited.
+#   Per-pair Nei GST (analytic, identical at all 10 loci):
+#     POP_A_vs_POP_B: p_A=1.0, p_B=0.0  -> H_S=0, p_T=0.5, H_T=0.5
+#                     -> GST = (0.5 - 0)/0.5 = 1.0  (perfect differentiation)
+#     POP_A_vs_POP_C: p_A=1.0, p_C=0.5  -> H_S=0.25, p_T=0.75, H_T=0.375
+#                     -> GST = (0.375 - 0.25)/0.375 = 0.333
+#     POP_B_vs_POP_C: p_B=0.0, p_C=0.5  -> H_S=0.25, p_T=0.25, H_T=0.375
+#                     -> GST = 0.333
+#   GROUND_TRUTH_FST_PAIR pins this test to POP_A_vs_POP_B = 1.0. The test
+#   verifies the harness scores the requested pair specifically and does
+#   NOT silently fall back to the first pair the tool happens to emit
+#   (e.g. POP_A_vs_POP_C). A tool that emits POP_A_vs_POP_C first must
+#   not be credited just because 0.333 happens to lie within tolerance of
+#   some other pair.
+#   Corrected 2026-04-07: GROUND_TRUTH_FST was 0.500, which matched no
+#   pairwise or global Nei GST on this VCF. Caught by Manuel/POP during
+#   v0.1.3 remediation re-run.
 # DESIGN: Uses 3 populations to force multi-pair output.
