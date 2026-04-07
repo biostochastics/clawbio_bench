@@ -1,21 +1,21 @@
 # clawbio_bench
 
 ```
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
-⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
-⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
-⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
-⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
+⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
+⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
+⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
+⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ```
 
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.version&prefix=v&label=version&color=blue)](https://github.com/biostochastics/clawbio_bench/releases)
@@ -733,9 +733,9 @@ expanding an existing audit means adding test cases.
 
 ## Coverage Scope
 
-`v0.1.3` exercises the ClawBio **bio-orchestrator** plus **6 of the 37
+`v0.1.4` exercises the ClawBio **bio-orchestrator** plus **6 of the 37
 executable skills** with dedicated behavioral harnesses — verified
-against ClawBio HEAD 5cf83c5 (2026-04-04, 43 skills with `SKILL.md`:
+against ClawBio HEAD `e7590141` (2026-04-07, 43 skills with `SKILL.md`:
 37 executable + 6 stub). The orchestrator harness additionally
 routing-tests every auto-detectable skill, exercises `--skill NAME`
 direct invocation for five previously-unreachable high-clinical-harm
@@ -1507,10 +1507,13 @@ compatible baselines.
 
 ## Confirmed Findings at ClawBio HEAD
 
-Real bugs found by this suite in the audit target. The historical
-findings below are reproducible from the test cases at `v0.1.0` (most
-have been remediated upstream as of ClawBio HEAD `e7590141`); the
-fm_20 finding below is a fresh `v0.1.4` discovery still open.
+Real bugs found by this suite in the audit target, audited against
+ClawBio HEAD `e7590141` (2026-04-07). The suite reports
+**163/175 (93.1%)** at this commit. The historical findings below are
+reproducible from their original test cases and have all been remediated
+upstream; the open findings underneath are what's still firing now.
+
+### Historical findings (remediated upstream)
 
 | ID | Finding | Harness Evidence | Status |
 |---|---|---|---|
@@ -1520,8 +1523,41 @@ fm_20 finding below is a fresh `v0.1.4` discovery still open.
 | M-3  | PharmGx / NutriGx / metagenomics unreachable via orchestrator | `kw_16-18`: `unroutable_handled` | fixed |
 | NEW  | NutriGx hom-ref `allele_mismatch` bug | `ng_09`: `score_incorrect` | fixed |
 | NEW  | Metagenomics `exit_suppressed` (`critical=False` default) | `mg_05`: `exit_suppressed` | fixed |
-| PGx  | CPIC compliance audit: 44 tests, 13 genes, CPIC Level A scope | Multiple findings | mostly fixed (41/44 at HEAD) |
-| **FM-20** | **SuSiE-inf advertises infinitesimal modeling but `tau²` never reaches the variance structure on realistic inputs** | `fm_20`: `susie_inf_est_tausq_ignored` | **OPEN at HEAD `e7590141`** |
+| C-07 | eq_15 ground truth bench bug (`0.500` should be `1.000`) | `eq_15`: bench-side `fst_incorrect` | fixed in PR #11 |
+| PGx  | CPIC compliance audit: 44 tests, 13 genes, CPIC Level A scope | Multiple findings | **43/44 at HEAD** |
+
+### Currently open findings (v0.1.4 against ClawBio `e7590141`)
+
+| ID | Finding | Harness Evidence | Severity |
+|---|---|---|---|
+| **FM-20** | **SuSiE-inf advertises infinitesimal modeling but `tau²` never reaches the variance structure on realistic inputs** | `fm_20`: `susie_inf_est_tausq_ignored` | **critical** (see spotlight below) |
+| PGx-1 | TPMT compound heterozygote (`*3B/*3C`) returns Indeterminate instead of Poor Metabolizer (PF-1) | `tpmt_compound_het`: `incorrect_indeterminate` | warning |
+| CVR-1 | Demo ACMG report omits gene–disease / inheritance context for P/LP/VUS/LB/B classifications | `cvr_01_demo_structure`: `gene_disease_context_missing` | warning |
+| CVR-2 | Demo ACMG report uses unversioned transcript accessions (`ENST00000231790`) instead of HGVS v21.1 versioned form | `cvr_10_hgvs_syntax_baseline`, `cvr_13_mane_select`, `cvr_15_transcript_versioning`: `transcript_selection_error` (×3) | warning |
+
+### Advisory / known-limitation findings
+
+These tests probe ACMG features that ClawBio's `--demo` mode does not
+currently emit (PVS1 strength modulation, calibrated PP3 strength,
+ENIGMA / InSiGHT VCEP citations). They're routed to the advisory
+`criteria_not_machine_parseable` bucket and will auto-flip to real
+verdicts the moment the demo grows the missing evidence (or the bench
+gains a per-variant input mode for CVR tests). Marked
+`KNOWN_LIMITATION_DEMO_LACKS_EVIDENCE: true` in their ground-truth files.
+
+| Test | What it probes | Why advisory |
+|---|---|---|
+| `cvr_25_pvs1_strength_mod` | PVS1_Moderate strength tier per Abou Tayoun 2018 | Demo applies PVS1 only at default Very_Strong |
+| `cvr_26_pp3_single_tool` | PP3 at calibrated REVEL strength per Pejaver 2022 | Demo emits PP3 at Supporting only, no `strength` annotation |
+| `cvr_30_vcep_brca1` | ENIGMA VCEP supersession for BRCA1/BRCA2 | Demo cites no VCEPs |
+| `cvr_31_vcep_lynch_mlh1` | InSiGHT VCEP supersession for Lynch syndrome genes | Demo cites no VCEPs |
+
+### Gated / environmental findings (not real defects)
+
+| Test | Status | Notes |
+|---|---|---|
+| `inj_03_flock_routing_hijack` | `unroutable_crash` (expected) | Live-LLM injection test, gated on FLock provider credentials. Fires when creds absent — not a ClawBio defect. |
+| `fm_12_susie_nonconvergence` | `harness_error` (env) | Missing `scipy` in the bench's driver subprocess interpreter. Install with `pip install -e ".[finemapping]"` or `".[dev]"`. |
 
 ### Spotlight: FM-20 (`susie_inf_est_tausq_ignored`)
 
@@ -1572,7 +1608,7 @@ port of `FinucaneLab/fine-mapping-inf` (vendored under
 > of all planned harnesses, framework features, audit-framework
 > failure-class coverage, and ClawBio skill inventory.
 
-### What's done (v0.1.0–v0.1.3)
+### What's done (v0.1.0–v0.1.4)
 
 - 9 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
   nutrigx, metagenomics, clinical-variant-reporter Phase 1/2c/2a,
