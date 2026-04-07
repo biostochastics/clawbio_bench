@@ -10,6 +10,11 @@ on:
         required: false
         default: ''
         type: string
+      clawbio_baseline_ref:
+        description: 'ClawBio commit to compare against (produces delta report)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write          # baseline commit + push
@@ -32,6 +37,16 @@ jobs:
             exit 1
           fi
 
+      - name: Validate clawbio_baseline_ref
+        if: inputs.clawbio_baseline_ref != ''
+        env:
+          CB_BASE: ${{ inputs.clawbio_baseline_ref }}
+        run: |
+          if ! printf '%s' "${CB_BASE}" | grep -Eq '^[A-Fa-f0-9a-z._/-]+$'; then
+            echo "::error::Invalid clawbio_baseline_ref: contains disallowed characters"
+            exit 1
+          fi
+
       - name: Checkout ClawBio
         uses: actions/checkout@v4
         with:
@@ -48,7 +63,24 @@ jobs:
       - name: Install bench
         run: pip install -e ".[all,dev]"
 
-      # ── Run smoke suite against ClawBio HEAD ──
+      # ── Run baseline audit (when comparing two commits) ──
+      - name: Run baseline audit
+        if: inputs.clawbio_baseline_ref != ''
+        env:
+          CB_BASE: ${{ inputs.clawbio_baseline_ref }}
+        run: |
+          set +e
+          clawbio-bench --commits "${CB_BASE}" \
+            --repo clawbio \
+            --output results/baseline/ \
+            --allow-dirty \
+            --no-rich
+          exit_code=$?
+          set -e
+          echo "Baseline audit exited with code ${exit_code}"
+          if [ $exit_code -ge 2 ]; then exit $exit_code; fi
+
+      # ── Run smoke suite against ClawBio HEAD (or clawbio_ref) ──
       - name: Run smoke suite
         id: smoke
         run: |
@@ -70,32 +102,39 @@ jobs:
 
       # ── Delta report (markdown) ──
       - name: Generate markdown delta report
+        env:
+          HAS_BASELINE_RUN: ${{ inputs.clawbio_baseline_ref != '' }}
         run: |
-          if [ -f baselines/latest_baseline.json ]; then
-            clawbio-bench --render-markdown results/today/ \
-              --baseline baselines/latest_baseline.json \
-              --markdown-output results/today/report.md \
-              --no-rich
-          else
-            clawbio-bench --render-markdown results/today/ \
-              --markdown-output results/today/report.md \
-              --no-rich
+          BASELINE_ARG=""
+          if [ "${HAS_BASELINE_RUN}" = "true" ] && [ -f results/baseline/aggregate_report.json ]; then
+            BASELINE_ARG="--baseline results/baseline/aggregate_report.json"
+          elif [ -f baselines/latest_baseline.json ]; then
+            BASELINE_ARG="--baseline baselines/latest_baseline.json"
           fi
+          # shellcheck disable=SC2086  # intentional word-splitting on BASELINE_ARG
+          clawbio-bench --render-markdown results/today/ \
+            ${BASELINE_ARG} \
+            --markdown-output results/today/report.md \
+            --no-rich
 
       # ── Delta report (PDF via Typst) ──
       - name: Install Typst
         uses: typst-community/setup-typst@v4
 
       - name: Generate PDF report
+        env:
+          HAS_BASELINE_RUN: ${{ inputs.clawbio_baseline_ref != '' }}
         run: |
-          if [ -f baselines/latest_baseline.json ]; then
-            python scripts/generate_report.py results/today/ \
-              --baseline baselines/latest_baseline.json \
-              --output results/today/report.pdf
-          else
-            python scripts/generate_report.py results/today/ \
-              --output results/today/report.pdf
+          BASELINE_ARG=""
+          if [ "${HAS_BASELINE_RUN}" = "true" ] && [ -f results/baseline/aggregate_report.json ]; then
+            BASELINE_ARG="--baseline results/baseline/aggregate_report.json"
+          elif [ -f baselines/latest_baseline.json ]; then
+            BASELINE_ARG="--baseline baselines/latest_baseline.json"
           fi
+          # shellcheck disable=SC2086
+          python scripts/generate_report.py results/today/ \
+            ${BASELINE_ARG} \
+            --output results/today/report.pdf
 
       # ── Baseline management ──
       - name: Update baseline if improved

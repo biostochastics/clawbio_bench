@@ -1,5 +1,23 @@
 # clawbio-bench
 
+```
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+```
+
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.version&prefix=v&label=version&color=blue)](https://github.com/biostochastics/clawbio_bench/releases)
 [![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.%22requires-python%22&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
@@ -1432,12 +1450,14 @@ every morning at 8 AM UTC against ClawBio HEAD:
 
 Secrets: `NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
 (optional, enables LLM swarm digest). The workflow also supports
-`workflow_dispatch` for manual triggering with an optional `clawbio_ref`
-input to audit a specific ClawBio commit, tag, or branch (e.g.
-`clawbio_ref: 349fb98` to audit the pre-remediation state). Historical
-runs produce full reports, baselines, and digests but suppress automatic
-issue creation to avoid false alarms. The ref input is validated against
-a conservative character set before use.
+`workflow_dispatch` for manual triggering with two optional inputs:
+`clawbio_ref` audits a specific ClawBio commit/tag/branch instead of
+HEAD; `clawbio_baseline_ref` runs the bench against a baseline commit
+first and uses its aggregate for the delta report — producing a single
+workflow run with a proper before/after comparison (e.g.
+`clawbio_baseline_ref: 349fb98` = "April 2 vs today"). Historical
+runs suppress automatic issue creation. Both ref inputs are validated
+against a conservative character set before use.
 
 ---
 
