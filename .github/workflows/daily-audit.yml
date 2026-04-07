@@ -80,6 +80,18 @@ jobs:
           echo "Baseline audit exited with code ${exit_code}"
           if [ $exit_code -ge 2 ]; then exit $exit_code; fi
 
+      - name: Restore ClawBio to target ref after baseline
+        if: inputs.clawbio_baseline_ref != ''
+        env:
+          CB_REF: ${{ inputs.clawbio_ref }}
+        run: |
+          cd clawbio
+          if [ -n "${CB_REF}" ]; then
+            git checkout "${CB_REF}"
+          else
+            git checkout "$(git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')"
+          fi
+
       # ── Run smoke suite against ClawBio HEAD (or clawbio_ref) ──
       - name: Run smoke suite
         id: smoke
