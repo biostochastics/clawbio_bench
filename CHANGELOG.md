@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-04-07
+
+### Added
+
+- **Braille logo with block-letter wordmark in README.** Lobster-claw-
+  under-magnifying-glass braille art with `clawbio` / `_bench` in
+  industrial block letters alongside.
+- **Actual audit report PDF.** `clawbio_audit_report_20260406.pdf`
+  (21-page, 7-harness smoke run, v0.1.2, 125/147 passing at ClawBio
+  HEAD `bb9ffff`) replaces the broken `sample_audit_report.pdf` link.
+
+### Changed
+
+- **CI section restructured by repo ownership.** ASCII diagram showing
+  which workflows live in `clawbio_bench` vs `ClawBio`, table of all 4
+  bench-side workflows with triggers, and a separate section for the
+  3-line ClawBio stub. Daily audit and secrets callouts now explicitly
+  name their source repo.
+- **Project name standardized to `clawbio_bench`** (underscore) across
+  README headings, prose, and CLI references.
+
+### Fixed
+
+- **`.gitignore` negation pattern.** `!sample_audit_report.pdf` replaced
+  with `!clawbio_audit_report_20260406.pdf` so the actual report is
+  tracked by git.
+
 ## [0.1.2] — 2026-04-06
 
 ### Added
@@ -452,6 +479,7 @@ set before interpolation into `pip install`.
   roadmap.
 - Platform coverage: Linux and macOS only. Windows is untested.
 
+[0.1.3]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.3
 [0.1.2]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.2
 [0.1.1]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.1
 [0.1.0]: https://github.com/biostochastics/clawbio_bench/releases/tag/v0.1.0

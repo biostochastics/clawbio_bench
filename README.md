@@ -3,17 +3,17 @@
 ```
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
+⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
+⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
+⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
 ⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ```
@@ -1342,14 +1342,31 @@ python scripts/gen_schemas.py                       # writes schemas/*.schema.js
 
 ## Continuous Audit (GitHub Actions)
 
-`clawbio_bench` ships a reusable workflow so any downstream repository —
-primarily [ClawBio](https://github.com/ClawBio/ClawBio) itself — can run
-the suite on every PR and get a sticky comment summarising findings.
+Two repositories participate. Workflows are split by ownership:
 
-### Stub for the audited repository
+```
+biostochastics/clawbio_bench          ClawBio/ClawBio
+(this repo — the auditor)             (the audited target)
+─────────────────────────             ─────────────────────
+ ci.yml                                audit.yml  ← you add this
+ audit-reusable.yml  ◄── called by ──  (3-line stub, see below)
+ audit-baseline.yml
+ daily-audit.yml
+```
 
-Drop this into `.github/workflows/audit.yml` in ClawBio (or any repo
-being audited):
+### Workflows in `clawbio_bench` (this repo)
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | Push / PR to `clawbio_bench` | Lint, unit tests (3.11–3.13), smoke against pinned ClawBio ref |
+| `audit-reusable.yml` | Called by downstream repos | Reusable workflow: installs bench, runs smoke, posts PR comment |
+| `audit-baseline.yml` | Nightly (04:17 UTC) + push to `main` | Publishes rolling `aggregate_report.json` baseline as a release asset |
+| `daily-audit.yml` | Cron (08:00 UTC) + manual dispatch | Full daily audit against ClawBio HEAD (see below) |
+
+### Workflow in ClawBio (the audited repo)
+
+Drop this **3-line stub** into `.github/workflows/audit.yml` in ClawBio
+(or any repo being audited). It calls the reusable workflow hosted here:
 
 ```yaml
 name: clawbio_bench audit
@@ -1367,7 +1384,7 @@ jobs:
       pull-requests: write
 ```
 
-What you get on each PR:
+What ClawBio gets on each PR:
 
 - The full smoke suite (all harnesses, HEAD only) runs against the PR
   checkout.
@@ -1379,6 +1396,40 @@ What you get on each PR:
 - The same report written to the job summary, so fork PRs (where the
   token is read-only and no comment can be posted) still surface the
   result.
+
+### Daily automated audit (`daily-audit.yml` in clawbio_bench)
+
+A cron-scheduled workflow runs every morning at 8 AM UTC. It clones
+ClawBio HEAD and audits it:
+
+1. **Smoke suite** — all harnesses, HEAD only (~40 seconds).
+2. **Delta reports** — markdown and PDF (Typst) compared against a
+   rolling baseline committed to `baselines/latest_baseline.json`.
+3. **Baseline promotion** — if pass rate improved, the baseline is
+   updated and committed. Regressions keep the old baseline so the
+   delta stays visible.
+4. **Notification** — a one-paragraph digest posted to a webhook
+   (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
+   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
+   the findings, then Haiku 4.5 synthesizes a narrative digest with
+   number verification against the structured source.
+5. **Regression issue** — a deduplicated GitHub issue opens
+   automatically when findings are detected.
+6. **Per-commit attribution** — a secondary job runs
+   `--regression-window 5` for the last 5 ClawBio commits, so you
+   can see which specific commit introduced a regression.
+
+Secrets (configured in `clawbio_bench`, not ClawBio):
+`NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
+(optional, enables LLM swarm digest). The workflow also supports
+`workflow_dispatch` for manual triggering with two optional inputs:
+`clawbio_ref` audits a specific ClawBio commit/tag/branch instead of
+HEAD; `clawbio_baseline_ref` runs the bench against a baseline commit
+first and uses its aggregate for the delta report — producing a single
+workflow run with a proper before/after comparison (e.g.
+`clawbio_baseline_ref: 349fb98` = "April 2 vs today"). Historical
+runs suppress automatic issue creation. Both ref inputs are validated
+against a conservative character set before use.
 
 ### Behaviour and tuning
 
@@ -1425,39 +1476,6 @@ What you get on each PR:
 See [docs/baseline-schema.md](docs/baseline-schema.md) for the exact
 fields consumed during diffing, so downstream tooling can produce
 compatible baselines.
-
-### Daily automated audit
-
-A cron-scheduled workflow (`.github/workflows/daily-audit.yml`) runs
-every morning at 8 AM UTC against ClawBio HEAD:
-
-1. **Smoke suite** — all harnesses, HEAD only (~40 seconds).
-2. **Delta reports** — markdown and PDF (Typst) compared against a
-   rolling baseline committed to `baselines/latest_baseline.json`.
-3. **Baseline promotion** — if pass rate improved, the baseline is
-   updated and committed. Regressions keep the old baseline so the
-   delta stays visible.
-4. **Notification** — a one-paragraph digest posted to a webhook
-   (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
-   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
-   the findings, then Haiku 4.5 synthesizes a narrative digest with
-   number verification against the structured source.
-5. **Regression issue** — a deduplicated GitHub issue opens
-   automatically when findings are detected.
-6. **Per-commit attribution** — a secondary job runs
-   `--regression-window 5` for the last 5 ClawBio commits, so you
-   can see which specific commit introduced a regression.
-
-Secrets: `NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
-(optional, enables LLM swarm digest). The workflow also supports
-`workflow_dispatch` for manual triggering with two optional inputs:
-`clawbio_ref` audits a specific ClawBio commit/tag/branch instead of
-HEAD; `clawbio_baseline_ref` runs the bench against a baseline commit
-first and uses its aggregate for the delta report — producing a single
-workflow run with a proper before/after comparison (e.g.
-`clawbio_baseline_ref: 349fb98` = "April 2 vs today"). Historical
-runs suppress automatic issue creation. Both ref inputs are validated
-against a conservative character set before use.
 
 ---
 
