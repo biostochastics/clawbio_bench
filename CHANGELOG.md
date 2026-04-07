@@ -17,7 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `clawbio_ref` input for auditing historical commits (e.g.
   `clawbio_ref: 349fb98` to audit the pre-remediation state). Historical
   runs produce full reports, baselines, and digests but suppress automatic
-  issue creation to avoid false alarms.
+  issue creation to avoid false alarms. A second optional input
+  `clawbio_baseline_ref` runs the bench against a baseline commit first,
+  then uses its aggregate as the `--baseline` for the main run's delta
+  report — producing a single workflow run with a proper before/after
+  comparison (e.g. `clawbio_baseline_ref: 349fb98` + default
+  `clawbio_ref` = "April 2 vs HEAD").
 - **`scripts/update_baseline.py`.** Baseline manager: promotes on strict
   improvement, initializes on first run, handles corrupt baselines.
 - **`scripts/post_summary.py` with multi-model LLM swarm.** `--llm
