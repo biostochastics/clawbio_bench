@@ -89,7 +89,9 @@ jobs:
           if [ -n "${CB_REF}" ]; then
             git checkout "${CB_REF}"
           else
-            git checkout "$(git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')"
+            # actions/checkout doesn't set origin/HEAD; find the default branch
+            DEFAULT=$(git remote show origin 2>/dev/null | sed -n 's/.*HEAD branch: //p')
+            git checkout "${DEFAULT:-main}"
           fi
 
       # ── Run smoke suite against ClawBio HEAD (or clawbio_ref) ──
