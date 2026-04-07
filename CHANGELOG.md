@@ -7,6 +7,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **PharmGx harness: 8 new test cases (36 → 44 total).**
+  - CYP1A2 coverage (3 tests): `cyp1a2_normal`, `cyp1a2_ultrarapid_1f1f`,
+    `cyp1a2_poor_1c1c` — fills zero-test gene gap covering clozapine
+    (DPWG CYP1A2/clozapine guidance).
+  - CYP2C9 standalone (2 tests): `cyp2c9_pm_star3_star3` (phenytoin/NSAIDs),
+    `cyp2c9_im_star1_star2` (celecoxib/ibuprofen) — validates non-warfarin
+    CYP2C9 drug coverage per CPIC (Theken 2020, PMID 32189324).
+  - CYP2D6*10 (1 test): `cyp2d6_10_het` — catches CPIC 2020 activity score
+    boundary error (Caudle 2020, PMID 31647186: AS 1.25 = NM, not IM).
+  - CPIC Level A scope honesty (2 tests): `hla_a3101_carbamazepine_indeterminate`
+    (Phillips 2018, PMID 29392710), `hla_b5801_allopurinol_indeterminate`
+    (Hershfield 2013, PMID 23232549) — validates tool now discloses
+    HLA-A and HLA-B as "Indeterminate (not in panel)".
+
+### Changed
+
+- **PharmGx: 3 existing tests updated for ClawBio HEAD SV handling.**
+  `cyp2d6_del`, `cyp3a5_7_ins`, `ugt1a1_28_het` changed from
+  `disclosure_failure` to `scope_honest_indeterminate` — tool now returns
+  "Indeterminate (structural variant not assessed)" for het calls at
+  DEL/INS/TA7 loci instead of silently skipping.
+
+- **PharmGx ground truths triple-verified.** All 44 test cases validated
+  against CPIC guidelines, PharmVar allele definitions, and published
+  literature (Exa search + Droid/Gemini/GLM-5 multi-model review).
+  Corrections applied: CYP2D6*10 AS boundary (IM → NM per CPIC 2020),
+  CYP2C9*3 terminology (decreased → no-function per CPIC 2020),
+  CYP1A2*1C European frequency (4% → 1.6% per CDC data), phenytoin PM
+  dose (25% → 50%), CPIC_REF tag (CPIC_STATINS → CPIC_NSAIDS).
+
+- **PharmGx: diclofenac/naproxen overclaim documented.** Tool classifies
+  diclofenac as "avoid" for CYP2C9 PM, but CPIC Table S9 (Theken 2020)
+  explicitly states "no recommendation" — diclofenac PK is "not
+  significantly impacted by CYP2C9 genetic variants in vivo."
+
+- **CVR Phase 2c harness: variant identity/HGVS validation.**
+  New harness `cvr_identity_harness.py` with 8 rubric categories
+  validates HGVS v21.1 syntax (Hart 2024, PMID 39702242), MANE Select
+  transcript usage, versioned accessions, indel normalization, and
+  assembly coordinate consistency.  6 test cases (`cvr_10`–`cvr_15`).
+  Registered in CLI as `cvr_identity`.
+
+- **CVR Phase 2a harness: ACMG classification correctness.**
+  New harness `cvr_correctness_harness.py` with 16 rubric categories
+  validates criterion-level correctness (PVS1 strength per Abou Tayoun
+  2018, PP3/BP4 calibration per Pejaver 2022, BA1/BS1/PM2 thresholds),
+  VCEP supersession (ENIGMA, InSiGHT), SF v3.3 (84 genes), and
+  ClinGen gene-disease validity.  13 test cases (`cvr_20`–`cvr_32`)
+  with Gold/Silver truth tiers.  Registered in CLI as `cvr_correctness`.
+
+- **Phase 2 PRD document.** `docs/plans/CVR_PHASE2_PRD.md` with
+  triple-verified standards ground truth (ACMG/AMP, ClinGen SVI,
+  HGVS, GA4GH, CPIC/PharmVar), architectural review by GPT-5.2-pro,
+  and phased roadmap (2c → 2a → 2b/Phase 3).
+
+### Changed
+
+- **Phase 1 CVR references updated.** Added `REHDER_2021` (PMID
+  33927380, supersedes Rehm 2013 for NGS technical standards),
+  `PEJAVER_2022` (PMID 36413997, PP3/BP4 calibration), and `LEE_2025`
+  (PMID 40568962, SF v3.3, 84 genes) to `GROUND_TRUTH_REFS`.  Fixed
+  Abou Tayoun 2018 journal (Human Mutation, not Genetics in Medicine).
+  Added PMIDs to existing references.
+
+### Fixed
+
+- **HGVS protein regex crash.** Fixed `[a-z]{2}+` (re.error: multiple
+  repeat) in `_HGVS_PROTEIN_RE` insertion pattern — changed to
+  `(?:[A-Z][a-z]{2})+`.  Added extension (`ext`), synonymous with
+  position, and unknown (`?`) patterns per HGVS v21.1.
+
+- **Unpredicted protein false positive.** `_UNPREDICTED_PROTEIN_RE`
+  now checks for missing opening paren (not closing paren), preventing
+  false positives on properly parenthesized `p.(Ser42Cys)` expressions.
+
+- **In-silico tool name false positives.** Replaced substring matching
+  with word-boundary regex for PP3/BP4 tool detection — "SIFT" no
+  longer matches "sifting", "VEST" no longer matches "investigate".
+
+- **REVEL thresholds corrected.** Pejaver 2022 Table 2 calibrated
+  thresholds are [0.644,0.773)/[0.773,0.932)/≥0.932, not the
+  previously stated 0.5/0.75/0.9.
+
+- **ClinGen GDV tiers clarified.** Changed "7 tiers" to "6
+  classification tiers" — "No Known Disease Relationship" is the
+  default uncurated state, not a scored classification tier.
+
+- **Ghasemnejad 2026 misattribution removed.** The paper (PMC12916173)
+  benchmarks variant prioritization, not criterion-level implementation
+  errors.  Removed as reference for PP3 overcounting and PM2 claims
+  in test cases `cvr_22` and `cvr_27`.
+
+- **BA1 exception list noted.** Test case `cvr_20` hazard metric now
+  mentions the ClinGen SVI BA1 exception list (Ghosh 2018, PMID
+  30311383).
+
+- **JSON parse errors recorded.** `analyze_acmg_correctness()` now
+  records parse error details instead of silently swallowing them.
+
 ### Changed
 
 - **Live inventory-driven executable detection in orchestrator harness.**

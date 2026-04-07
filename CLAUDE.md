@@ -69,7 +69,7 @@ def run_single_<name>(repo_path, commit_sha, test_case_path,
                        ground_truth, payload_path, output_base, commit_meta) -> dict
 ```
 
-Five harnesses: orchestrator (44 tests), equity (14), pharmgx (18), nutrigx (10), metagenomics (7).
+Five harnesses: orchestrator (55 tests), equity (15), pharmgx (44), nutrigx (20), metagenomics (7).
 
 The `run_single_*` function must never raise — return `harness_error` verdicts for infrastructure failures.
 

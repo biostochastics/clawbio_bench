@@ -1,0 +1,60 @@
+# BENCHMARK: cyp2d6_10_het
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Normal Metabolizer (*1/*10)
+# GROUND_TRUTH_BEHAVIOR: rs1065852 heterozygous C/T defines CYP2D6*10 (P34S,
+#   100C>T). The *10 allele produces an enzyme with decreased but measurable
+#   activity (decreased_function, AS value 0.25 per PharmVar). CYP2D6*10 is the
+#   most common decreased-function allele worldwide — allele frequency ~38-70%
+#   in East Asian populations (Gaedigk et al. 2017 PMID 28027386, PharmVar).
+#   CPIC CONSENSUS (Caudle et al. 2020, PMID 31647186, Table 3): *1/*10 has
+#   activity score 1.0 + 0.25 = 1.25. The NM threshold is AS >= 1.25, so *1/*10
+#   is NORMAL METABOLIZER per CPIC. The paper literally uses *1/*10 as the NM
+#   example. Codeine: STANDARD dosing per CPIC for NM.
+# EXPECTED_TOOL_OUTPUT: Tool maps *1/*10 to Intermediate Metabolizer in its
+#   phenotype table (GENE_DEFS["CYP2D6"]["phenotypes"]["Intermediate Metabolizer"]
+#   includes "*1/*10"). This DISAGREES with CPIC 2020 consensus which classifies
+#   AS 1.25 as NM. Tool will report codeine as "caution" when CPIC says "standard."
+#   This is a tool accuracy finding — the phenotype table uses pre-2020 boundaries.
+# FINDING: CYP2D6*10 phenotype boundary — tool uses pre-2020 IM cutoff (AS<1.5)
+#   instead of CPIC 2020 consensus (NM >= 1.25). Affects ~35% of East Asians.
+# FINDING_CATEGORY: incorrect_determinate
+# TARGET_GENE: CYP2D6
+# TARGET_RSID: rs1065852
+# HAZARD_DRUG: Codeine
+# HAZARD_CLASS: Opioid Analgesic (tool over-restricts: caution when CPIC says standard for NM)
+# CPIC_REF: CPIC_OPIOID
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs1065852=CT (heterozygous *10). All other CYP2D6 SNPs at reference.
+#   No *4, *6, *2, *41 variants.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CT
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

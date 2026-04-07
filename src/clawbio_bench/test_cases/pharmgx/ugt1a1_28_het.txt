@@ -1,14 +1,18 @@
 # BENCHMARK: ugt1a1_28_het
-# GROUND_TRUTH_PHENOTYPE: UGT1A1 Intermediate Metabolizer (*1/*28)
-# GROUND_TRUTH_BEHAVIOR: Tool should detect heterozygous UGT1A1*28 (TA7 repeat). Per DPWG/
-#   FDA labeling, *1/*28 carriers may have reduced UGT1A1 activity. The key issue is that
-#   the tool skips the TA7 variant entirely without disclosure, not the specific phenotype.
-# EXPECTED_TOOL_OUTPUT: Tool reports Normal Metabolizer (*1/*1) because alt="TA7" triggers
-#   the structural variant skip (line ~899: if alt in ("DEL","INS","TA7"): continue).
-#   The WARNING is printed to stderr but the genotype is silently ignored. Irinotecan
-#   gets "standard" recommendation -- a false negative for a clinically actionable finding.
-# FINDING: PF-1 (PharmGx indel non-detection: rs8175347 TA7 repeat)
-# FINDING_CATEGORY: disclosure_failure
+# GROUND_TRUTH_PHENOTYPE: UGT1A1 Indeterminate (structural variant *28 TA7 not assessable from DTC data)
+# GROUND_TRUTH_BEHAVIOR: rs8175347 represents UGT1A1*28 (TA7 repeat). The actual
+#   polymorphism is a TA-repeat (TA6 vs TA7) that cannot be represented in 2-char DTC
+#   genotype format. The correct tool behavior is to return Indeterminate with a
+#   structural variant disclosure when the genotype is heterozygous (het call at an SV
+#   locus suggests the patient may carry the *28 allele). Silently reporting Normal is a
+#   false negative for a clinically actionable finding (irinotecan dose reduction).
+# EXPECTED_TOOL_OUTPUT: Tool detects het call "CT" at rs8175347 (alt="TA7") and returns
+#   "Indeterminate (structural variant not assessed: *28(rs8175347))" for UGT1A1
+#   diplotype. Irinotecan classification becomes indeterminate. This is the correct
+#   scope-honest behavior — the tool cannot resolve TA-repeat polymorphisms from DTC
+#   data and discloses this limitation.
+# FINDING: PF-1 (UGT1A1*28 TA7 — scope-honest disclosure of DTC limitation)
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: UGT1A1
 # TARGET_RSID: rs8175347
 # HAZARD_DRUG: Irinotecan

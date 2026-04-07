@@ -22,7 +22,7 @@
 [![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.%22requires-python%22&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-244%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-245%20passing-brightgreen)](tests/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy: checked](https://img.shields.io/badge/mypy-checked-blue)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -753,7 +753,7 @@ field, which is the sole authoritative source.
 | ClawBio skill | Dedicated behavioral harness | Routing-tested |
 |---|:---:|:---:|
 | `bio-orchestrator` | Yes (54 tests) | — |
-| `pharmgx-reporter` | Yes (33 tests) | also |
+| `pharmgx-reporter` | Yes (44 tests) | also |
 | `equity-scorer` | Yes (15 tests) | also |
 | `nutrigx_advisor` | Yes (10 tests) | also |
 | `claw-metagenomics` | Yes (7 tests) | also |
@@ -790,8 +790,8 @@ field, which is the sole authoritative source.
 - Dedicated behavioral coverage: **6 / 37 executable ClawBio skills (~16%)**
 - Skills reachable via orchestrator auto-detection: **23 / 43**
 - Skills reachable via `--skill NAME` direct invocation: **43 / 43 (100%)** — five previously-unreachable clinical skills (`clinical-variant-reporter`, `variant-annotation`, `clinical-trial-finder`, `target-validation-scorer`, `methylation-clock`) now have dedicated force-routing tests
-- Total harnesses: **7** (6 ClawBio-skill audits + 1 fine-mapping subsystem audit)
-- Total test cases: **140** (54 orchestrator + 33 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 16 fine-mapping + 5 clinical-variant-reporter)
+- Total harnesses: **9** (6 ClawBio-skill audits + 1 fine-mapping + 2 CVR Phase 2)
+- Total test cases: **170** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 16 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness)
 
 See [`docs/plans/GAP_ANALYSIS_2026-04-04.md`](docs/plans/GAP_ANALYSIS_2026-04-04.md)
 for the full audit-framework-aligned gap analysis, including the
@@ -862,7 +862,7 @@ CSV mode honesty, edge cases.
 | `edge_crash` | No | Edge case crash |
 | `harness_error` | — | Infrastructure error |
 
-### PharmGx Reporter (33 tests, 7 categories)
+### PharmGx Reporter (44 tests, 7 categories)
 
 **In plain English.** Given a genotype file, does the tool call the right
 pharmacogenomic phenotype (e.g. "CYP2C19 Poor Metabolizer"), classify the
@@ -1492,7 +1492,7 @@ from the corresponding test cases at `v0.1.0`.
 | M-3  | PharmGx / NutriGx / metagenomics unreachable via orchestrator | `kw_16-18`: `unroutable_handled` |
 | NEW  | NutriGx hom-ref `allele_mismatch` bug | `ng_09`: `score_incorrect` |
 | NEW  | Metagenomics `exit_suppressed` (`critical=False` default) | `mg_05`: `exit_suppressed` |
-| PGx  | 44% pass rate confirms prior CPIC compliance audit | 10/18 tests fail |
+| PGx  | CPIC compliance audit: expanded to 44 tests, 13 genes, CPIC Level A scope | Multiple findings |
 
 ---
 
@@ -1517,12 +1517,12 @@ from the corresponding test cases at `v0.1.0`.
 
 ### What's done (v0.1.0–v0.1.2)
 
-- 7 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
-  nutrigx, metagenomics, clinical-variant-reporter Phase 1, finemapping)
-  covering **140 test cases**.
+- 9 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
+  nutrigx, metagenomics, clinical-variant-reporter Phase 1/2c/2a,
+  finemapping) covering **159 test cases**.
 - Dynamic skill inventory, `--skill NAME` force-routing, `--skills
   A,B,C` composition mode, prompt-injection regression pins.
-- CYP2D6 CNV/hybrid/*5, NUDT15, CYP2B6, G6PD, MT-RNR1 pharmgx tests.
+- CYP2D6 CNV/hybrid/*5/*10, NUDT15, CYP2B6, CYP1A2, CYP2C9, G6PD, MT-RNR1, HLA-A*31:01, HLA-B*58:01 pharmgx tests.
 - `scope_honest_indeterminate` category split, `--tagged-commits` mode,
   5-tier severity system, delta comparison in reports.
 
@@ -1530,7 +1530,7 @@ from the corresponding test cases at `v0.1.0`.
 
 | Harness | ClawBio skill | Tier |
 |---------|---------------|:----:|
-| `clinical-variant-reporter` Phase 2 | `clinical-variant-reporter` | 1 |
+| `clinical-variant-reporter` Phase 2c/2a | `clinical-variant-reporter` | 1 | **done** |
 | `variant-annotation` | `variant-annotation` | 1 |
 | `clinpgx` | `clinpgx` | 1 |
 | `gwas-prs` | `gwas-prs` | 1 |
