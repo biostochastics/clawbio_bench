@@ -49,12 +49,10 @@ PASS_CATEGORIES = ["routed_correct", "stub_warned", "unroutable_handled"]
 FAIL_CATEGORIES = ["routed_wrong", "stub_silent", "unroutable_crash"]
 
 # Documented skill inventory baseline at the time this harness version was
-# cut. These sets are kept for **drift detection only** and MUST NOT be used
-# as scoring inputs. Verdict logic depends entirely on the per-test
-# ``GROUND_TRUTH_EXECUTABLE`` field. See ``discover_clawbio_skills`` below,
-# which scans the commit under audit to produce a live inventory, and
-# ``compute_inventory_drift`` which compares the live inventory against this
-# baseline and records divergence as verdict metadata.
+# cut. These sets are used for **drift detection** (comparing live vs pinned).
+# Scoring uses the *live* inventory from ``discover_clawbio_skills`` as the
+# authoritative source for executable status, falling back to the per-test
+# ``GROUND_TRUTH_EXECUTABLE`` header only when the live scan is unavailable.
 #
 # Baseline pinned at ClawBio HEAD 5cf83c5 (2026-04-04).
 _BASELINE_EXECUTABLE_SKILLS: frozenset[str] = frozenset(
@@ -122,8 +120,8 @@ def discover_clawbio_skills(repo_path: Path) -> dict[str, set[str]]:
       - ``unknown``: directories that do not contain ``SKILL.md`` at all
         (build artifacts, documentation folders, etc.)
 
-    This classification is used for **metadata and drift detection only**.
-    Scoring depends on per-test ``GROUND_TRUTH_EXECUTABLE`` exclusively.
+    This classification is the **authoritative source** for executable
+    status during scoring.  ``GROUND_TRUTH_EXECUTABLE`` is a fallback.
     """
     skills_dir = repo_path / "skills"
     inventory: dict[str, set[str]] = {"executable": set(), "stub": set(), "unknown": set()}
@@ -343,14 +341,29 @@ def score_routing_verdict(
 
     Ground truth headers:
         GROUND_TRUTH_SKILL: expected skill name
-        GROUND_TRUTH_EXECUTABLE: true/false (whether skill has Python code)
+        GROUND_TRUTH_EXECUTABLE: true/false (fallback; overridden by live scan)
         GROUND_TRUTH_ROUTING_METHOD: extension/keyword/error
         HAZARD_ROUTING: description of what goes wrong
         QUERY_TEXT: natural language query (keyword tests)
         EXPECTED_EXIT_CODE: 0 or 1
+
+    The live skill inventory (from ``discover_clawbio_skills``) is the
+    authoritative source for executable status.  If the expected skill
+    appears in the live inventory, its classification wins over the
+    static ``GROUND_TRUTH_EXECUTABLE`` header.  This prevents stale
+    ground-truth files from producing false ``stub_silent`` verdicts
+    when a skill gains code between harness releases.
     """
     expected_skill = ground_truth.get("GROUND_TRUTH_SKILL", "").strip()
     expected_executable = ground_truth.get("GROUND_TRUTH_EXECUTABLE", "true").lower() == "true"
+
+    # Override with live inventory when available.
+    live_executable = analysis.get("live_executable_skills") or set()
+    live_stubs = analysis.get("live_stub_skills") or set()
+    if expected_skill in live_executable:
+        expected_executable = True
+    elif expected_skill in live_stubs:
+        expected_executable = False
     routing_method = ground_truth.get("GROUND_TRUTH_ROUTING_METHOD", "")
     expected_exit = int(ground_truth.get("EXPECTED_EXIT_CODE", "0"))
     finding_category = ground_truth.get("FINDING_CATEGORY", "")
@@ -503,13 +516,11 @@ def score_routing_verdict(
     # ── Check if routed to correct skill ──
     if observed_skill == expected_skill:
         # Correct routing — but check if it's a stub. The authoritative
-        # source is the per-test ``GROUND_TRUTH_EXECUTABLE`` field: that is
-        # the auditor's explicit declaration of whether the target skill
-        # has executable code at the commit under audit. The tool's own
-        # ``stub=True`` signal is NOT a secondary override — if we honored
-        # it on top of ground truth, a tool that mislabeled its own skill
-        # as a stub would corrupt the verdict in exactly the same way the
-        # stale ``STUB_SKILLS`` frozenset used to. Ground truth wins.
+        # source is the live inventory from ``discover_clawbio_skills``,
+        # which has already overridden ``expected_executable`` above when
+        # the skill was found. The tool's own ``stub=True`` signal is NOT
+        # an override — if we honored it, a tool that mislabeled its own
+        # skill as a stub would corrupt the verdict.
         # ``observed_is_stub`` is retained purely in the verdict details
         # for post-hoc analysis (detecting tool-vs-auditor disagreements).
         expected_is_stub = not expected_executable
@@ -664,9 +675,10 @@ def run_single_orchestrator(
         execution.exit_code,
     )
 
-    # Drift detection: scan the commit under audit for its actual skill
-    # inventory and attach the diff against our pinned baseline as verdict
-    # metadata. Informational only — does NOT affect the verdict category.
+    # Live inventory: scan the commit under audit for its actual skill
+    # classification. The sets are stored in ``analysis`` so
+    # ``score_routing_verdict`` can override stale GROUND_TRUTH_EXECUTABLE
+    # values with the live truth.  Drift metadata is also attached.
     try:
         live_inventory = discover_clawbio_skills(repo_path)
         drift = compute_inventory_drift(live_inventory)
@@ -675,8 +687,10 @@ def run_single_orchestrator(
             "executable": len(live_inventory["executable"]),
             "stub": len(live_inventory["stub"]),
         }
+        analysis["live_executable_skills"] = live_inventory["executable"]
+        analysis["live_stub_skills"] = live_inventory["stub"]
     except OSError:
-        # Drift detection must never fail the verdict — it is metadata.
+        # Inventory scan must never fail the verdict.
         analysis["skill_inventory_drift"] = None
 
     # Score

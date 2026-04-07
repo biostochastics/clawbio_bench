@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Live inventory-driven executable detection in orchestrator harness.**
+  `score_routing_verdict()` now uses the live skill scan from
+  `discover_clawbio_skills()` as the authoritative source for whether a
+  skill is executable or a stub.  The manual `GROUND_TRUTH_EXECUTABLE`
+  header in test case files is now a fallback, not the primary source.
+  This prevents stale ground-truth files from producing false
+  `stub_silent` verdicts when a ClawBio skill gains code between
+  harness releases (e.g. `struct-predictor`, which gained 1,166 LOC
+  but was still classified as a stub in 3 test cases).
+
+### Fixed
+
+- **3 false `stub_silent` findings for `struct-predictor` eliminated.**
+  `ext_09_pdb`, `ext_10_cif`, and `kw_05_alphafold` ground truth files
+  updated from `GROUND_TRUTH_EXECUTABLE: false` to `true` and
+  `FINDING_CATEGORY` from `stub_silent` to `routed_correct`.
+- **`FLOCK_API_KEY` now passed to daily audit smoke step.** The
+  `inj_03_flock_routing_hijack` prompt-injection test previously always
+  produced `unroutable_crash` in CI because FLock credentials were not
+  available.  The daily-audit workflow now passes the secret, enabling
+  the actual LLM routing path to be exercised.
+
 ## [0.1.3] — 2026-04-07
 
 ### Added
