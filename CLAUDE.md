@@ -69,7 +69,9 @@ def run_single_<name>(repo_path, commit_sha, test_case_path,
                        ground_truth, payload_path, output_base, commit_meta) -> dict
 ```
 
-Five harnesses: orchestrator (55 tests), equity (15), pharmgx (44), nutrigx (20), metagenomics (7).
+Nine harnesses: orchestrator (54 tests), equity (15), pharmgx (44), nutrigx (10), metagenomics (7), clinical_variant_reporter Phase 1 (5), cvr_identity Phase 2c (6), cvr_correctness Phase 2a (13), finemapping (16). Total: 170 test cases.
+
+The `cvr_identity` and `cvr_correctness` harnesses both audit the same ClawBio `clinical-variant-reporter` skill but with different rubrics — Phase 2c validates HGVS/transcript/assembly representation, Phase 2a validates ACMG/AMP criterion-level correctness with dual-layer ground truth (gold standard `EXPECTED_*` vs tool self-consistency `EXPECTED_TOOL_*`).
 
 The `run_single_*` function must never raise — return `harness_error` verdicts for infrastructure failures.
 

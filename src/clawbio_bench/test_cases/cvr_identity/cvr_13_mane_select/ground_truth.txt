@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: false
+# CHECK_TRANSCRIPT_VERSION: true
+# CHECK_MANE_SELECT: true
+# CHECK_NORMALIZATION: false
+# CHECK_ASSEMBLY_COORDS: false
+# EXPECTED_ASSEMBLY: any
+#
+# Gold standard (clinical correctness):
+#   MANE Select transcript must be used when available. LRGs deprecated per
+#   HGVS v21.1 (Hart 2024, PMID 39702242). MANE ensures cross-database
+#   reproducibility (NCBI, Ensembl, ClinVar align on MANE).
+#
+# Tool expectation (self-consistency):
+#   Demo mode should cite MANE Select and use versioned transcripts. Happy path.
+#
+# FINDING: Phase 2c — MANE Select transcript must be used when available
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: HGVS v21.1 (Hart 2024, PMID 39702242) formally recommends MANE Select transcripts and withdraws LRG recommendation. PVS1 loss-of-function assessment is transcript-dependent — using a non-MANE transcript can produce different exon structures and alter classification. MANE Select ensures cross-database reproducibility (NCBI, Ensembl, ClinVar align on MANE).
+# REFERENCE: MANE_SELECT
+# REFERENCE: HART_2024
+# EXPECTED_EXIT_CODE: 0

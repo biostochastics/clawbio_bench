@@ -1,0 +1,24 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PVS1
+# CHECK_PVS1_STRENGTH: true
+# EXPECTED_PVS1_STRENGTH: Moderate
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PVS1 strength modulation per Abou Tayoun 2018 decision tree. Four tiers:
+#   PVS1 (Very_Strong), PVS1_Strong, PVS1_Moderate, PVS1_Supporting.
+#   Splice variants in last exon, in-frame deletions → strength downgrade.
+#
+# Tool expectation (self-consistency):
+#   Demo panel includes a variant requiring PVS1_Moderate. Tool should
+#   apply PVS1 at Moderate, not full Very_Strong.
+# EXPECTED_TOOL_CRITERIA: PVS1
+#
+# FINDING: Phase 2a Gold — PVS1 strength modulation for partial LoF
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: ClinGen SVI PVS1 decision tree defines strength tiers: PVS1 (Very_Strong), PVS1_Strong, PVS1_Moderate, PVS1_Supporting. Splice variants in last exon, in-frame deletions, and variants with rescue mechanisms require strength downgrade. Applying PVS1 at full Very_Strong when Moderate is correct inflates pathogenicity assessment. The 4 PVS1 strength levels directly affect Richards Table 5 combination rules.
+# REFERENCE: ABOU_TAYOUN_2018
+# EXPECTED_EXIT_CODE: 0

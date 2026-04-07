@@ -1,0 +1,22 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PM2
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PM2 v1.0 (2020-09-04) updated from "absent" to "absent OR extremely low
+#   frequency" AND downgraded strength from Moderate to Supporting. Tools
+#   using strict absent-only logic apply outdated 2015 rules.
+#
+# Tool expectation (self-consistency):
+#   Demo panel includes an extremely-low-frequency variant. Tool should
+#   apply PM2 (not miss it due to non-zero frequency).
+# EXPECTED_TOOL_CRITERIA: PM2
+#
+# FINDING: Phase 2a Gold — PM2 v1.0 update: extremely low frequency must also trigger
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: ClinGen SVI PM2 v1.0 (approved 2020-09-04) updated PM2 from "absent in population databases" to "absent OR at extremely low frequency" and downgraded strength from Moderate to Supporting. Tools using strict "absent-only" logic are applying the outdated 2015 rule and will miss PM2 for variants with gnomAD AF just below threshold (e.g., AF=0.00005 for a dominant gene with PM2 cutoff <0.0001).
+# REFERENCE: CLINGEN_SVI_PM2
+# EXPECTED_EXIT_CODE: 0

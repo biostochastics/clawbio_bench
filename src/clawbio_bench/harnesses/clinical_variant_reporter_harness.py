@@ -101,23 +101,43 @@ GROUND_TRUTH_REFS = {
         "interpretation of sequence variants: a joint consensus recommendation "
         "of the American College of Medical Genetics and Genomics and the "
         "Association for Molecular Pathology. Genetics in Medicine, 17(5), "
-        "405-424. doi:10.1038/gim.2015.30"
+        "405-424. PMID 25741868. doi:10.1038/gim.2015.30"
     ),
     "REHM_2013": (
         "Rehm, H.L. et al. (2013). ACMG clinical laboratory standards for "
         "next-generation sequencing. Genetics in Medicine, 15(9), 733-747. "
-        "doi:10.1038/gim.2013.92"
+        "doi:10.1038/gim.2013.92 [historical; superseded by REHDER_2021]"
+    ),
+    "REHDER_2021": (
+        "Rehder, S.A. et al. (2021). Next-generation sequencing for "
+        "constitutional variants in the clinical laboratory, 2021 revision: "
+        "a technical standard of the American College of Medical Genetics "
+        "and Genomics (ACMG). Genetics in Medicine. "
+        "PMID 33927380. doi:10.1038/s41436-021-01139-4"
     ),
     "CLINGEN_SVI_PVS1": (
         "Abou Tayoun, A.N. et al. (2018). Recommendations for interpreting "
         "the loss of function PVS1 ACMG/AMP variant criterion. Human "
-        "Mutation, 39(11), 1517-1524. doi:10.1002/humu.23626"
+        "Mutation, 39(11), 1517-1524. PMID 30192042. doi:10.1002/humu.23626"
+    ),
+    "PEJAVER_2022": (
+        "Pejaver, V. et al. (2022). Calibration of computational tools for "
+        "missense variant pathogenicity classification and ClinGen "
+        "recommendations for PP3/BP4 criteria. American Journal of Human "
+        "Genetics, 109(12), 2163-2177. PMID 36413997. "
+        "doi:10.1016/j.ajhg.2022.10.013"
     ),
     "MILLER_2023": (
         "Miller, D.T. et al. (2023). ACMG SF v3.2 list for reporting of "
-        "secondary findings in clinical exome and genome sequencing: a "
-        "policy statement of the American College of Medical Genetics and "
-        "Genomics (ACMG). Genetics in Medicine, 25(8), 100866."
+        "secondary findings in clinical exome and genome sequencing. "
+        "Genetics in Medicine, 25(8), 100866. PMID 37347242. "
+        "[superseded by LEE_2025 SF v3.3]"
+    ),
+    "LEE_2025": (
+        "Lee, K. et al. (2025). ACMG SF v3.3 list for reporting of "
+        "secondary findings in clinical exome and genome sequencing. "
+        "Genetics in Medicine, 27(8), 101454. PMID 40568962. "
+        "doi:10.1016/j.gim.2025.101454 [84 genes; current]"
     ),
     "MANE_SELECT_v1.3": (
         "NCBI / EBI MANE (Matched Annotation from NCBI and EBI) Project, "
@@ -129,28 +149,53 @@ CATEGORY_LEGEND = {
     "report_structure_complete": {
         "color": "#22c55e",
         "label": "Report structurally complete",
+        "tier": "pass",
     },
-    "assembly_missing": {"color": "#ef4444", "label": "Reference build missing"},
-    "transcript_missing": {"color": "#ef4444", "label": "Transcript source missing"},
+    "assembly_missing": {
+        "color": "#ef4444",
+        "label": "Reference build missing",
+        "tier": "critical",
+    },
+    "transcript_missing": {
+        "color": "#ef4444",
+        "label": "Transcript source missing",
+        "tier": "critical",
+    },
     "data_source_version_missing": {
         "color": "#f97316",
         "label": "Data source versions unpinned",
+        "tier": "warning",
     },
-    "limitations_missing": {"color": "#f97316", "label": "Limitations section missing"},
-    "disclaimer_missing": {"color": "#ef4444", "label": "RUO disclaimer missing"},
+    "limitations_missing": {
+        "color": "#f97316",
+        "label": "Limitations section missing",
+        "tier": "warning",
+    },
+    "disclaimer_missing": {
+        "color": "#ef4444",
+        "label": "RUO disclaimer missing",
+        "tier": "critical",
+    },
     "evidence_trail_incomplete": {
         "color": "#ef4444",
         "label": "Evidence audit trail incomplete",
+        "tier": "critical",
     },
     "gene_disease_context_missing": {
         "color": "#f97316",
         "label": "Gene-disease context missing",
+        "tier": "warning",
     },
     "reference_build_inconsistent": {
         "color": "#ef4444",
         "label": "Conflicting reference builds in report",
+        "tier": "critical",
     },
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 

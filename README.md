@@ -757,7 +757,7 @@ field, which is the sole authoritative source.
 | `equity-scorer` | Yes (15 tests) | also |
 | `nutrigx_advisor` | Yes (10 tests) | also |
 | `claw-metagenomics` | Yes (7 tests) | also |
-| `clinical-variant-reporter` | Yes — Phase 1 (5 tests, structural only) | also (via `--skill`) |
+| `clinical-variant-reporter` | Yes — Phase 1+2c+2a (5+6+13 tests) | also (via `--skill`) |
 | `variant-annotation` | — | Yes (via `--skill`) |
 | `clinical-trial-finder` | — | Yes (via `--skill`) |
 | `target-validation-scorer` | — | Yes (via `--skill`) |
@@ -960,15 +960,23 @@ gene–disease/inheritance context (per Rehm et al. 2013 laboratory
 reporting standards and Abou Tayoun et al. 2018 ClinGen SVI PVS1
 recommendations).
 
-Phase 2 of this harness will add a small unambiguous-subset
-correctness test set against ClinGen VCEP 3-star+ consensus variants
-(BA1 very-common benign and PVS1 clear loss-of-function). A full
-28-criteria adjudication harness is explicitly out of scope for this
-release — mapping MAVEdb functional assays to PS3/BS3 strength levels,
-canonicalizing transcripts across MANE Select vs RefSeq, and aligning
-in-silico predictor thresholds require gene-disease-specific expert
-calibration that is its own multi-release project. This scope
-boundary is deliberate.
+**Phase 2 (v0.1.3) is now live** as two separate harnesses:
+
+- **`cvr_identity` (Phase 2c, 6 tests)** — variant identity and HGVS
+  v21.1 compliance: syntax, MANE Select, transcript versioning, indel
+  normalization, assembly coordinate consistency.
+- **`cvr_correctness` (Phase 2a, 13 tests)** — ACMG criterion-level
+  correctness with Gold/Silver truth tiers: BA1/BS1/PM2 thresholds,
+  PVS1 strength modulation per Abou Tayoun 2018, PP3/BP4 calibration
+  per Pejaver 2022, VCEP supersession (ENIGMA, InSiGHT), SF v3.3 (84
+  genes), ClinGen GDV.  Uses dual-layer ground truth: `EXPECTED_*`
+  for clinical gold standard, `EXPECTED_TOOL_*` for tool
+  self-consistency, with `self_consistency_error` rubric category.
+
+Both Phase 2 harnesses are grounded in the
+[Phase 2 PRD](docs/plans/CVR_PHASE2_PRD.md) with triple-verified
+standards (Exa + ref.tools + Tavily across three independent passes,
+plus 6-model code review by Droid/Gemini/Crush/Codex/OpenCode/Claude).
 
 | Category | Pass? | Description |
 |---|:---:|---|
@@ -1515,11 +1523,11 @@ from the corresponding test cases at `v0.1.0`.
 > of all planned harnesses, framework features, audit-framework
 > failure-class coverage, and ClawBio skill inventory.
 
-### What's done (v0.1.0–v0.1.2)
+### What's done (v0.1.0–v0.1.3)
 
 - 9 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
   nutrigx, metagenomics, clinical-variant-reporter Phase 1/2c/2a,
-  finemapping) covering **159 test cases**.
+  finemapping) covering **170 test cases**.
 - Dynamic skill inventory, `--skill NAME` force-routing, `--skills
   A,B,C` composition mode, prompt-injection regression pins.
 - CYP2D6 CNV/hybrid/*5/*10, NUDT15, CYP2B6, CYP1A2, CYP2C9, G6PD, MT-RNR1, HLA-A*31:01, HLA-B*58:01 pharmgx tests.

@@ -83,42 +83,52 @@ CATEGORY_LEGEND = {
     "fst_correct": {
         "color": "#22c55e",
         "label": "FST correct + labeled correctly",
+        "tier": "pass",
     },
     "fst_incorrect": {
         "color": "#ef4444",
         "label": "FST value outside tolerance",
+        "tier": "critical",
     },
     "fst_mislabeled": {
         "color": "#f97316",
         "label": "FST correct, label WRONG",
+        "tier": "warning",
     },
     "heim_bounded": {
         "color": "#86efac",
         "label": "HEIM in [0, 100]",
+        "tier": "pass",
     },
     "heim_unbounded": {
         "color": "#ef4444",
         "label": "HEIM outside [0, 100]",
+        "tier": "warning",
     },
     "csv_honest": {
         "color": "#22c55e",
         "label": "CSV mode honest",
+        "tier": "pass",
     },
     "csv_inflated": {
         "color": "#f97316",
         "label": "CSV mode inflated",
+        "tier": "warning",
     },
     "edge_handled": {
         "color": "#86efac",
         "label": "Edge case handled",
+        "tier": "pass",
     },
     "edge_crash": {
         "color": "#ef4444",
         "label": "Edge case CRASH",
+        "tier": "critical",
     },
     "harness_error": {
         "color": "#9ca3af",
         "label": "Harness infrastructure error",
+        "tier": "infra",
     },
 }
 
@@ -131,7 +141,6 @@ CATEGORY_LEGEND = {
 def analyze_equity_report(
     report_md_path: Path,
     result_json_path: Path,
-    stdout: str,
     stderr: str,
 ) -> dict[str, Any]:
     """Parse equity scorer outputs to extract FST, HEIM, and labels."""
@@ -277,10 +286,10 @@ def analyze_equity_report(
 
 
 def score_equity_verdict(
-    ground_truth: dict,
-    analysis: dict,
+    ground_truth: dict[str, Any],
+    analysis: dict[str, Any],
     execution: harness_core.ExecutionResult,
-) -> dict:
+) -> dict[str, Any]:
     """Score an equity scorer run against ground truth.
 
     Ground truth headers:
@@ -557,11 +566,11 @@ def run_single_equity(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute equity_scorer.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
     run_output_dir = output_base / commit_sha / tc_name
@@ -638,7 +647,6 @@ def run_single_equity(
     analysis = analyze_equity_report(
         report_md,
         result_json,
-        execution.stdout,
         execution.stderr,
     )
 

@@ -47,7 +47,7 @@ from typing import Any
 DRIVER_VERSION = "0.1.0"
 
 
-def _emit(result: dict, output_path: Path | None) -> None:
+def _emit(result: dict[str, Any], output_path: Path | None) -> None:
     """Write result to stdout and (if provided) an output file."""
     payload = json.dumps(result, indent=2, default=str)
     sys.stdout.write(payload)
@@ -106,7 +106,9 @@ def _numeric_matrix(value: Any) -> list[list[float]] | None:
         return None
 
 
-def _serialize_credsets(credsets: list[dict] | None) -> list[dict] | None:
+def _serialize_credsets(
+    credsets: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]] | None:
     """Flatten credible-set dicts for JSON output.
 
     The skill returns numpy scalars inside the dicts; we must cast them
@@ -114,7 +116,7 @@ def _serialize_credsets(credsets: list[dict] | None) -> list[dict] | None:
     """
     if credsets is None:
         return None
-    out: list[dict] = []
+    out: list[dict[str, Any]] = []
     for cs in credsets:
         variants = []
         for v in cs.get("variants", []):
@@ -145,10 +147,10 @@ def _serialize_credsets(credsets: list[dict] | None) -> list[dict] | None:
     return out
 
 
-def _run_abf(inputs: dict, mods: dict) -> dict:
+def _run_abf(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, Any]:
     """Invoke ClawBio's ABF path and return a serialisable result dict."""
     import numpy as np
-    import pandas as pd
+    import pandas as pd  # type: ignore[import-untyped]
 
     compute_abf = mods["abf"].compute_abf
 
@@ -195,7 +197,7 @@ def _run_abf(inputs: dict, mods: dict) -> dict:
     }
 
 
-def _run_susie(inputs: dict, mods: dict) -> dict:
+def _run_susie(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, Any]:
     """Invoke ClawBio's SuSiE path and return a serialisable result dict."""
     import numpy as np
 
@@ -248,7 +250,7 @@ def _run_susie(inputs: dict, mods: dict) -> dict:
     }
 
 
-def _run_susie_inf(inputs: dict, mods: dict) -> dict:
+def _run_susie_inf(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, Any]:
     """Invoke ClawBio's SuSiE-inf path (Cui et al. 2023) and return a serialisable result."""
     import numpy as np
 
@@ -327,7 +329,7 @@ def _run_susie_inf(inputs: dict, mods: dict) -> dict:
     }
 
 
-def _run_credset_susie(inputs: dict, mods: dict) -> dict:
+def _run_credset_susie(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, Any]:
     """Directly exercise build_credible_sets_susie with caller-supplied alpha.
 
     Lets us construct adversarial credible-set shapes (e.g. the alpha
@@ -380,7 +382,7 @@ def _run_credset_susie(inputs: dict, mods: dict) -> dict:
     }
 
 
-def _run_credset_abf(inputs: dict, mods: dict) -> dict:
+def _run_credset_abf(inputs: dict[str, Any], mods: dict[str, Any]) -> dict[str, Any]:
     """Directly exercise build_credible_set_abf with caller-supplied PIPs."""
     import numpy as np
     import pandas as pd

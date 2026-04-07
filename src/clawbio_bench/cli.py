@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 from clawbio_bench import (
     AUDIT_TARGET_URL,
@@ -92,6 +93,26 @@ HARNESS_REGISTRY = {
             "audit of ACMG reports (no full 28-criteria adjudication)"
         ),
     },
+    "cvr_identity": {
+        "module": "clawbio_bench.harnesses.cvr_identity_harness",
+        "run_fn": "run_single_cvr_identity",
+        "benchmark_name": "cvr-variant-identity",
+        "default_inputs_dir": "cvr_identity",
+        "description": (
+            "Clinical Variant Reporter Phase 2c — variant identity/HGVS "
+            "nomenclature correctness (prerequisite for Phase 2a)"
+        ),
+    },
+    "cvr_correctness": {
+        "module": "clawbio_bench.harnesses.cvr_correctness_harness",
+        "run_fn": "run_single_cvr_correctness",
+        "benchmark_name": "cvr-acmg-correctness",
+        "default_inputs_dir": "cvr_correctness",
+        "description": (
+            "Clinical Variant Reporter Phase 2a — ACMG/AMP criterion-level "
+            "and classification correctness with Gold/Silver truth tiers"
+        ),
+    },
 }
 
 # Package-level test cases directory
@@ -114,7 +135,7 @@ def run_single_harness(
     inputs_override: Path | None = None,
     quiet: bool = False,
     tag_map: dict[str, list[str]] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Run one harness and return its summary."""
     mod = load_harness(name)
     info = HARNESS_REGISTRY[name]
@@ -146,7 +167,6 @@ def run_single_harness(
         test_cases,
         harness_output,
         run_fn,
-        mod.BENCHMARK_NAME,
         allow_dirty=allow_dirty,
         quiet=quiet,
         rubric_categories=mod.RUBRIC_CATEGORIES,
@@ -185,6 +205,11 @@ def run_single_harness(
     # Full list (not truncated) — downstream consumers (markdown renderer,
     # baseline diffing) need every finding, and 93 tests * 5 harnesses keeps
     # the file tractable. Callers that render to console should slice locally.
+    #
+    # ``category_legend`` is embedded so the aggregate is self-contained for
+    # both report generators (markdown and Typst). It carries the ``tier``
+    # field per category that drives severity colors and emoji without
+    # requiring per-harness heatmap_data.json loads from downstream tools.
     return {
         "version": mod.BENCHMARK_VERSION,
         "pass": pass_count == evaluated and evaluated > 0,
@@ -195,6 +220,8 @@ def run_single_harness(
         "fail_count": evaluated - pass_count,
         "pass_rate": pass_rate,
         "pass_categories": mod.PASS_CATEGORIES,
+        "fail_categories": mod.FAIL_CATEGORIES,
+        "category_legend": mod.CATEGORY_LEGEND,
         "categories": dict(cats),
         "critical_failures": [
             {

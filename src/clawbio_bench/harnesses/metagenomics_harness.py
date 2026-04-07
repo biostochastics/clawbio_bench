@@ -65,13 +65,41 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "injection_blocked": {"color": "#22c55e", "label": "Injection BLOCKED"},
-    "injection_succeeded": {"color": "#ef4444", "label": "Injection SUCCEEDED"},
-    "exit_handled": {"color": "#22c55e", "label": "Exit code handled"},
-    "exit_suppressed": {"color": "#f97316", "label": "Exit suppressed to warning"},
-    "demo_functional": {"color": "#86efac", "label": "Demo mode works"},
-    "demo_broken": {"color": "#ef4444", "label": "Demo mode fails"},
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "injection_blocked": {
+        "color": "#22c55e",
+        "label": "Injection BLOCKED",
+        "tier": "pass",
+    },
+    "injection_succeeded": {
+        "color": "#ef4444",
+        "label": "Injection SUCCEEDED",
+        "tier": "critical",
+    },
+    "exit_handled": {
+        "color": "#22c55e",
+        "label": "Exit code handled",
+        "tier": "pass",
+    },
+    "exit_suppressed": {
+        "color": "#f97316",
+        "label": "Exit suppressed to warning",
+        "tier": "warning",
+    },
+    "demo_functional": {
+        "color": "#86efac",
+        "label": "Demo mode works",
+        "tier": "pass",
+    },
+    "demo_broken": {
+        "color": "#ef4444",
+        "label": "Demo mode fails",
+        "tier": "critical",
+    },
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 
@@ -104,7 +132,7 @@ def _resolve_import_aliases(tree: ast.Module) -> dict[str, str]:
 _OS_SHELL_FUNCS = frozenset({"system", "popen"})
 
 
-def _find_shell_true_ast(tree: ast.Module) -> list[dict]:
+def _find_shell_true_ast(tree: ast.Module) -> list[dict[str, Any]]:
     """Walk AST to find subprocess calls with shell=True.
 
     Handles aliased imports (import subprocess as sp), direct imports
@@ -184,7 +212,7 @@ def _find_shell_true_ast(tree: ast.Module) -> list[dict]:
     return findings
 
 
-def _count_subprocess_calls_ast(tree: ast.Module) -> list[dict]:
+def _count_subprocess_calls_ast(tree: ast.Module) -> list[dict[str, Any]]:
     """Count all subprocess invocations via AST, including aliased imports."""
     calls = []
     subprocess_funcs = {"run", "call", "Popen", "check_call", "check_output"}
@@ -473,10 +501,10 @@ def analyze_metagenomics_output(
 
 
 def score_metagenomics_verdict(
-    ground_truth: dict,
-    analysis: dict,
+    ground_truth: dict[str, Any],
+    analysis: dict[str, Any],
     execution: harness_core.ExecutionResult,
-) -> dict:
+) -> dict[str, Any]:
     """Score a metagenomics test against ground truth."""
     finding_category = ground_truth.get("FINDING_CATEGORY", "")
     expected_exit = int(ground_truth.get("EXPECTED_EXIT_CODE", "0"))
@@ -635,11 +663,11 @@ def run_single_metagenomics(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute metagenomics_profiler.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
     run_output_dir = output_base / commit_sha / tc_name

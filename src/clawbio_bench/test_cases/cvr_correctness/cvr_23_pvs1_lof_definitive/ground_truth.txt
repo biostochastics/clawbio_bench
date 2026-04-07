@@ -1,0 +1,24 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PVS1
+# CHECK_PVS1_STRENGTH: true
+# EXPECTED_PVS1_STRENGTH: Very_Strong
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PVS1 at full Very_Strong for null variants in genes where LoF is the
+#   established disease mechanism per ClinGen SVI (Abou Tayoun 2018,
+#   PMID 30192042, Human Mutation). ClinGen GDV: Definitive.
+#
+# Tool expectation (self-consistency):
+#   Demo panel includes a clear LoF variant in a Definitive gene. Tool
+#   should apply PVS1 at Very_Strong.
+# EXPECTED_TOOL_CRITERIA: PVS1
+#
+# FINDING: Phase 2a Gold — PVS1 at full strength for LoF in definitive LoF-mechanism gene
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: PVS1 (very strong pathogenic) applies to null variants (nonsense, frameshift, canonical splice) in genes where LoF is the established disease mechanism per ClinGen SVI (Abou Tayoun 2018, Hum Mutat, PMID 30192042). For genes with ClinGen GDV classification "Definitive" and LoF mechanism established, PVS1 applies at full Very_Strong level. Strength modulation required for partial LoF or uncertain mechanism.
+# REFERENCE: ABOU_TAYOUN_2018
+# EXPECTED_EXIT_CODE: 0

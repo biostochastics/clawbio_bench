@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: false
+# CHECK_TRANSCRIPT_VERSION: false
+# CHECK_MANE_SELECT: false
+# CHECK_NORMALIZATION: false
+# CHECK_ASSEMBLY_COORDS: true
+# EXPECTED_ASSEMBLY: GRCh38
+#
+# Gold standard (clinical correctness):
+#   All coordinates must be on GRCh38. No cross-build contamination (hg19
+#   positions mixed with GRCh38 headers). GRCh37 and hg19 are NOT
+#   interchangeable (different chrM, alt contigs).
+#
+# Tool expectation (self-consistency):
+#   Demo mode invoked with --assembly GRCh38 should produce only GRCh38
+#   coordinates. Happy path.
+#
+# FINDING: Phase 2c — all coordinates must be consistent with stated reference assembly
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: Mixed assembly coordinates (e.g., GRCh38 stated but hg19 coordinates present) make variant positions ambiguous. Liftover between GRCh37 and GRCh38 is not 1:1 — positions can shift, merge, or become unmappable in complex regions. Report consumers who assume uniform coordinates will misidentify variants.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

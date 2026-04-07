@@ -1,0 +1,25 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: true
+# CHECK_TRANSCRIPT_VERSION: true
+# CHECK_MANE_SELECT: true
+# CHECK_NORMALIZATION: true
+# CHECK_ASSEMBLY_COORDS: true
+# EXPECTED_ASSEMBLY: GRCh38
+#
+# Gold standard (clinical correctness):
+#   All HGVS expressions must comply with v21.1 (Hart 2024, PMID 39702242).
+#   Versioned MANE Select transcripts required. GRCh38 coordinates only.
+#
+# Tool expectation (self-consistency):
+#   Demo mode uses pre-cached GIAB ACMG panel. Tool should produce compliant
+#   output. If EXPECTED_TOOL_* diverges from EXPECTED_*, the gap is the
+#   benchmark finding.
+#
+# FINDING: Phase 2c baseline — demo mode must produce HGVS-compliant variant representations
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: HGVS nomenclature compliance per v21.1 (Hart et al. 2024, PMID 39702242). Hsu et al. 2025 (PMID 40542397) found major annotation tools produce discrepant HGVS strings for the same ClinVar variants. Non-compliant HGVS makes variant identity unreproducible across tools and databases.
+# REFERENCE: HGVS_V21
+# REFERENCE: HART_2024
+# REFERENCE: HSU_2025
+# EXPECTED_EXIT_CODE: 0

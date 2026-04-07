@@ -208,13 +208,25 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "routed_correct": {"color": "#22c55e", "label": "Correct routing"},
-    "routed_wrong": {"color": "#ef4444", "label": "WRONG routing"},
-    "stub_warned": {"color": "#fbbf24", "label": "Stub routed, warned"},
-    "stub_silent": {"color": "#f97316", "label": "Stub routed, NO warning"},
-    "unroutable_handled": {"color": "#86efac", "label": "Unknown input handled"},
-    "unroutable_crash": {"color": "#ef4444", "label": "Unknown input CRASH"},
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "routed_correct": {"color": "#22c55e", "label": "Correct routing", "tier": "pass"},
+    "routed_wrong": {"color": "#ef4444", "label": "WRONG routing", "tier": "critical"},
+    "stub_warned": {"color": "#fbbf24", "label": "Stub routed, warned", "tier": "pass"},
+    "stub_silent": {"color": "#f97316", "label": "Stub routed, NO warning", "tier": "warning"},
+    "unroutable_handled": {
+        "color": "#86efac",
+        "label": "Unknown input handled",
+        "tier": "pass",
+    },
+    "unroutable_crash": {
+        "color": "#ef4444",
+        "label": "Unknown input CRASH",
+        "tier": "critical",
+    },
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 
@@ -223,7 +235,7 @@ CATEGORY_LEGEND = {
 # ---------------------------------------------------------------------------
 
 
-def analyze_routing_output(stdout: str, stderr: str, exit_code: int) -> dict:
+def analyze_routing_output(stdout: str, stderr: str, exit_code: int) -> dict[str, Any]:
     """Parse orchestrator stdout/stderr for routing decision.
 
     The orchestrator outputs JSON with 'detected_skill' on success,
@@ -333,10 +345,10 @@ def analyze_routing_output(stdout: str, stderr: str, exit_code: int) -> dict:
 
 
 def score_routing_verdict(
-    ground_truth: dict,
-    analysis: dict,
+    ground_truth: dict[str, Any],
+    analysis: dict[str, Any],
     execution: harness_core.ExecutionResult,
-) -> dict:
+) -> dict[str, Any]:
     """Score a routing decision against ground truth.
 
     Ground truth headers:
@@ -566,11 +578,11 @@ def run_single_orchestrator(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute orchestrator.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
     run_output_dir = output_base / commit_sha / tc_name

@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: false
+# CHECK_TRANSCRIPT_VERSION: true
+# CHECK_MANE_SELECT: false
+# CHECK_NORMALIZATION: false
+# CHECK_ASSEMBLY_COORDS: false
+# EXPECTED_ASSEMBLY: any
+#
+# Gold standard (clinical correctness):
+#   HGVS v21.1 mandates versioned transcript accessions (NM_004006.2, not
+#   NM_004006). Transcript versions differ in exon boundaries, UTR length,
+#   and coding sequence. ClinVar submissions require versioned transcripts.
+#
+# Tool expectation (self-consistency):
+#   Demo mode should produce versioned transcripts. Happy path.
+#
+# FINDING: Phase 2c — transcript accessions must include version numbers
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: HGVS v21.1 mandates versioned transcript accessions (NM_004006.2, not NM_004006). Transcript versions can differ in exon boundaries, UTR length, and coding sequence — an unversioned reference is ambiguous and can produce different HGVS expressions for the same variant. ClinVar submissions require versioned transcripts.
+# REFERENCE: HGVS_V21
+# REFERENCE: HART_2024
+# EXPECTED_EXIT_CODE: 0

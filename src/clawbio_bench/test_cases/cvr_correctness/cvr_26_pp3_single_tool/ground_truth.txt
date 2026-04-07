@@ -1,0 +1,24 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PP3
+# EXPECTED_CRITERIA_STRENGTH: PP3_Moderate
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PP3 from a single calibrated tool at correct strength per Pejaver 2022
+#   (PMID 36413997). Calibrated REVEL thresholds (Table 2):
+#   [0.644,0.773) = Supporting, [0.773,0.932) = Moderate, >=0.932 = Strong.
+#   Must use ONE tool — not multiple.
+#
+# Tool expectation (self-consistency):
+#   Tool uses REVEL as its primary in-silico predictor. Demo panel should
+#   produce PP3 at Moderate for a variant in the [0.773,0.932) range.
+# EXPECTED_TOOL_CRITERIA: PP3
+#
+# FINDING: Phase 2a Gold — PP3 from single calibrated tool at correct strength
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: ClinGen SVI (Pejaver 2022, PMID 36413997) mandates using ONE calibrated computational tool per variant. A calibrated tool (e.g., REVEL) can produce PP3 at Supporting (0.644-0.773), Moderate (0.773-0.932), or Strong (>=0.932) depending on its posterior calibration. This test validates correct strength assignment from a single tool, not overcounting from multiple tools.
+# REFERENCE: PEJAVER_2022
+# EXPECTED_EXIT_CODE: 0

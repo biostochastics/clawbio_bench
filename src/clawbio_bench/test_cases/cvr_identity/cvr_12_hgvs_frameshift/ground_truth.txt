@@ -1,0 +1,22 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: true
+# CHECK_TRANSCRIPT_VERSION: false
+# CHECK_MANE_SELECT: false
+# CHECK_NORMALIZATION: false
+# CHECK_ASSEMBLY_COORDS: false
+# EXPECTED_ASSEMBLY: any
+#
+# Gold standard (clinical correctness):
+#   Full frameshift notation is p.(Arg456GlyfsTer17), not truncated p.Arg456fs.
+#   HGVS v21.1 allows p.(Arg456GlyfsTer) (without position number) but
+#   requires at least "Ter" or "*" after "fs".
+#
+# Tool expectation (self-consistency):
+#   Demo mode should produce complete frameshift notation. Happy path.
+#
+# FINDING: Phase 2c — frameshift notation must include Ter position
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: Per HGVS v21.1, complete frameshift notation is p.(Arg456GlyfsTer17), not truncated p.Arg456fs. Incomplete notation obscures the predicted protein length, which affects functional impact assessment and ACMG PVS1 strength modulation (Abou Tayoun 2018, PMID 30192042).
+# REFERENCE: HGVS_V21
+# EXPECTED_EXIT_CODE: 0

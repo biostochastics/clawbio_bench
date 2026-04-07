@@ -75,15 +75,51 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "score_correct": {"color": "#22c55e", "label": "Score matches expected"},
-    "score_incorrect": {"color": "#ef4444", "label": "Score diverges"},
-    "repro_functional": {"color": "#22c55e", "label": "Repro bundle works"},
-    "repro_broken": {"color": "#f97316", "label": "Repro bundle fails"},
-    "snp_valid": {"color": "#86efac", "label": "SNP panel valid"},
-    "snp_invalid": {"color": "#ef4444", "label": "SNP panel error"},
-    "threshold_consistent": {"color": "#86efac", "label": "Thresholds match docs"},
-    "threshold_mismatch": {"color": "#fbbf24", "label": "Code vs docs disagree"},
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "score_correct": {
+        "color": "#22c55e",
+        "label": "Score matches expected",
+        "tier": "pass",
+    },
+    "score_incorrect": {
+        "color": "#ef4444",
+        "label": "Score diverges",
+        "tier": "critical",
+    },
+    "repro_functional": {
+        "color": "#22c55e",
+        "label": "Repro bundle works",
+        "tier": "pass",
+    },
+    "repro_broken": {
+        "color": "#f97316",
+        "label": "Repro bundle fails",
+        "tier": "warning",
+    },
+    "snp_valid": {
+        "color": "#86efac",
+        "label": "SNP panel valid",
+        "tier": "pass",
+    },
+    "snp_invalid": {
+        "color": "#ef4444",
+        "label": "SNP panel error",
+        "tier": "warning",
+    },
+    "threshold_consistent": {
+        "color": "#86efac",
+        "label": "Thresholds match docs",
+        "tier": "pass",
+    },
+    "threshold_mismatch": {
+        "color": "#fbbf24",
+        "label": "Code vs docs disagree",
+        "tier": "warning",
+    },
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 # Documented thresholds from score_variants.py
@@ -156,9 +192,8 @@ def analyze_nutrigx_output(
     report_md_path: Path,
     result_json_path: Path,
     output_dir: Path,
-    stdout: str,
     stderr: str,
-) -> dict:
+) -> dict[str, Any]:
     """Parse NutriGx outputs."""
     analysis: dict[str, Any] = {
         "report_exists": False,
@@ -237,10 +272,10 @@ def analyze_nutrigx_output(
 
 
 def score_nutrigx_verdict(
-    ground_truth: dict,
-    analysis: dict,
+    ground_truth: dict[str, Any],
+    analysis: dict[str, Any],
     execution: harness_core.ExecutionResult,
-) -> dict:
+) -> dict[str, Any]:
     """Score a NutriGx run against ground truth."""
     finding_category = ground_truth.get("FINDING_CATEGORY", "")
     expected_exit = int(ground_truth.get("EXPECTED_EXIT_CODE", "0"))
@@ -462,11 +497,11 @@ def run_single_nutrigx(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute nutrigx_advisor.py for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
     run_output_dir = output_base / commit_sha / tc_name
@@ -520,7 +555,6 @@ def run_single_nutrigx(
         report_md,
         result_json,
         tool_output_dir,
-        execution.stdout,
         execution.stderr,
     )
 

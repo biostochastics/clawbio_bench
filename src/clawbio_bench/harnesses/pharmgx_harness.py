@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import regex  # third-party: variable-length lookbehind + Unicode-aware boundaries
+import regex  # type: ignore[import-untyped]  # third-party: variable-length lookbehind
 
 from clawbio_bench import core as harness_core
 
@@ -86,17 +86,46 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "correct_determinate": {"color": "#22c55e", "label": "Correct (determinate)"},
-    "correct_indeterminate": {"color": "#86efac", "label": "Correct (indeterminate)"},
+    "correct_determinate": {
+        "color": "#22c55e",
+        "label": "Correct (determinate)",
+        "tier": "pass",
+    },
+    "correct_indeterminate": {
+        "color": "#86efac",
+        "label": "Correct (indeterminate)",
+        "tier": "pass",
+    },
     "scope_honest_indeterminate": {
         "color": "#a7f3d0",
         "label": "Scope-honest Indeterminate (DTC limitation, correct behavior)",
+        "tier": "advisory",
     },
-    "incorrect_determinate": {"color": "#ef4444", "label": "WRONG (false Normal)"},
-    "incorrect_indeterminate": {"color": "#fbbf24", "label": "Unnecessary indeterminate"},
-    "omission": {"color": "#1e1b4b", "label": "Drug MISSING from report"},
-    "disclosure_failure": {"color": "#f97316", "label": "Warning on stderr only"},
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "incorrect_determinate": {
+        "color": "#ef4444",
+        "label": "WRONG (false Normal)",
+        "tier": "critical",
+    },
+    "incorrect_indeterminate": {
+        "color": "#fbbf24",
+        "label": "Unnecessary indeterminate",
+        "tier": "warning",
+    },
+    "omission": {
+        "color": "#1e1b4b",
+        "label": "Drug MISSING from report",
+        "tier": "critical",
+    },
+    "disclosure_failure": {
+        "color": "#f97316",
+        "label": "Warning on stderr only",
+        "tier": "warning",
+    },
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 
@@ -221,8 +250,8 @@ def analyze_stderr(stderr_text: str) -> list[str]:
     return warnings
 
 
-def analyze_result_json(result_json_path: Path) -> dict:
-    analysis: dict = {
+def analyze_result_json(result_json_path: Path) -> dict[str, Any]:
+    analysis: dict[str, Any] = {
         "exists": False,
         "valid_json": False,
         "has_tuple_keys": False,
@@ -238,7 +267,7 @@ def analyze_result_json(result_json_path: Path) -> dict:
             data = json.load(f)
         analysis["valid_json"] = True
         if "drug_results" in data:
-            for _cat, drugs in data["drug_results"].items():
+            for drugs in data["drug_results"].values():
                 analysis["drug_count"] += len(drugs) if isinstance(drugs, list) else 0
                 if isinstance(drugs, list):
                     for d in drugs:
@@ -393,12 +422,12 @@ def _gene_relevant_warnings(stderr_warnings: list[str], target_gene: str) -> lis
 
 
 def score_pgx_verdict(
-    ground_truth: dict,
-    report_analysis: dict,
+    ground_truth: dict[str, Any],
+    report_analysis: dict[str, Any],
     stderr_warnings: list[str],
-    result_json_analysis: dict,
+    result_json_analysis: dict[str, Any],
     exit_code: int,
-) -> dict:
+) -> dict[str, Any]:
     """Score a single (commit, input) pair against the 6-category rubric."""
     gt = ground_truth
     ra = report_analysis
@@ -666,11 +695,11 @@ def run_single_pharmgx(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute pharmgx_reporter.py for one (commit, input) pair."""
     # Model A: test_case_path IS the input file
     input_path = payload_path or test_case_path

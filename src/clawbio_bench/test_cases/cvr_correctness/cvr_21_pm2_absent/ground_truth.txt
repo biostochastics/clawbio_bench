@@ -1,0 +1,20 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PM2
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PM2 applies when variant is absent from population databases per ClinGen
+#   SVI PM2 v1.0 (2020-09-04). Strength: Supporting (downgraded from Moderate).
+#
+# Tool expectation (self-consistency):
+#   Demo panel includes an absent variant. Tool should apply PM2.
+# EXPECTED_TOOL_CRITERIA: PM2
+#
+# FINDING: Phase 2a Gold — PM2 for variant absent from gnomAD
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: PM2 should be applied when a variant is absent from population databases. Per ClinGen SVI PM2 v1.0 (2020-09-04), the threshold changed from strict "absent" to "absent OR at extremely low frequency." This test checks that truly absent variants correctly trigger PM2.
+# REFERENCE: CLINGEN_SVI_PM2
+# EXPECTED_EXIT_CODE: 0

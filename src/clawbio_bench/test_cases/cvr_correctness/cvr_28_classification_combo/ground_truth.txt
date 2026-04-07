@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: PS1,PM2
+# EXPECTED_CLASSIFICATION: Likely Pathogenic
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   Richards 2015 Table 5, Likely Pathogenic rule #2: "1 Strong (PS1-PS4)
+#   AND 1-2 Moderate (PM1-PM6)." PS1 + PM2 = Likely Pathogenic.
+#
+# Tool expectation (self-consistency):
+#   Demo panel should include a variant with PS1 + PM2 evidence. Tool
+#   should classify as Likely Pathogenic per its own combination logic.
+# EXPECTED_TOOL_CLASSIFICATION: Likely Pathogenic
+# EXPECTED_TOOL_CRITERIA: PS1,PM2
+#
+# FINDING: Phase 2a Gold — Richards Table 5 combination: PS + PM = Likely Pathogenic
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: Richards 2015 Table 5 specifies combination rules for ACMG 5-tier classification. One strong (PS1) plus one moderate (PM2) criterion yields "Likely Pathogenic." Correct criteria but wrong combination-rule application is a distinct error type (classification_aggregation_error) that reveals logic bugs in the tool's decision engine rather than evidence-gathering failures.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

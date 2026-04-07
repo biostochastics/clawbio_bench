@@ -1,0 +1,21 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: false
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_VCEP_SUPERSESSION: false
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   For genes without an approved ClinGen VCEP, generic ACMG/AMP 2015
+#   rules (Richards et al., PMID 25741868) are the correct framework.
+#   Tool should NOT fabricate VCEP references for non-VCEP genes.
+#
+# Tool expectation (self-consistency):
+#   Tool should apply standard ACMG criteria without VCEP citations for
+#   non-VCEP genes. Positive control complementing cvr_30/31.
+#
+# FINDING: Phase 2a — generic ACMG rules acceptable for genes without approved VCEP
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: For genes without an approved ClinGen VCEP, generic ACMG/AMP 2015 rules (Richards et al., PMID 25741868) are the correct framework. This test validates that the tool does not fabricate VCEP references for non-VCEP genes and applies standard criteria correctly. Positive control complementing cvr_30/31 VCEP supersession tests.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0
