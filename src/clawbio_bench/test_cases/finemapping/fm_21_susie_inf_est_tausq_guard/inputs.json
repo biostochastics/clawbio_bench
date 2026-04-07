@@ -40402,7 +40402,7 @@
       1.0
     ]
   ],
-  "est_tausq": true,
+  "est_tausq": false,
   "max_iter": 200,
   "method": "susie_inf",
   "min_purity": 0.5,

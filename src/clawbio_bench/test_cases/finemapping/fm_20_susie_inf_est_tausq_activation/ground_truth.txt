@@ -1,62 +1,116 @@
 # BENCHMARK: clawbio-finemapping v0.1.0
 # PAYLOAD: inputs.json
 # METHOD: susie_inf
-# FINDING: FM-20 SuSiE-inf activation guard: est_tausq=False should produce standard SuSiE output
-# FINDING_CATEGORY: finemap_correct
-# KNOWN_LIMITATION: susie_inf_infinitesimal_prior_pip_instability
-# HAZARD_METRIC: The critical activation switch for SuSiE-inf is est_tausq. When
-#   est_tausq=False, the method is algebraically identical to standard SuSiE-RSS.
-#   When est_tausq=True, MoM is supposed to estimate tau^2 > 0 and absorb
-#   polygenic background effects. The honesty check this test was supposed to
-#   enforce: does the tool actually toggle the infinitesimal component?
+# FINDING: FM-20 SuSiE-inf est_tausq=True activation honesty test
+# FINDING_CATEGORY: susie_inf_est_tausq_ignored
 #
-#   STRUCTURAL LIMITATION: On the fm_17 / fm_20 input geometry (one strong z,
-#   nine moderate z's, n=10000, L=5), Cui 2023's MoM linear system returns a
-#   non-positive tau^2 solution which is correctly truncated to 0. This means
-#   est_tausq=True and est_tausq=False BOTH produce tau^2=0 and identical
-#   PIPs by construction, so the activation toggle is structurally untestable
-#   on this input. fm_17 and fm_20 produce byte-identical driver output. The
-#   test as designed cannot distinguish a tool that honors est_tausq from one
-#   that ignores it on these specific inputs.
+# HAZARD_METRIC: SuSiE-inf is supposed to estimate tau^2 by method-of-moments
+#   when est_tausq=True (Cui et al. 2023, Methods). A correct implementation
+#   solves a 2x2 linear system A*[sigma^2, tau^2]' = x at every IBSS iteration
+#   and, when the solution is non-positive, falls back to tau^2 = 0 per the
+#   paper. The bench detects two distinct failure modes both as
+#   `susie_inf_est_tausq_ignored`:
 #
-#   To make the activation toggle discriminating, this test would need an
-#   input geometry that forces MoM tau^2 > 0 cleanly: large p (e.g., p=200),
-#   two-block LD (within-block rho ~0.2-0.3, between-block 0), alternating
-#   z-scores at moderate magnitude (e.g., z_i = (-1)^i * 1.5 with two small
-#   localized bumps), n=5000, L=5, w=0.01. That construction makes sum(z^2)
-#   clearly inflated above null expectation and z'Rz non-redundant with z'z,
-#   which is the geometry where MoM's nonnegativity constraint is not active.
-#   Fix scoped for v0.1.4 fine-mapping pass; until then, this test verifies
-#   only that the est_tausq=False path runs to completion and produces output
-#   consistent with the diffuse-row baseline derived in fm_17.
-# EXPECTED_PIPS: [0.95, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34]
-# PIP_TOLERANCE: 0.15
-# SECONDARY_PIP_THRESHOLD: 0.50
+#   Failure mode A — dead code in the IBSS loop:
+#     The internal _mom_update call site hardcodes est_tausq=False, OR
+#     run_susie_inf doesn't expose the est_tausq parameter at all, OR the
+#     parameter is never propagated from the public API into _mom_update.
+#     The tau^2-estimation branch becomes literally unreachable. ClawBio's
+#     pre-237cbd9 build had this defect.
+#
+#   Failure mode B — defensive threshold suppression:
+#     A "filter" that zeroes out the estimated tau^2 unless it exceeds some
+#     threshold (e.g. effective_tausq = tausq if tausq >= 1e-3 else 0.0)
+#     before applying it to the variance structure. In practice, gentropy's
+#     correctly-implemented MoM produces tau^2 in the 1e-5 to 1e-4 range on
+#     realistic SuSiE-inf inputs (small but biologically meaningful), so
+#     any threshold above 1e-4 effectively nullifies activation across all
+#     geometries. The output is then byte-equivalent to failure mode A.
+#     This is the post-237cbd9 ClawBio defect.
+#
+#   In both cases the tool returns standard SuSiE-RSS output while
+#   advertising itself as SuSiE-inf — an honesty failure of exactly the kind
+#   this benchmark exists to detect. The two modes are observationally
+#   indistinguishable to a downstream consumer reading the result dict
+#   (both produce tausq=0 on output and PIPs that match est_tausq=False).
+#
+#   This test pairs with fm_21 (same input, est_tausq=False). On a correct
+#   implementation:
+#     fm_20 (est_tausq=True):  tau^2 > 0, bumps SUPPRESSED to PIP ~0.026
+#                              (because the polygenic background is
+#                              absorbed into the infinitesimal component)
+#     fm_21 (est_tausq=False): tau^2 = 0, bumps STAND OUT at PIP ~0.161
+#                              (no infinitesimal component to absorb them)
+#   On a tool that ignores est_tausq, fm_20 and fm_21 produce byte-identical
+#   output. The harness catches this from two angles:
+#     1. fm_20 directly: tau^2 stays at 0 + bump PIPs match the est_tausq=False
+#        regime (~0.16 instead of ~0.026)  -> susie_inf_est_tausq_ignored
+#     2. fm_21 cross-check: produces correct est_tausq=False output, which
+#        coincidentally also matches the buggy fm_20 output, confirming
+#        the diagnosis from a second angle
+#
+# DERIVED_FROM: derived/oracle_expected.json (run scripts/derive_finemapping_ground_truth.py
+#               to regenerate from the gentropy SuSiE-inf reference port)
+#
+# ── Activation honesty thresholds ──
+# A tool that estimates tau^2 correctly on this geometry produces tau^2
+# in the 5e-5 range. The threshold is set conservatively at 1e-9 — any
+# positive value indicates the MoM solver actually ran.
+# EXPECTED_TAUSQ_MIN: 1.0e-9
+#
+# Bump indices (the discriminating signal). Variant 17 is in block 1
+# (the +1.5 block) with z = +3.5; variant 123 is in block 2 (the -1.5
+# block) with z = -3.5. Both are deliberate "outlier" markers whose
+# PIPs differ sharply between MoM-active and MoM-inactive runs.
+# EXPECTED_BUMP_INDICES: [17, 123]
+# EXPECTED_BUMP_PIPS: [0.0260, 0.0260]
+# PIP_TOLERANCE: 0.05
+#
 # EXPECTED_EXIT_STATUS: ok
-# EXPECTED_TAUSQ: 0.0
 # CUI_REF: CUI_2023
-# DERIVATION: Same input as fm_17 (10 variants, polygenic LD structure, z=[5,
-#   2, 1.8, ...], n=10000, L=5) but est_tausq=False. Without the infinitesimal
-#   component, SuSiE-inf is algebraically identical to standard SuSiE-RSS, and
-#   per Wang et al. 2020 Eq. 3 the diffuse-row baseline for non-causal variants
-#   is PIP_i = 1 - (1 - 1/p)^(L-1) = 1 - 0.9^4 = 0.3439, plus modest LD-induced
-#   inflation. PIP_0 collapses to ~1 because variant 0 is nearly independent of
-#   the rest and dominates the first IBSS row. The observed tool output
-#   (PIP_0=0.9998, others ~0.30-0.46, mean 0.351) is the exact textbook
-#   standard-SuSiE diffuse-row baseline.
 #
-#   Corrected 2026-04-07: EXPECTED_PIPS field previously said
-#   [0.60, 0.10, 0.10, ...] which assumed inflated phantom PIPs across LD
-#   neighbors. That assumption was wrong: with one nearly-independent strong
-#   signal (variant 0 has off-diagonal R entries 0.0-0.1 to all other
-#   variants), there is no LD path for the strong signal to leak across, so
-#   PIP_0 stays near 1 and the L-1 unused rows produce a uniform diffuse
-#   baseline at 0.344. Caught by Manuel/POP during v0.1.3 remediation re-run.
+# DERIVATION:
+#   Geometry: p=200, n=5000, L=5
+#     LD: two equicorrelated blocks of 100 variants each, within-block
+#         rho=0.20, between-block 0
+#     z:  block-uniform alternating (first 100 +1.5, second 100 -1.5)
+#         with bumps at indices 17 (in block 1) and 123 (in block 2)
+#         set to +3.5 and -3.5 respectively
 #
-#   This test is also marked KNOWN_LIMITATION because the activation-toggle
-#   honesty check is structurally untestable on this input (see HAZARD_METRIC
-#   above). v0.1.4 will redesign with the recommended large-p / two-block LD
-#   geometry to restore discriminating power. Recipe sourced from GPT-5.2-pro
-#   consultation cross-checked against Cui 2023 Methods.
+#   Why this geometry forces MoM to activate (and the previous fm_20
+#   geometry did not):
+#     - Block-uniform z puts most of the spectral mass on the
+#       large-eigenvalue directions of R (the block-mean eigenvectors),
+#       which is exactly where the MoM moment x[1] = sum(Xty^2) - ...
+#       gathers signal. Alternating ±1.5 across all 200 variants made
+#       z' R z = z' z and rendered the moment system degenerate.
+#     - The two opposite-sign bumps create a small but identifiable
+#       sparse signal on top of the polygenic background, which is the
+#       behavior SuSiE-inf was designed to disentangle.
+#
+#   Reference ground truth (gentropy SuSiE-inf port, est_tausq=True):
+#     tausq      = 0.0000546   (MoM activated, small but non-zero)
+#     sigmasq    = 0.9891
+#     PIP[17]    = 0.0260      (bump suppressed by infinitesimal absorption)
+#     PIP[123]   = 0.0260      (same — symmetric design)
+#     non-bump max PIP = 0.0247
+#     non-bump mean PIP = 0.0247
+#
+#   Reference ground truth (gentropy SuSiE-inf port, est_tausq=False — fm_21):
+#     tausq      = 0.0
+#     sigmasq    = 0.9988
+#     PIP[17]    = 0.1609      (bump prominent — no infinitesimal absorption)
+#     PIP[123]   = 0.1609
+#     max |PIP_True - PIP_False| = 0.1349  (the cross-pair discriminating signal)
+#
+#   ClawBio's current build (HEAD as of 2026-04-07) returns identical
+#   output for both fm_20 and fm_21 with PIP[17] = PIP[123] = 0.1609 and
+#   tausq = 0.0 — the dead-code signature this test catches.
+#
+#   The reference oracle is the gentropy port of FinucaneLab/fine-mapping-inf,
+#   vendored under scripts/_reference/gentropy_susie_inf.py. To re-derive
+#   the expected values run scripts/derive_finemapping_ground_truth.py.
+#
 # CITATION: Cui R et al. (2023). Nature Genetics 56(1):162-169. doi:10.1038/s41588-023-01597-3
 # WANG_REF: Wang G et al. (2020). JRSS-B 82(5):1273-1300, Eq. 3 (PIP aggregation across L rows)
+# UPSTREAM_REF: FinucaneLab/fine-mapping-inf (master branch); gentropy port at opentargets/gentropy/main/src/gentropy/method/susie_inf.py

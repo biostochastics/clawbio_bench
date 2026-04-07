@@ -38,7 +38,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "clawbio-finemapping"
-BENCHMARK_VERSION = "0.1.0"
+BENCHMARK_VERSION = "0.1.1"
 
 # Driver shim lives alongside the harness package. Resolved once at import
 # time so every verdict embeds the driver's SHA-256 without re-globbing.
@@ -56,6 +56,7 @@ RUBRIC_CATEGORIES = [
     "susie_spurious_secondary_signal",
     "susie_nonconvergence_suppressed",
     "susie_moment_field_mislabeled",
+    "susie_inf_est_tausq_ignored",
     # Fail — credible-set claim-vs-reality
     "credset_pip_is_alpha_mismatch",
     "credset_purity_mean_hides_weak",
@@ -79,6 +80,7 @@ FAIL_CATEGORIES = [
     "susie_spurious_secondary_signal",
     "susie_nonconvergence_suppressed",
     "susie_moment_field_mislabeled",
+    "susie_inf_est_tausq_ignored",
     "credset_pip_is_alpha_mismatch",
     "credset_purity_mean_hides_weak",
     "credset_purity_none_wrongly_pure",
@@ -148,6 +150,11 @@ CATEGORY_LEGEND = {
         "color": "#f97316",
         "label": "mu/mu2 are alpha-weighted, not posterior",
         "tier": "warning",
+    },
+    "susie_inf_est_tausq_ignored": {
+        "color": "#ef4444",
+        "label": "SuSiE-inf est_tausq=True silently ignored (tau^2 not estimated)",
+        "tier": "critical",
     },
     "credset_pip_is_alpha_mismatch": {
         "color": "#f97316",
@@ -571,6 +578,138 @@ def score_finemapping_verdict(
             "details": details,
         }
 
+    if expected_category == "susie_inf_est_tausq_ignored":
+        # SuSiE-inf est_tausq=True activation honesty test.
+        #
+        # Ground truth comes from the gentropy reference oracle (vendored at
+        # scripts/_reference/gentropy_susie_inf.py and re-derived via
+        # scripts/derive_finemapping_ground_truth.py). The bench reads four
+        # scalars from ground_truth.txt:
+        #
+        #   EXPECTED_TAUSQ_MIN          : float, lower bound on tausq for a
+        #                                 correct implementation. Typically
+        #                                 1e-9 (any positive value), set
+        #                                 higher to require strong activation.
+        #   EXPECTED_BUMP_INDICES       : JSON list of variant indices whose
+        #                                 PIPs encode the discriminating
+        #                                 signal between MoM-active and
+        #                                 MoM-inactive runs.
+        #   EXPECTED_BUMP_PIPS          : JSON list of expected aggregated
+        #                                 PIPs for those bumps under the
+        #                                 oracle (which actually estimates
+        #                                 tau^2). Same length as the indices.
+        #   PIP_TOLERANCE               : float, max |observed - expected| for
+        #                                 each bump PIP to be considered
+        #                                 matching the oracle.
+        #
+        # A tool that ignores est_tausq will leave tausq at its initial
+        # value (typically 0) and produce PIPs identical to the est_tausq=False
+        # guard run, which is the failure mode this category catches.
+        observed_tausq = result.get("tausq")
+        if observed_tausq is None:
+            return {
+                "category": "harness_error",
+                "rationale": "tausq not present in driver result",
+                "details": details,
+            }
+        observed_tausq_f = float(observed_tausq)
+        observed_pips = result.get("pips") or []
+        expected_tausq_min = _parse_expected_float(ground_truth.get("EXPECTED_TAUSQ_MIN")) or 1e-9
+        bump_indices = _parse_expected_list(ground_truth.get("EXPECTED_BUMP_INDICES")) or []
+        expected_bump_pips = _parse_expected_list(ground_truth.get("EXPECTED_BUMP_PIPS")) or []
+        if not bump_indices or len(bump_indices) != len(expected_bump_pips):
+            return {
+                "category": "harness_error",
+                "rationale": (
+                    "EXPECTED_BUMP_INDICES / EXPECTED_BUMP_PIPS missing or "
+                    "mismatched length in ground_truth.txt"
+                ),
+                "details": details,
+            }
+        bump_idx_int = [int(i) for i in bump_indices]
+        if any(i < 0 or i >= len(observed_pips) for i in bump_idx_int):
+            return {
+                "category": "harness_error",
+                "rationale": (
+                    f"bump indices {bump_idx_int} out of range for "
+                    f"{len(observed_pips)}-variant output"
+                ),
+                "details": details,
+            }
+        observed_bump_pips = [float(observed_pips[i]) for i in bump_idx_int]
+        bump_errors = [
+            abs(o - float(e)) for o, e in zip(observed_bump_pips, expected_bump_pips, strict=True)
+        ]
+        max_bump_err = max(bump_errors) if bump_errors else 0.0
+        details["observed_tausq"] = observed_tausq_f
+        details["expected_tausq_min"] = expected_tausq_min
+        details["bump_indices"] = bump_idx_int
+        details["expected_bump_pips"] = expected_bump_pips
+        details["observed_bump_pips"] = observed_bump_pips
+        details["max_bump_pip_error"] = max_bump_err
+        details["pip_tolerance"] = tolerance
+
+        # Two-condition activation check:
+        #   1. tausq must exceed the activation threshold
+        #   2. bump PIPs must match the oracle within PIP_TOLERANCE
+        # The conjunction is what distinguishes a tool that estimated tau^2
+        # correctly from one that happens to produce numerically similar
+        # PIPs by coincidence.
+        tausq_ok = observed_tausq_f > expected_tausq_min
+        pips_ok = max_bump_err <= tolerance
+
+        if tausq_ok and pips_ok:
+            return {
+                "category": "finemap_correct",
+                "rationale": (
+                    f"SuSiE-inf est_tausq=True activated MoM "
+                    f"(tausq={observed_tausq_f:.6f} > {expected_tausq_min}); "
+                    f"bump PIPs match oracle within {tolerance} "
+                    f"(max error {max_bump_err:.4f})"
+                ),
+                "details": details,
+            }
+        if not tausq_ok and not pips_ok:
+            return {
+                "category": "susie_inf_est_tausq_ignored",
+                "rationale": (
+                    f"est_tausq=True silently ignored: tausq stayed at "
+                    f"{observed_tausq_f} (oracle estimates >{expected_tausq_min}) "
+                    f"AND bump PIPs match the est_tausq=False regime "
+                    f"(max error {max_bump_err:.4f} > tolerance {tolerance}). "
+                    f"Two known failure modes produce this signature: "
+                    f"(A) dead code where _mom_update is called with "
+                    f"est_tausq=False hardcoded, OR run_susie_inf never "
+                    f"exposes / propagates the est_tausq parameter; "
+                    f"(B) a defensive threshold like `effective_tausq = "
+                    f"tausq if tausq >= 1e-3 else 0.0` that zeros out the "
+                    f"correctly-estimated tau^2 before applying it to the "
+                    f"variance structure. Realistic gentropy-reference "
+                    f"tau^2 estimates are in the 1e-5 to 1e-4 range on "
+                    f"SuSiE-inf inputs, so any threshold above ~1e-4 "
+                    f"nullifies activation across all geometries."
+                ),
+                "details": details,
+            }
+        if not tausq_ok:
+            return {
+                "category": "susie_inf_est_tausq_ignored",
+                "rationale": (
+                    f"est_tausq=True silently ignored: tausq={observed_tausq_f} "
+                    f"(oracle estimates >{expected_tausq_min})"
+                ),
+                "details": details,
+            }
+        return {
+            "category": "pip_value_incorrect",
+            "rationale": (
+                f"tausq activated correctly ({observed_tausq_f:.6f}) but bump "
+                f"PIPs deviate from oracle (max error {max_bump_err:.4f} > "
+                f"tolerance {tolerance})"
+            ),
+            "details": details,
+        }
+
     if expected_category == "credset_pip_is_alpha_mismatch":
         credsets = result.get("credible_sets") or []
         alpha = result.get("alpha")
@@ -813,6 +952,30 @@ def score_finemapping_verdict(
                     "rationale": (
                         f"converged mismatch: expected {expected_converged}, "
                         f"got {observed_converged}"
+                    ),
+                    "details": details,
+                }
+        # Optional: tausq upper-bound check (used by est_tausq=False guard
+        # tests where the algorithm should not estimate τ² and the value
+        # should stay at its initial 0).
+        expected_tausq_max = _parse_expected_float(ground_truth.get("EXPECTED_TAUSQ_MAX"))
+        if expected_tausq_max is not None:
+            observed_tausq = result.get("tausq")
+            if observed_tausq is None:
+                return {
+                    "category": "harness_error",
+                    "rationale": "EXPECTED_TAUSQ_MAX set but tausq missing from driver result",
+                    "details": details,
+                }
+            observed_tausq_f = float(observed_tausq)
+            details["expected_tausq_max"] = expected_tausq_max
+            details["observed_tausq"] = observed_tausq_f
+            if observed_tausq_f > expected_tausq_max:
+                return {
+                    "category": "pip_value_incorrect",
+                    "rationale": (
+                        f"tausq exceeded upper bound: observed {observed_tausq_f}, "
+                        f"expected <= {expected_tausq_max}"
                     ),
                     "details": details,
                 }

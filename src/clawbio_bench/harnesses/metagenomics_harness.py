@@ -37,7 +37,7 @@ from clawbio_bench import core as harness_core
 # ---------------------------------------------------------------------------
 
 BENCHMARK_NAME = "claw-metagenomics"
-BENCHMARK_VERSION = "0.1.0"
+BENCHMARK_VERSION = "0.1.1"
 
 RUBRIC_CATEGORIES = [
     "injection_blocked",
