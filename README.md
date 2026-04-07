@@ -1,4 +1,4 @@
-# clawbio-bench
+# clawbio_bench
 
 ```
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -28,7 +28,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/biostochastics/clawbio_bench)
 
-> **What this is.** `clawbio-bench` is a **standalone Python audit suite** that
+> **What this is.** `clawbio_bench` is a **standalone Python audit suite** that
 > evaluates the external [**ClawBio**](https://github.com/ClawBio/ClawBio)
 > bioinformatics platform for **safety, correctness, and honesty**. It runs
 > behavioral harnesses against a local clone of ClawBio, compares each skill's
@@ -222,7 +222,7 @@ clawbio-bench --version
 
 ## How It Works
 
-`clawbio-bench` runs a **(commits × test_cases) matrix**. For every commit
+`clawbio_bench` runs a **(commits × test_cases) matrix**. For every commit
 you select, every test case you select is executed against that commit, and
 every `(commit, test_case)` pair produces exactly one verdict — even if the
 harness itself crashes (infrastructure failures become `harness_error`
@@ -710,7 +710,7 @@ Three terms recur throughout this document and the code:
 - **Skill** — a capability exposed by the ClawBio platform (e.g. the
   `pharmgx-reporter` that turns a genotype TSV into a drug-safety report).
   ClawBio advertises 23 executable skills + 8 stub skills.
-- **Harness** — a `clawbio-bench` audit module (one file under
+- **Harness** — a `clawbio_bench` audit module (one file under
   `src/clawbio_bench/harnesses/`) that tests exactly one skill domain,
   with its own category rubric, its own scoring logic, and a
   `run_single_<name>()` entry point. There are currently **six harnesses**.
@@ -1087,7 +1087,7 @@ before deciding to use this tool.
   collapses the two.
 - **Tamper-evident chain of custody.** SHA-256 on every input, output,
   ground-truth file, stdout, stderr, and on the verdict document itself.
-  `clawbio-bench --verify` runs a three-layer reconciliation (per-verdict
+  `clawbio_bench --verify` runs a three-layer reconciliation (per-verdict
   self-hash, sidecar index, log-file integrity).
 - **Longitudinal sweeps across git history.** `--regression-window N`,
   `--all-commits`, and `--tagged-commits` replay every test case against
@@ -1288,7 +1288,7 @@ is hidden:
 1. **Never abort** — every `(commit, test_case)` pair produces a verdict.
    Infrastructure failures become `harness_error` verdicts excluded from
    pass rate. A harness that raises an unhandled exception is itself a
-   bug in `clawbio-bench`, not a valid outcome.
+   bug in `clawbio_bench`, not a valid outcome.
 2. **Offline only** — no network calls at runtime. Reference values are
    analytically pre-computed and embedded in ground truth files.
 3. **Chain of custody** — SHA-256 of every input, output, and ground
@@ -1304,7 +1304,7 @@ is hidden:
 
 ## Understanding Results (Exit Codes)
 
-`clawbio-bench` uses **advisory** exit codes. You can rely on them for
+`clawbio_bench` uses **advisory** exit codes. You can rely on them for
 CI gating:
 
 | Exit | Meaning | CI recommendation |
@@ -1342,7 +1342,7 @@ python scripts/gen_schemas.py                       # writes schemas/*.schema.js
 
 ## Continuous Audit (GitHub Actions)
 
-`clawbio-bench` ships a reusable workflow so any downstream repository —
+`clawbio_bench` ships a reusable workflow so any downstream repository —
 primarily [ClawBio](https://github.com/ClawBio/ClawBio) itself — can run
 the suite on every PR and get a sticky comment summarising findings.
 
@@ -1352,7 +1352,7 @@ Drop this into `.github/workflows/audit.yml` in ClawBio (or any repo
 being audited):
 
 ```yaml
-name: clawbio-bench audit
+name: clawbio_bench audit
 on:
   pull_request:
     branches: [main]
