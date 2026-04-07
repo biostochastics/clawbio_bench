@@ -1,18 +1,18 @@
 # BENCHMARK: cyp2d6_del
-# GROUND_TRUTH_PHENOTYPE: CYP2D6 at least Intermediate Metabolizer (carries *6 deletion)
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Indeterminate (structural variant *6 DEL not assessable from DTC data)
 # GROUND_TRUTH_BEHAVIOR: rs5030655 represents CYP2D6*6, a single-nucleotide deletion
-#   (T deletion) that causes a frameshift and no-function allele. A correct tool should
-#   detect this variant. However, the DTC genotype "CT" for a deletion locus is
-#   ambiguous -- arrays cannot reliably call indels. The tool should either detect the
-#   variant or flag it as indeterminate, NOT silently report Normal.
-# EXPECTED_TOOL_OUTPUT: Tool SKIPS rs5030655 entirely because alt="DEL" triggers the
-#   structural variant check (line ~899: if alt in ("DEL","INS","TA7"): continue).
-#   The WARNING "cannot interpret from DTC data" prints to stderr, but the allele is
-#   not counted. With all other CYP2D6 SNPs at reference, the tool reports "*1/*1"
-#   Normal Metabolizer. Codeine: standard. This is a FALSE NEGATIVE -- the *6 allele
-#   is present but undetected, potentially causing adverse drug reactions.
-# FINDING: PF-1 (CYP2D6*6 indel non-detection: rs5030655 DEL)
-# FINDING_CATEGORY: disclosure_failure
+#   (T deletion) that causes a frameshift and no-function allele. DTC arrays cannot
+#   reliably call indels. The correct tool behavior is to return Indeterminate with a
+#   structural variant disclosure when the genotype is heterozygous (het call at an SV
+#   locus suggests the patient may carry the variant). Silently reporting Normal is a
+#   false negative on a safety-relevant allele.
+# EXPECTED_TOOL_OUTPUT: Tool detects het call "CT" at rs5030655 (alt="DEL") and returns
+#   "Indeterminate (structural variant not assessed: *6(rs5030655))" for CYP2D6
+#   diplotype. Codeine classification becomes indeterminate. This is the correct
+#   scope-honest behavior — the tool cannot resolve DEL alleles from DTC data and
+#   discloses this limitation instead of silently assuming reference.
+# FINDING: PF-1 (CYP2D6*6 indel — scope-honest disclosure of DTC limitation)
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP2D6
 # TARGET_RSID: rs5030655
 # HAZARD_DRUG: Codeine

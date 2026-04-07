@@ -37,7 +37,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -70,6 +69,20 @@ PALETTE = {
 # ---------------------------------------------------------------------------
 # Every verdict category maps to exactly one severity tier. The report uses
 # tier colors instead of per-category colors for cross-harness consistency.
+#
+# Tier data is sourced per category from each harness's ``CATEGORY_LEGEND``
+# (carried through ``heatmap_data.json`` and the aggregate report). The
+# report generator is harness-agnostic: add a new harness with tier-annotated
+# legend entries and the PDF will pick up the new categories automatically.
+# Unknown categories fall back to the algorithmic derivation that matches
+# the markdown renderer — fail → critical, pass → pass, other → warning.
+
+# Imported from clawbio_bench.core so the Typst renderer cannot drift from
+# the runtime tier numbering.
+from clawbio_bench.core import TIER_RANKS  # noqa: E402
+from clawbio_bench.core import (  # noqa: E402
+    derive_tier_from_category_sets as _derive_tier,
+)
 
 TIER_DEFS: dict[int, dict[str, str]] = {
     0: {"name": "Pass", "fill": "#166534", "bg": "#dcfce7", "text": "#166534"},
@@ -79,85 +92,96 @@ TIER_DEFS: dict[int, dict[str, str]] = {
     4: {"name": "Infra", "fill": "#475569", "bg": "#f1f5f9", "text": "#475569"},
 }
 
-SEVERITY_TIERS: dict[str, int] = {
-    # Tier 0: Pass — correct behavior, within spec
-    "correct_determinate": 0,
-    "correct_indeterminate": 0,
-    "fst_correct": 0,
-    "csv_honest": 0,
-    "heim_bounded": 0,
-    "edge_handled": 0,
-    "score_correct": 0,
-    "repro_functional": 0,
-    "snp_valid": 0,
-    "threshold_consistent": 0,
-    "routed_correct": 0,
-    "stub_warned": 0,
-    "unroutable_handled": 0,
-    "injection_blocked": 0,
-    "exit_handled": 0,
-    "demo_functional": 0,
-    "finemap_correct": 0,
-    "report_structure_complete": 0,
-    # Tier 1: Advisory — technically correct but sub-optimal
-    "scope_honest_indeterminate": 1,
-    # Tier 2: Warning — incorrect or misleading, actionable
-    "incorrect_indeterminate": 2,
-    "disclosure_failure": 2,
-    "fst_mislabeled": 2,
-    "heim_unbounded": 2,
-    "csv_inflated": 2,
-    "repro_broken": 2,
-    "snp_invalid": 2,
-    "threshold_mismatch": 2,
-    "stub_silent": 2,
-    "exit_suppressed": 2,
-    "susie_nonconvergence_suppressed": 2,
-    "susie_moment_field_mislabeled": 2,
-    "credset_pip_is_alpha_mismatch": 2,
-    "credset_purity_mean_hides_weak": 2,
-    "credset_purity_none_wrongly_pure": 2,
-    "credset_coverage_incorrect": 2,
-    "data_source_version_missing": 2,
-    "limitations_missing": 2,
-    "gene_disease_context_missing": 2,
-    # Tier 3: Critical — crash, silent data loss, wrong result
-    "incorrect_determinate": 3,
-    "omission": 3,
-    "fst_incorrect": 3,
-    "edge_crash": 3,
-    "score_incorrect": 3,
-    "routed_wrong": 3,
-    "unroutable_crash": 3,
-    "injection_succeeded": 3,
-    "demo_broken": 3,
-    "pip_value_incorrect": 3,
-    "pip_nan_silent": 3,
-    "susie_null_forced_signal": 3,
-    "susie_spurious_secondary_signal": 3,
-    "abf_variant_n_collapsed": 3,
-    "input_validation_missing": 3,
-    "assembly_missing": 3,
-    "transcript_missing": 3,
-    "disclaimer_missing": 3,
-    "evidence_trail_incomplete": 3,
-    "reference_build_inconsistent": 3,
-    # Tier 4: Infrastructure
-    "harness_error": 4,
-}
+
+# Runtime lookup populated by ``build_tier_lookup`` from the loaded results.
+# Module-level so helper functions downstream can stay as simple single-arg
+# functions the emit_* code already uses.
+_TIER_LOOKUP: dict[str, int] = {}
+
+
+def _rank_from_tier_name(tier_name: str | None) -> int:
+    """Map a tier string (e.g. ``"critical"``) to its integer rank 0..4.
+
+    Normalises casing and whitespace so ``"Critical"`` or ``" critical "``
+    resolve to the same rank — tolerant of hand-edited legend entries.
+    """
+    if tier_name is None:
+        return TIER_RANKS["infra"]
+    return TIER_RANKS.get(tier_name.strip().lower(), TIER_RANKS["infra"])
+
+
+def build_tier_lookup(
+    aggregate: dict[str, Any],
+    harness_entries: list[dict[str, Any]],
+) -> dict[str, int]:
+    """Resolve every category to a numeric tier from the loaded artifacts.
+
+    Sources consulted, in order of precedence:
+
+    1. Per-harness ``CATEGORY_LEGEND[cat]["tier"]`` from ``heatmap_data.json``
+       (authoritative — set by the harness author).
+    2. Per-harness ``category_legend`` echoed into ``aggregate_report.json``
+       (same data, different path — covers partial runs where a harness
+       crashed before writing its heatmap).
+    3. Algorithmic fallback using ``pass_categories`` / ``fail_categories``
+       from the aggregate: fail → critical, pass → pass, harness_error → infra,
+       everything else → warning. Matches markdown_report.py's dynamic map.
+
+    Returns a flat ``{category → tier_rank}`` dict. The same category name
+    appearing in two harnesses with conflicting tiers takes the most-severe
+    rank (which is the conservative choice for sort order and color).
+    """
+    lookup: dict[str, int] = {}
+
+    def _promote(cat: str, rank: int) -> None:
+        existing = lookup.get(cat)
+        if existing is None or rank > existing:
+            lookup[cat] = rank
+
+    # Source 1+2: per-harness legends — prefer heatmap then aggregate echo.
+    aggregate_harnesses = aggregate.get("harnesses") or {}
+    for h in harness_entries:
+        name = h.get("name", "")
+        heatmap = h.get("heatmap") or {}
+        legend = heatmap.get("category_legend") or {}
+        if not legend:
+            legend = (aggregate_harnesses.get(name) or {}).get("category_legend") or {}
+        for cat, entry in legend.items():
+            if not isinstance(entry, dict):
+                continue
+            tier_name = entry.get("tier")
+            if tier_name is not None:
+                _promote(cat, _rank_from_tier_name(str(tier_name)))
+
+    # Source 3: algorithmic fallback for any categories not covered above.
+    # We walk the aggregate's categories counts so we cover everything that
+    # actually appeared in the run, not just those in the legend. Delegates
+    # to ``core.derive_tier_from_category_sets`` so this module and the
+    # markdown renderer cannot disagree on the fallback rule.
+    for hdata in aggregate_harnesses.values():
+        if not isinstance(hdata, dict):
+            continue
+        pass_set = set(hdata.get("pass_categories") or [])
+        fail_set = set(hdata.get("fail_categories") or [])
+        for cat in hdata.get("categories") or {}:
+            if cat in lookup:
+                continue
+            tier_name = _derive_tier(cat, pass_set, fail_set)
+            _promote(cat, TIER_RANKS[tier_name])
+
+    return lookup
 
 
 def category_tier(category: str) -> int:
-    """Return the unified severity tier (0-4) for a category."""
-    return SEVERITY_TIERS.get(category, 4)
+    """Return the unified severity tier (0-4) for a category.
 
+    Consults the module-level ``_TIER_LOOKUP`` populated by
+    ``build_tier_lookup`` at the start of each report render. Unknown
+    categories fall back to tier 4 (Infra) so missing data is visible
+    rather than silently misclassified.
+    """
+    return _TIER_LOOKUP.get(category, TIER_RANKS["infra"])
 
-# Fallback colors for categories that somehow lack a legend entry (should
-# not happen, but keeps the report from blowing up on malformed input).
-CATEGORY_FALLBACK_COLOR = {
-    "harness_error": "#475569",
-}
-DEFAULT_UNKNOWN_COLOR = "#94a3b8"
 
 # Cap on verdict.details dict entries rendered per finding — large SuSiE
 # alpha / mu dumps would blow the page otherwise. The finding card notes
@@ -358,15 +382,6 @@ def is_failing(verdict_doc: dict[str, Any], pass_categories: list[str]) -> bool:
     return category not in pass_categories
 
 
-_HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
-
-
-def category_color(category: str, legend: dict[str, dict[str, str]]) -> str:
-    """Return hex color for a category using the unified tier palette."""
-    tier = category_tier(category)
-    return TIER_DEFS[tier]["fill"]
-
-
 def category_label(category: str, legend: dict[str, dict[str, str]]) -> str:
     entry = legend.get(category)
     if entry and isinstance(entry, dict):
@@ -402,7 +417,7 @@ def emit_preamble(title: str, subtitle: str) -> str:
     # Emit tier color variables
     lines.append("")
     lines.append("// ── Unified 5-tier severity palette ──")
-    for _tier_idx, tdef in TIER_DEFS.items():
+    for tdef in TIER_DEFS.values():
         tname = tdef["name"].lower()
         lines.append(f'#let tier-{tname}-fill = rgb("{tdef["fill"]}")')
         lines.append(f'#let tier-{tname}-bg   = rgb("{tdef["bg"]}")')
@@ -1335,26 +1350,27 @@ def emit_findings_section(h: dict[str, Any]) -> str:
     heatmap = h.get("heatmap") or {}
     legend = heatmap.get("category_legend") or {}
 
-    # Extract and sort by severity using the harness's own category sets
-    # (palette-independent). Fail categories → tier 0, harness_error → tier 3,
-    # non-pass/non-fail (warnings) → tier 1, unknown → tier 2.
     failing = [v for v in verdicts if is_failing(v, pass_categories)]
-    fail_categories = set(entry.get("fail_categories") or [])
+
+    # Sort by display order derived from the unified 5-tier system. We want
+    # the most actionable severities at the top: critical → warning →
+    # advisory → infra. Pass tier is filtered out upstream by ``is_failing``
+    # so it never appears here.
+    _DISPLAY_ORDER = {
+        TIER_RANKS["critical"]: 0,  # shown first
+        TIER_RANKS["warning"]: 1,
+        TIER_RANKS["advisory"]: 2,
+        TIER_RANKS["infra"]: 3,  # shown last
+        TIER_RANKS["pass"]: 4,  # defensive; should not appear
+    }
 
     def _severity_key(v: dict[str, Any]) -> tuple[int, str, str, str]:
         cat = v.get("verdict", {}).get("category", "zzz")
-        if cat in fail_categories:
-            tier = 0
-        elif cat == "harness_error":
-            tier = 3
-        elif cat not in pass_categories:
-            tier = 1  # warning tier (non-pass, non-fail)
-        else:
-            tier = 2  # unknown / fallback
-        # Include category in sort key so same-category findings are contiguous
-        # (required for the collapse-into-table logic to work correctly).
+        display_rank = _DISPLAY_ORDER.get(category_tier(cat), 99)
+        # Include category in the sort key so same-category findings are
+        # contiguous (required for the collapse-into-table logic to work).
         return (
-            tier,
+            display_rank,
             cat,
             v.get("test_case", {}).get("name", ""),
             v.get("commit", {}).get("short", ""),
@@ -1372,15 +1388,6 @@ def emit_findings_section(h: dict[str, Any]) -> str:
             ]
         )
 
-    # Group by severity tier for section headers (using unified tier system)
-    tier_names = {0: "Critical", 1: "Warnings", 2: "Other", 3: "Harness errors"}
-    tier_palette = {
-        0: TIER_DEFS[3]["fill"],  # critical → tier 3 colors
-        1: TIER_DEFS[2]["fill"],  # warnings → tier 2 colors
-        2: TIER_DEFS[4]["fill"],  # other → tier 4 colors
-        3: TIER_DEFS[4]["fill"],  # harness errors → tier 4 colors
-    }
-
     lines: list[str] = [
         f'#text(11pt, weight: "bold", fill: coral)[Findings ({len(failing)})]',
         "#v(0.1cm)",
@@ -1389,34 +1396,26 @@ def emit_findings_section(h: dict[str, Any]) -> str:
         "#v(0.15cm)",
     ]
 
-    # Pre-compute per-category counts for collapse detection
-    from collections import Counter
-
-    cat_counts: Counter[str] = Counter()
-    for fv in failing:
-        cat_counts[fv.get("verdict", {}).get("category", "")] += 1
-
     current_tier: int | None = None
     card_index = 0
     i = 0
     while i < len(failing):
         v = failing[i]
         cat = v.get("verdict", {}).get("category", "")
-        if cat in fail_categories:
-            tier = 0
-        elif cat == "harness_error":
-            tier = 3
-        elif cat not in pass_categories:
-            tier = 1
-        else:
-            tier = 2
+        tier = category_tier(cat)
 
-        # Severity group header
+        # Severity group header — use the canonical tier name + color from
+        # TIER_DEFS so the header text and fill stay in lockstep with every
+        # other tier-aware rendering path in the report.
         if tier != current_tier:
             current_tier = tier
-            tier_count = sum(1 for fv in failing if _severity_key(fv)[0] == tier)
-            tc_hex = tier_palette.get(tier, TIER_DEFS[4]["fill"])
-            tn = tier_names.get(tier, "Other")
+            tier_count = sum(
+                1
+                for fv in failing
+                if category_tier(fv.get("verdict", {}).get("category", "")) == tier
+            )
+            tc_hex = TIER_DEFS[tier]["fill"]
+            tn = TIER_DEFS[tier]["name"]
             lines.append(
                 f'#block(fill: rgb("{tc_hex}").lighten(92%), inset: (x: 6pt, y: 3pt), '
                 f'width: 100%, stroke: 0.4pt + rgb("{tc_hex}"))['
@@ -1787,6 +1786,27 @@ def build_typst(
 ) -> str:
     aggregate = loaded["aggregate"]
     harnesses = loaded["harnesses"]
+
+    # Populate the module-level tier lookup so every emit_* helper can use
+    # ``category_tier(cat)`` without threading a lookup dict through every
+    # signature. Tier data is sourced from each harness's CATEGORY_LEGEND
+    # (primary) with algorithmic fallback for unknown categories. When a
+    # baseline aggregate is provided we seed the lookup from it too so the
+    # delta section can color baseline-only categories correctly.
+    #
+    # Mutate via clear()/update() rather than rebinding so any cached dict
+    # references held elsewhere stay in sync.
+    fresh = build_tier_lookup(aggregate, harnesses)
+    if baseline_aggregate is not None:
+        # Source 2: baseline aggregate-echoed legends. Harness entries from
+        # the baseline aren't available here, so we pass an empty list and
+        # rely on the aggregate's echoed category_legend + algorithmic
+        # fallback paths inside build_tier_lookup.
+        for cat, rank in build_tier_lookup(baseline_aggregate, []).items():
+            if cat not in fresh or rank > fresh[cat]:
+                fresh[cat] = rank
+    _TIER_LOOKUP.clear()
+    _TIER_LOOKUP.update(fresh)
 
     title = "ClawBio Benchmark Audit Report"
     subtitle = "Safety, correctness, and honesty findings"

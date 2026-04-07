@@ -33,6 +33,68 @@ from types import SimpleNamespace
 from typing import Any
 
 # ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+# Names exposed to downstream importers. Anything not listed here is
+# considered internal and may change without a deprecation period. Standalone
+# harness scripts that build on the matrix runner should pin against these.
+
+__all__ = [
+    # Version + tier system
+    "CORE_VERSION",
+    "TIER_NAMES",
+    "TIER_RANKS",
+    "tier_rank",
+    "derive_tier_from_category_sets",
+    # Exceptions
+    "BenchmarkConfigError",
+    "DirtyRepoError",
+    "VerdictSchemaError",
+    # Validators
+    "validate_timeout",
+    "validate_commit_sha",
+    "validate_weights",
+    "validate_payload_path",
+    "validate_repo",
+    "validate_verdict_schema",
+    # Hashing / artifacts
+    "sha256_file",
+    "sha256_string",
+    "artifact_info",
+    # Git helpers
+    "get_commit_metadata",
+    "get_commit_tags",
+    "get_tagged_commits",
+    "safe_checkout",
+    "clean_workspace",
+    "check_repo_clean",
+    # Test case + ground truth resolution
+    "resolve_test_cases",
+    "resolve_test_case",
+    "parse_ground_truth",
+    # Execution + verdicts
+    "ExecutionResult",
+    "capture_execution",
+    "build_verdict_doc",
+    "save_verdict",
+    "save_execution_logs",
+    "harness_error_verdict",
+    # Aggregation + matrix runner
+    "run_benchmark_matrix",
+    "run_harness_main",
+    "build_summary",
+    "build_heatmap_data",
+    "write_manifest",
+    "write_verdict_hashes",
+    # Verification
+    "verify_verdict_file",
+    "verify_results_directory",
+    # CLI helpers
+    "add_common_args",
+    "resolve_commits",
+]
+
+# ---------------------------------------------------------------------------
 # Constants & Exceptions
 # ---------------------------------------------------------------------------
 
@@ -56,6 +118,58 @@ class VerdictSchemaError(Exception):
 
 
 # ---------------------------------------------------------------------------
+# Unified severity tier system
+# ---------------------------------------------------------------------------
+# Five canonical tiers used across all harnesses and both report generators.
+# Each harness's CATEGORY_LEGEND entry carries a "tier" field set to one of
+# these strings; the generators map it to the numeric rank below at render
+# time. New harnesses add tier annotations to their legend — no code edits
+# are required in the report generators.
+
+TIER_NAMES: tuple[str, ...] = ("pass", "advisory", "warning", "critical", "infra")
+
+# Numeric ranks — higher = more severe. Report generators use these to sort
+# findings and pick colors. Keep stable: baselines and aggregates carry the
+# string name, not the int, so renumbering tiers requires a migration.
+TIER_RANKS: dict[str, int] = {name: idx for idx, name in enumerate(TIER_NAMES)}
+
+
+def tier_rank(tier: str | None) -> int:
+    """Return the integer rank (0..4) for a tier name, default ``infra``."""
+    if tier is None:
+        return TIER_RANKS["infra"]
+    return TIER_RANKS.get(tier, TIER_RANKS["infra"])
+
+
+def derive_tier_from_category_sets(
+    category: str,
+    pass_categories: list[str] | set[str],
+    fail_categories: list[str] | set[str],
+) -> str:
+    """Smart fallback when a category lacks an explicit tier in the legend.
+
+    This is the heuristic the dynamic markdown renderer used to bake in; we
+    expose it here so every consumer agrees on the fallback semantics. The
+    heuristic is deliberately coarse:
+
+    * ``harness_error``          → ``"infra"``
+    * in ``pass_categories``     → ``"pass"``
+    * in ``fail_categories``     → ``"critical"``
+    * anything else              → ``"warning"``
+
+    Harnesses SHOULD set ``tier`` explicitly in their legend so this is not
+    used; it only matters for unknown categories appearing at runtime.
+    """
+    if category == "harness_error":
+        return "infra"
+    if category in pass_categories:
+        return "pass"
+    if category in fail_categories:
+        return "critical"
+    return "warning"
+
+
+# ---------------------------------------------------------------------------
 # Input Validation
 # ---------------------------------------------------------------------------
 
@@ -73,7 +187,7 @@ MAX_TIMEOUT = 600  # 10 minutes — hard cap for any single test case
 MAX_CAPTURE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
-def _environment_signature() -> dict:
+def _environment_signature() -> dict[str, Any]:
     """Capture a reproducibility signature for the current Python environment.
 
     Records interpreter path, Python version, platform, hostname hash, and a
@@ -103,10 +217,15 @@ def _environment_signature() -> dict:
     }
 
 
-def validate_timeout(value: str | int, default: int = 60) -> int:
-    """Parse and clamp a timeout value to [1, MAX_TIMEOUT]."""
+def validate_timeout(value: str | int | None, default: int = 60) -> int:
+    """Parse and clamp a timeout value to [1, MAX_TIMEOUT].
+
+    Accepts ``None`` and returns ``default`` — the function is defensive
+    against unparseable input (env vars, CLI args) so callers can pass
+    raw values without pre-validating.
+    """
     try:
-        t = int(value)
+        t = int(value)  # type: ignore[arg-type]
     except (ValueError, TypeError):
         return default
     return max(1, min(t, MAX_TIMEOUT))
@@ -169,7 +288,7 @@ def sha256_string(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def artifact_info(filepath: Path) -> dict:
+def artifact_info(filepath: Path) -> dict[str, Any]:
     """Return {exists, sha256, size_bytes} for chain of custody."""
     if not filepath.exists():
         return {"exists": False, "sha256": None, "size_bytes": 0}
@@ -185,7 +304,7 @@ def artifact_info(filepath: Path) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def get_commit_metadata(repo_path: Path, commit_sha: str) -> dict:
+def get_commit_metadata(repo_path: Path, commit_sha: str) -> dict[str, Any]:
     """Get commit date, message, and full SHA."""
     try:
         result = subprocess.run(
@@ -503,6 +622,11 @@ def _parse_legacy_key_value(lines: list[str], ground_truth_path: Path) -> dict[s
         if not m:
             continue
         key, value = m.group(1).strip(), m.group(2).strip()
+        # REFERENCE is allowed to repeat (multiple citations per test case);
+        # subsequent values are appended with a separator rather than warned.
+        if key == "REFERENCE" and key in seen_keys:
+            gt[key] = f"{gt[key]},{value}"
+            continue
         if key in seen_keys:
             print(
                 f"  WARNING: Duplicate header '{key}' in {ground_truth_path.name} "
@@ -673,7 +797,7 @@ def _normalize_yaml_value(value: Any, ground_truth_path: Path, key_path: str) ->
 def parse_ground_truth(
     ground_truth_path: Path,
     required_fields: list[str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Parse a ground truth file, dispatching on format.
 
     Two formats are accepted:
@@ -728,7 +852,7 @@ def parse_ground_truth(
     return gt
 
 
-def resolve_test_case(test_case_path: Path) -> tuple[dict, Path | None]:
+def resolve_test_case(test_case_path: Path) -> tuple[dict[str, Any], Path | None]:
     """Resolve a test case to (ground_truth_dict, payload_path).
 
     Model A (file): Parse the file as both ground truth and payload.
@@ -804,7 +928,7 @@ class ExecutionResult:
     stdout_truncated: bool = False
     stderr_truncated: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "exit_code": self.exit_code,
             "stdout_lines": self.stdout.count("\n"),
@@ -838,7 +962,7 @@ def capture_execution(
     cmd: list[str],
     cwd: Path,
     timeout: int = 60,
-    env: dict | None = None,
+    env: dict[str, str] | None = None,
     fallback_cmd: list[str] | None = None,
     fallback_flag: str | None = None,
 ) -> ExecutionResult:
@@ -1011,10 +1135,10 @@ def _truncate_with_hash(text: str) -> tuple[str, str, int, bool]:
 
 def harness_error_verdict(
     test_case_name: str,
-    commit_meta: dict,
+    commit_meta: dict[str, Any],
     exception: BaseException,
-    ground_truth: dict | None = None,
-) -> dict:
+    ground_truth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Produce a verdict with category='harness_error'.
 
     Never abort the matrix — always emit a verdict.
@@ -1051,7 +1175,7 @@ def write_manifest(
     rubric_categories: list[str],
     pass_categories: list[str],
     fail_categories: list[str],
-) -> dict:
+) -> dict[str, Any]:
     """Write manifest.json and return the manifest dict."""
     # Build test case inventory
     tc_inventory = []
@@ -1101,10 +1225,10 @@ def write_manifest(
 
 
 def build_heatmap_data(
-    verdicts: list[dict],
-    category_legend: dict[str, dict],
+    verdicts: list[dict[str, Any]],
+    category_legend: dict[str, dict[str, Any]],
     tag_map: dict[str, list[str]] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Build aggregated heatmap matrix from verdict list.
 
     If *tag_map* is provided (SHA → tag names), each commit entry in the
@@ -1153,9 +1277,9 @@ def build_heatmap_data(
 
 
 def build_summary(
-    verdicts: list[dict],
+    verdicts: list[dict[str, Any]],
     pass_categories: list[str],
-) -> dict:
+) -> dict[str, Any]:
     """Per-commit summary. Pass rate excludes harness_error.
 
     ``_meta`` carries three distinct buckets for longitudinal analysis:
@@ -1171,7 +1295,7 @@ def build_summary(
       always-errored ones).
     """
     # Key by FULL SHA to avoid short-SHA collisions in longitudinal sweeps.
-    by_commit: dict[str, list] = defaultdict(list)
+    by_commit: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for v in verdicts:
         sha = v.get("commit", {}).get("sha", "unknown")
         by_commit[sha].append(v)
@@ -1270,14 +1394,14 @@ def validate_repo(repo_path: Path) -> None:
 
 
 def _record_harness_error(
-    all_verdicts: list[dict],
+    all_verdicts: list[dict[str, Any]],
     output_base: Path,
     commit_sha: str,
     commit_short: str,
-    commit_meta: dict,
+    commit_meta: dict[str, Any],
     tc_name: str,
     exception: BaseException,
-    ground_truth: dict | None = None,
+    ground_truth: dict[str, Any] | None = None,
 ) -> None:
     """Build a harness_error verdict, append it to the in-memory list, AND
     persist it through ``save_verdict`` to the canonical per-case path.
@@ -1317,8 +1441,7 @@ def run_benchmark_matrix(
     commits: list[str],
     test_cases: list[Path],
     output_base: Path,
-    run_single_fn: Callable,
-    benchmark_name: str,
+    run_single_fn: Callable[..., dict[str, Any]],
     clean_between_commits: bool = True,
     allow_dirty: bool = False,
     quiet: bool = False,
@@ -1326,7 +1449,7 @@ def run_benchmark_matrix(
     pass_categories: list[str] | None = None,
     fail_categories: list[str] | None = None,
     progress: Any = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run full benchmark matrix: commits x test_cases.
 
     Never aborts on tool or harness failure. Emits harness_error verdicts
@@ -1357,7 +1480,7 @@ def run_benchmark_matrix(
             fail_categories=fail_categories,
         )
 
-    all_verdicts: list[dict] = []
+    all_verdicts: list[dict[str, Any]] = []
 
     try:
         starting_ref = get_starting_ref(repo_path)
@@ -1653,9 +1776,13 @@ def resolve_test_cases(inputs_path: Path, glob_pattern: str = "*") -> list[Path]
         return dirs
 
     # Model A fallback: glob for files. Filter dotfiles (macOS .DS_Store,
-    # editor swap files) so they cannot silently enter the test matrix.
+    # editor swap files) and underscore-prefixed files (README_, _NOTES, etc.)
+    # so non-test-case documentation cannot silently enter the test matrix
+    # when a harness uses a permissive glob like "*.txt".
     files = sorted(
-        f for f in inputs_path.glob(glob_pattern) if f.is_file() and not f.name.startswith(".")
+        f
+        for f in inputs_path.glob(glob_pattern)
+        if f.is_file() and not f.name.startswith(".") and not f.name.startswith("_")
     )
     if files:
         return files
@@ -1679,17 +1806,17 @@ def make_output_dir(args: argparse.Namespace, benchmark_name: str) -> Path:
 def build_verdict_doc(
     benchmark_name: str,
     benchmark_version: str,
-    commit_meta: dict,
+    commit_meta: dict[str, Any],
     test_case_name: str,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     ground_truth_refs: dict[str, str],
     execution: ExecutionResult | None,
-    outputs: dict,
-    report_analysis: dict,
-    verdict: dict,
+    outputs: dict[str, Any],
+    report_analysis: dict[str, Any],
+    verdict: dict[str, Any],
     driver_path: Path | None = None,
     payload_path: Path | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Build a standardized verdict JSON document."""
     test_case_info = {"name": test_case_name}
     if driver_path and driver_path.exists():
@@ -1729,7 +1856,7 @@ def build_verdict_doc(
 
 
 def validate_verdict_schema(
-    verdict_doc: dict,
+    verdict_doc: object,
     rubric_categories: list[str] | None = None,
     *,
     strict: bool = False,
@@ -1836,7 +1963,7 @@ def _enc_hook(obj: object) -> object:
     return str(obj)
 
 
-def _canonical_verdict_bytes(verdict_doc: dict) -> bytes:
+def _canonical_verdict_bytes(verdict_doc: dict[str, Any]) -> bytes:
     """Serialize a verdict dict to canonical, deterministic bytes for hashing.
 
     Uses ``msgspec.json.encode(order="sorted")`` — the single canonical
@@ -1855,7 +1982,7 @@ def _canonical_verdict_bytes(verdict_doc: dict) -> bytes:
     return encoded + b"\n"
 
 
-def save_verdict(verdict_doc: dict, output_dir: Path) -> Path:
+def save_verdict(verdict_doc: dict[str, Any], output_dir: Path) -> Path:
     """Write verdict.json to the output directory and record its own hash.
 
     Computes the SHA-256 in memory over the canonical msgspec bytes, embeds
@@ -2089,12 +2216,12 @@ def run_harness_main(
     benchmark_name: str,
     benchmark_version: str,
     default_inputs_dir: str,
-    run_single_fn: Callable,
+    run_single_fn: Callable[..., dict[str, Any]],
     rubric_categories: list[str],
     pass_categories: list[str],
     fail_categories: list[str],
     ground_truth_refs: dict[str, str],
-    category_legend: dict[str, dict],
+    category_legend: dict[str, dict[str, Any]],
     description: str = "",
     glob_pattern: str = "*",
 ) -> None:
@@ -2158,7 +2285,6 @@ def run_harness_main(
         test_cases,
         output_base,
         run_single_fn,
-        benchmark_name,
         allow_dirty=allow_dirty,
         quiet=quiet,
         rubric_categories=rubric_categories,

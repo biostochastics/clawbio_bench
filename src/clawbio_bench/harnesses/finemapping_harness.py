@@ -109,43 +109,86 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "finemap_correct": {"color": "#22c55e", "label": "PIPs correct + claims match math"},
-    "edge_handled": {"color": "#86efac", "label": "Edge case handled cleanly"},
-    "pip_value_incorrect": {"color": "#ef4444", "label": "PIPs outside tolerance"},
-    "pip_nan_silent": {"color": "#ef4444", "label": "NaN PIPs returned silently"},
-    "susie_null_forced_signal": {"color": "#ef4444", "label": "Null locus returns phantom signal"},
+    "finemap_correct": {
+        "color": "#22c55e",
+        "label": "PIPs correct + claims match math",
+        "tier": "pass",
+    },
+    "edge_handled": {
+        "color": "#86efac",
+        "label": "Edge case handled cleanly",
+        "tier": "pass",
+    },
+    "pip_value_incorrect": {
+        "color": "#ef4444",
+        "label": "PIPs outside tolerance",
+        "tier": "critical",
+    },
+    "pip_nan_silent": {
+        "color": "#ef4444",
+        "label": "NaN PIPs returned silently",
+        "tier": "critical",
+    },
+    "susie_null_forced_signal": {
+        "color": "#ef4444",
+        "label": "Null locus returns phantom signal",
+        "tier": "critical",
+    },
     "susie_spurious_secondary_signal": {
         "color": "#ef4444",
         "label": "One-signal locus returns phantom secondary",
+        "tier": "critical",
     },
     "susie_nonconvergence_suppressed": {
         "color": "#f97316",
         "label": "Non-convergence scored as valid",
+        "tier": "warning",
     },
     "susie_moment_field_mislabeled": {
         "color": "#f97316",
         "label": "mu/mu2 are alpha-weighted, not posterior",
+        "tier": "warning",
     },
     "credset_pip_is_alpha_mismatch": {
         "color": "#f97316",
         "label": "Credset 'pip' field is alpha not true PIP",
+        "tier": "warning",
     },
     "credset_purity_mean_hides_weak": {
         "color": "#f97316",
         "label": "Mean purity hides weak-link variant",
+        "tier": "warning",
     },
     "credset_purity_none_wrongly_pure": {
         "color": "#f97316",
         "label": "pure=True when purity unknown",
+        "tier": "warning",
     },
     "credset_coverage_incorrect": {
         "color": "#f97316",
         "label": "Reported coverage != sum of weights",
+        "tier": "warning",
     },
-    "abf_variant_n_collapsed": {"color": "#ef4444", "label": "Per-variant n collapsed to median"},
-    "input_validation_missing": {"color": "#ef4444", "label": "Invalid input silently accepted"},
-    "edge_crash": {"color": "#ef4444", "label": "Edge case crashed"},
-    "harness_error": {"color": "#9ca3af", "label": "Harness infrastructure error"},
+    "abf_variant_n_collapsed": {
+        "color": "#ef4444",
+        "label": "Per-variant n collapsed to median",
+        "tier": "critical",
+    },
+    "input_validation_missing": {
+        "color": "#ef4444",
+        "label": "Invalid input silently accepted",
+        "tier": "critical",
+    },
+    "edge_crash": {
+        "color": "#ef4444",
+        "label": "Edge case crashed",
+        "tier": "critical",
+    },
+    "harness_error": {
+        "color": "#9ca3af",
+        "label": "Harness infrastructure error",
+        "tier": "infra",
+    },
 }
 
 
@@ -211,8 +254,8 @@ def _score_numerical_correctness(
     expected_category: str,
     expected_pips: list[float] | None,
     tolerance: float,
-    result: dict,
-) -> dict | None:
+    result: dict[str, Any],
+) -> dict[str, Any] | None:
     """Compare returned PIPs to expected values.
 
     Returns a verdict dict if a category decision can be made here, or
@@ -245,10 +288,10 @@ def _score_numerical_correctness(
 
 
 def score_finemapping_verdict(
-    ground_truth: dict,
-    result: dict,
+    ground_truth: dict[str, Any],
+    result: dict[str, Any],
     execution: harness_core.ExecutionResult,
-) -> dict:
+) -> dict[str, Any]:
     """Score a fine-mapping run against its ground truth.
 
     The ground truth's ``FINDING_CATEGORY`` tells us which category the
@@ -546,7 +589,7 @@ def score_finemapping_verdict(
         # that index. The bug is: "pip" equals alpha[l][i] (one row),
         # not the true PIP across all rows.
         max_err = 0.0
-        mismatched: list[dict] = []
+        mismatched: list[dict[str, Any]] = []
         for cs in credsets:
             for v in cs.get("variants", []):
                 rsid = v.get("rsid", "")
@@ -637,7 +680,7 @@ def score_finemapping_verdict(
             }
         coverage_tol = float(ground_truth.get("COVERAGE_TOLERANCE", "0.001"))
         max_err = 0.0
-        mismatches: list[dict] = []
+        mismatches: list[dict[str, Any]] = []
         for cs in credsets:
             reported = float(cs.get("coverage", 0.0))
             sum_alpha = sum(float(v.get("alpha", 0.0)) for v in cs.get("variants", []))
@@ -825,11 +868,11 @@ def run_single_finemapping(
     repo_path: Path,
     commit_sha: str,
     test_case_path: Path,
-    ground_truth: dict,
+    ground_truth: dict[str, Any],
     payload_path: Path | None,
     output_base: Path,
-    commit_meta: dict,
-) -> dict:
+    commit_meta: dict[str, Any],
+) -> dict[str, Any]:
     """Execute the fine-mapping driver for one (commit, test_case) pair."""
     tc_name = test_case_path.name if test_case_path.is_dir() else test_case_path.stem
     run_output_dir = output_base / commit_sha / tc_name

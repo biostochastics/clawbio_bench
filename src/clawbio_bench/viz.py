@@ -94,17 +94,23 @@ def _load_heatmap_files(results_dir: Path) -> list[Path]:
 
 def _merge_heatmap_data(
     heatmap_files: list[Path],
-) -> tuple[list[dict], list[str], dict, dict, dict[str, list[str]]]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[str],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, list[str]],
+]:
     """Merge data from one or more heatmap_data.json files.
 
     Returns (commits, test_cases, matrix, legend, harness_boundaries).
     ``harness_boundaries`` maps harness name → list of test case names belonging
     to that harness, preserving insertion order for hierarchical rendering.
     """
-    all_commits: list[dict] = []
+    all_commits: list[dict[str, Any]] = []
     all_test_cases: list[str] = []
-    all_matrix: dict = {}
-    all_legend: dict = {}
+    all_matrix: dict[str, Any] = {}
+    all_legend: dict[str, Any] = {}
     seen_commits: set[str] = set()
     harness_boundaries: dict[str, list[str]] = {}
 
@@ -144,7 +150,7 @@ def _merge_heatmap_data(
     return all_commits, all_test_cases, all_matrix, all_legend, harness_boundaries
 
 
-def _build_commit_label(commit: dict) -> str:
+def _build_commit_label(commit: dict[str, Any]) -> str:
     """Build a Y-axis label for a commit, including tag/release if present."""
     short = commit.get("short", commit["sha"][:8])
     date = commit.get("date", "")[:10]
@@ -162,10 +168,10 @@ def _render_single_heatmap(
     mcolors: Any,
     mpatches: Any,
     np: Any,
-    all_commits: list[dict],
+    all_commits: list[dict[str, Any]],
     all_test_cases: list[str],
-    all_matrix: dict,
-    all_legend: dict,
+    all_matrix: dict[str, Any],
+    all_legend: dict[str, Any],
     harness_boundaries: dict[str, list[str]],
     output_path: Path,
     title: str | None = None,

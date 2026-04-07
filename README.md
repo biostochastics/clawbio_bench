@@ -1,19 +1,19 @@
-# clawbio-bench
+# clawbio_bench
 
 ```
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⠉⠈⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⢀⣠⣤⣤⣤⣤⣤⣤⣄⡀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ██       █████  ██     ██ ██████  ██  ██████
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣠⣾⣿⣿⣿⣿⡿⢿⠛⡟⢿⣿⣿⣿⣿⣷⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██     ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢠⣿⣿⣿⣿⣿⡿⡋⠃⠈⠀⠀⠈⠈⢻⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿  ██      ██      ███████ ██  █  ██ ██████  ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡃⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⣿⣿⣿⣿  ██      ██      ██   ██ ██ ███ ██ ██   ██ ██ ██    ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠹⣿⣿⣿⣿⣿⣦⡂⡀⠀⠀⠀⠀⠀⣰⣶⣶⣶⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿   ██████ ███████ ██   ██  ███ ███  ██████  ██  ██████
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠉⠻⣿⣿⣿⣿⣿⣧⣼⣀⣆⣼⣾⣿⣿⣿⣿⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  ███████ ███    ██  ██████ ██   ██
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⣄⡀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠟⠋⠀⣀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ████   ██ ██      ██   ██
+⣿⣿⣿⣿⣿⣿⣿⠿⠃⠀⢀⣼⣿⣿⣿⣦⣄⣀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██████  █████   ██ ██  ██ ██      ███████
+⣿⣿⣿⣿⣿⠟⠉⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿          ██   ██ ██      ██  ██ ██ ██      ██   ██
+⣿⣿⡿⢋⠁⢀⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  ███████ ██████  ███████ ██   ████  ██████ ██   ██
 ⢟⠉⠀⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣷⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ```
@@ -22,13 +22,13 @@
 [![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiostochastics%2Fclawbio_bench%2Fmain%2Fpyproject.toml&query=%24.project.%22requires-python%22&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/biostochastics/clawbio_bench/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-244%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-245%20passing-brightgreen)](tests/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy: checked](https://img.shields.io/badge/mypy-checked-blue)](https://mypy-lang.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/biostochastics/clawbio_bench)
 
-> **What this is.** `clawbio-bench` is a **standalone Python audit suite** that
+> **What this is.** `clawbio_bench` is a **standalone Python audit suite** that
 > evaluates the external [**ClawBio**](https://github.com/ClawBio/ClawBio)
 > bioinformatics platform for **safety, correctness, and honesty**. It runs
 > behavioral harnesses against a local clone of ClawBio, compares each skill's
@@ -50,8 +50,9 @@ every step.
   and verdict format as a reference for auditing other computational biology
   tools.
 - **[Audit report (PDF)](clawbio_audit_report_20260406.pdf)** — a 21-page
-  report from a 7-harness smoke run against ClawBio HEAD (v0.1.2,
-  125/147 tests passing).
+  report from a 7-harness smoke run against ClawBio HEAD captured at
+  v0.1.2 (125/147 tests passing). The current suite (v0.1.3) runs nine
+  harnesses with 174 test cases (see [Coverage Scope](#coverage-scope)).
 
 ### The three audit dimensions
 
@@ -201,8 +202,8 @@ clawbio-bench --version
 | `--all-commits` | Every commit on a branch from the first audit-era commit forward (slowest). |
 | `--tagged-commits` | Run against tagged commits only (releases / milestones). Heatmaps annotate release names on the timeline. |
 | `--commits SHA,SHA,...` | Explicit commit list (diagnostic mode). |
-| `--branch NAME` | Which branch to walk (default: the repo's current `HEAD`). |
-| `--harness NAME` | Run only one harness (e.g. `equity`, `pharmgx`). Omit to run all six. |
+| `--branch NAME` | Which branch to walk (default: `main`). |
+| `--harness NAME` | Run only one harness (e.g. `equity`, `pharmgx`). Omit to run all nine. |
 | `--inputs PATH` | Override the bundled test case directory for a single harness. |
 | `--output DIR` | Where results land. Default: `./results/suite/<timestamp>/`. |
 | `--repo PATH` | **Required** for every real run: local ClawBio checkout. |
@@ -222,7 +223,7 @@ clawbio-bench --version
 
 ## How It Works
 
-`clawbio-bench` runs a **(commits × test_cases) matrix**. For every commit
+`clawbio_bench` runs a **(commits × test_cases) matrix**. For every commit
 you select, every test case you select is executed against that commit, and
 every `(commit, test_case)` pair produces exactly one verdict — even if the
 harness itself crashes (infrastructure failures become `harness_error`
@@ -282,8 +283,8 @@ Step by step:
    suite-level `aggregate_report.json`, `heatmap_data.json`, and a
    tamper-evident `verdict_hashes.json` sidecar.
 
-The matrix model is why `--smoke` is 25 seconds (1 commit × ~115 tests)
-but `--regression-window 20` is ~8 minutes (20 × ~115).
+The matrix model is why `--smoke` is ~30 seconds (1 commit × 174 tests)
+but `--regression-window 20` is several minutes (20 × 174).
 
 ---
 
@@ -710,10 +711,12 @@ Three terms recur throughout this document and the code:
 - **Skill** — a capability exposed by the ClawBio platform (e.g. the
   `pharmgx-reporter` that turns a genotype TSV into a drug-safety report).
   ClawBio advertises 23 executable skills + 8 stub skills.
-- **Harness** — a `clawbio-bench` audit module (one file under
+- **Harness** — a `clawbio_bench` audit module (one file under
   `src/clawbio_bench/harnesses/`) that tests exactly one skill domain,
   with its own category rubric, its own scoring logic, and a
-  `run_single_<name>()` entry point. There are currently **six harnesses**.
+  `run_single_<name>()` entry point. There are currently **nine
+  harnesses** (six ClawBio-skill audits + one out-of-registry
+  fine-mapping audit + two CVR Phase 2 harnesses).
 - **Test case** — a directory under
   `src/clawbio_bench/test_cases/<harness>/` containing input payloads +
   a `ground_truth.txt` header (YAML frontmatter or legacy `# KEY: value`
@@ -727,16 +730,19 @@ expanding an existing audit means adding test cases.
 
 ## Coverage Scope
 
-`v0.1.0` exercises the ClawBio **bio-orchestrator** plus **6 of the 37
+`v0.1.3` exercises the ClawBio **bio-orchestrator** plus **6 of the 37
 executable skills** with dedicated behavioral harnesses — verified
 against ClawBio HEAD 5cf83c5 (2026-04-04, 43 skills with `SKILL.md`:
 37 executable + 6 stub). The orchestrator harness additionally
 routing-tests every auto-detectable skill, exercises `--skill NAME`
 direct invocation for five previously-unreachable high-clinical-harm
 skills, and covers `--skills A,B,C` multi-skill composition. The
-clinical-variant-reporter harness is Phase 1 — structural and
-traceability checks only, not full ACMG 28-criteria adjudication (see
-the harness section for rationale). The fine-mapping harness audits a
+`clinical-variant-reporter` skill is now audited by three harnesses:
+`clinical_variant_reporter` (Phase 1 — structural / traceability,
+5 tests), `cvr_identity` (Phase 2c — HGVS / transcript / assembly
+representation, 6 tests, new in v0.1.3), and `cvr_correctness`
+(Phase 2a — ACMG criterion-level correctness with dual-layer ground
+truth, 13 tests, new in v0.1.3). The fine-mapping harness audits a
 statistical-inference subsystem outside ClawBio's official skill
 registry; it runs via a subprocess driver shim so its numerical stack
 (`numpy`/`pandas`) stays an optional extra.
@@ -753,11 +759,11 @@ field, which is the sole authoritative source.
 | ClawBio skill | Dedicated behavioral harness | Routing-tested |
 |---|:---:|:---:|
 | `bio-orchestrator` | Yes (54 tests) | — |
-| `pharmgx-reporter` | Yes (33 tests) | also |
+| `pharmgx-reporter` | Yes (44 tests) | also |
 | `equity-scorer` | Yes (15 tests) | also |
 | `nutrigx_advisor` | Yes (10 tests) | also |
 | `claw-metagenomics` | Yes (7 tests) | also |
-| `clinical-variant-reporter` | Yes — Phase 1 (5 tests, structural only) | also (via `--skill`) |
+| `clinical-variant-reporter` | Yes — Phase 1+2c+2a (5+6+13 tests) | also (via `--skill`) |
 | `variant-annotation` | — | Yes (via `--skill`) |
 | `clinical-trial-finder` | — | Yes (via `--skill`) |
 | `target-validation-scorer` | — | Yes (via `--skill`) |
@@ -777,7 +783,7 @@ field, which is the sole authoritative source.
 | `illumina-bridge` | — | Yes |
 | `bioconductor-bridge` | — | Yes |
 | `diff-visualizer` | — | Yes |
-| `fine-mapping` | Yes (16 tests, out-of-registry) | — (executable, not auto-detected) |
+| `fine-mapping` | Yes (20 tests, out-of-registry) | — (executable, not auto-detected) |
 | `ukb-navigator` | — | — (executable, not auto-detected) |
 | `galaxy-bridge` | — | — (executable, not auto-detected) |
 | `genome-match`, `recombinator`, `soul2dna` | — | — (synthetic genome generation; privacy/consent review pending) |
@@ -790,8 +796,8 @@ field, which is the sole authoritative source.
 - Dedicated behavioral coverage: **6 / 37 executable ClawBio skills (~16%)**
 - Skills reachable via orchestrator auto-detection: **23 / 43**
 - Skills reachable via `--skill NAME` direct invocation: **43 / 43 (100%)** — five previously-unreachable clinical skills (`clinical-variant-reporter`, `variant-annotation`, `clinical-trial-finder`, `target-validation-scorer`, `methylation-clock`) now have dedicated force-routing tests
-- Total harnesses: **7** (6 ClawBio-skill audits + 1 fine-mapping subsystem audit)
-- Total test cases: **140** (54 orchestrator + 33 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 16 fine-mapping + 5 clinical-variant-reporter)
+- Total harnesses: **9** (6 ClawBio-skill audits + 1 fine-mapping + 2 CVR Phase 2)
+- Total test cases: **174** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 20 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness)
 
 See [`docs/plans/GAP_ANALYSIS_2026-04-04.md`](docs/plans/GAP_ANALYSIS_2026-04-04.md)
 for the full audit-framework-aligned gap analysis, including the
@@ -862,7 +868,7 @@ CSV mode honesty, edge cases.
 | `edge_crash` | No | Edge case crash |
 | `harness_error` | — | Infrastructure error |
 
-### PharmGx Reporter (33 tests, 7 categories)
+### PharmGx Reporter (44 tests, 7 categories)
 
 **In plain English.** Given a genotype file, does the tool call the right
 pharmacogenomic phenotype (e.g. "CYP2C19 Poor Metabolizer"), classify the
@@ -930,7 +936,7 @@ the audited source (no external bioinformatics tools required).
 | `demo_broken` | No | Demo mode fails |
 | `harness_error` | — | Infrastructure error |
 
-### Fine-Mapping (16 tests)
+### Fine-Mapping (20 tests)
 
 **In plain English.** Does Approximate Bayes Factor (ABF) and SuSiE
 fine-mapping produce mathematically valid posterior inclusion
@@ -960,15 +966,23 @@ gene–disease/inheritance context (per Rehm et al. 2013 laboratory
 reporting standards and Abou Tayoun et al. 2018 ClinGen SVI PVS1
 recommendations).
 
-Phase 2 of this harness will add a small unambiguous-subset
-correctness test set against ClinGen VCEP 3-star+ consensus variants
-(BA1 very-common benign and PVS1 clear loss-of-function). A full
-28-criteria adjudication harness is explicitly out of scope for this
-release — mapping MAVEdb functional assays to PS3/BS3 strength levels,
-canonicalizing transcripts across MANE Select vs RefSeq, and aligning
-in-silico predictor thresholds require gene-disease-specific expert
-calibration that is its own multi-release project. This scope
-boundary is deliberate.
+**Phase 2 (v0.1.3) is now live** as two separate harnesses:
+
+- **`cvr_identity` (Phase 2c, 6 tests)** — variant identity and HGVS
+  v21.1 compliance: syntax, MANE Select, transcript versioning, indel
+  normalization, assembly coordinate consistency.
+- **`cvr_correctness` (Phase 2a, 13 tests)** — ACMG criterion-level
+  correctness with Gold/Silver truth tiers: BA1/BS1/PM2 thresholds,
+  PVS1 strength modulation per Abou Tayoun 2018, PP3/BP4 calibration
+  per Pejaver 2022, VCEP supersession (ENIGMA, InSiGHT), SF v3.3 (84
+  genes), ClinGen GDV.  Uses dual-layer ground truth: `EXPECTED_*`
+  for clinical gold standard, `EXPECTED_TOOL_*` for tool
+  self-consistency, with `self_consistency_error` rubric category.
+
+Both Phase 2 harnesses are grounded in the
+[Phase 2 PRD](docs/plans/CVR_PHASE2_PRD.md) with triple-verified
+standards (Exa + ref.tools + Tavily across three independent passes,
+plus 6-model code review by Droid/Gemini/Crush/Codex/OpenCode/Claude).
 
 | Category | Pass? | Description |
 |---|:---:|---|
@@ -1077,9 +1091,11 @@ the Python implementation is one way to honor it, not the only one.
 High-level, user-facing features — the things you should know about
 before deciding to use this tool.
 
-- **Six dedicated harnesses** covering pharmacogenomics, population
-  genetics, nutrigenomics, metagenomics, orchestration routing, and
-  fine-mapping. **116 test cases total** with analytically derived or
+- **Nine dedicated harnesses** covering pharmacogenomics, population
+  genetics, nutrigenomics, metagenomics, orchestration routing,
+  fine-mapping, and three layers of clinical-variant-reporter audit
+  (Phase 1 structural, Phase 2c identity, Phase 2a ACMG correctness).
+  **174 test cases total** with analytically derived or
   authority-referenced ground truth.
 - **Category-level verdicts, not just pass/fail.** Each harness rubric
   has 6–10 named categories; a `fst_mislabeled` finding carries
@@ -1087,7 +1103,7 @@ before deciding to use this tool.
   collapses the two.
 - **Tamper-evident chain of custody.** SHA-256 on every input, output,
   ground-truth file, stdout, stderr, and on the verdict document itself.
-  `clawbio-bench --verify` runs a three-layer reconciliation (per-verdict
+  `clawbio_bench --verify` runs a three-layer reconciliation (per-verdict
   self-hash, sidecar index, log-file integrity).
 - **Longitudinal sweeps across git history.** `--regression-window N`,
   `--all-commits`, and `--tagged-commits` replay every test case against
@@ -1113,7 +1129,7 @@ before deciding to use this tool.
   `--list` and the final summary, with `--no-rich` as a kill switch
   and a byte-stable plain-text fallback when piped.
 - **Type-safe.** Full `mypy --strict` compliance across all source files.
-- **223 unit tests** at `v0.1.0` covering scoring, validators, parser
+- **245 unit tests** at `v0.1.3` covering scoring, validators, parser
   edge cases, tamper detection, schema drift, YAML frontmatter hardening,
   canonical byte determinism, and deep-verify chain-of-custody
   reconciliation.
@@ -1212,21 +1228,28 @@ is hidden:
   See the [Roadmap](#roadmap) for the prioritized plan to close the
   behavioral-coverage gap; in the meantime, absence of a finding on a
   non-covered skill is **not** evidence of correctness.
-- **`clinical-variant-reporter` harness is Phase 1 only.** It checks
-  structural and traceability requirements (reference build stated,
-  transcript cited, ClinVar/gnomAD versions pinned, limitations section
-  present, RUO disclaimer in report body, per-variant ACMG criterion
-  audit trail, disease/inheritance context). It does **not** currently
-  score 28-criteria adjudication correctness. Phase 2 will add a small
-  unambiguous-subset correctness set (BA1 very-common benign, PVS1 clear
-  LoF) against ClinGen VCEP 3-star+ consensus variants. A rushed
-  28-criteria harness is actively scoped out because it generates
+- **`clinical-variant-reporter` audit is split across three harnesses.**
+  Phase 1 (`clinical_variant_reporter`, 5 tests) checks structural and
+  traceability requirements (reference build stated, transcript cited,
+  ClinVar/gnomAD versions pinned, limitations section present, RUO
+  disclaimer in report body, per-variant ACMG criterion audit trail,
+  disease/inheritance context). Phase 2c (`cvr_identity`, 6 tests, new
+  in v0.1.3) validates HGVS v21.1 syntax, MANE Select transcript usage,
+  indel normalization, and assembly coordinate consistency. Phase 2a
+  (`cvr_correctness`, 13 tests, new in v0.1.3) scores ACMG criterion-
+  level correctness on a curated unambiguous subset using dual-layer
+  ground truth (`EXPECTED_*` for clinical gold standard versus
+  `EXPECTED_TOOL_*` for tool self-consistency, with a
+  `self_consistency_error` rubric category). None of the three
+  harnesses attempts a full 28-criteria adjudication of contested
+  variants — that scope is intentionally avoided because it generates
   indefensible ground truth and damages suite credibility.
 - **Prompt-injection tests are honestly scoped.** Against ClawBio's
   current deterministic parsers (TSV header reader for `pharmgx_reporter`,
   substring `KEYWORD_MAP` for the orchestrator) injection payloads in
   comments or queries are inert — the tool never interprets them as
-  instructions. Three of the four injection test cases are labeled as
+  instructions. Two of the three orchestrator injection test cases
+  (`inj_01_routing_hijack`, `inj_02_exfil_attempt`) are labeled as
   **regression pins** in their ground-truth hazards: they exist to
   catch a future refactor that introduces LLM-based parsing without
   re-hardening. The genuine live injection test is
@@ -1288,7 +1311,7 @@ is hidden:
 1. **Never abort** — every `(commit, test_case)` pair produces a verdict.
    Infrastructure failures become `harness_error` verdicts excluded from
    pass rate. A harness that raises an unhandled exception is itself a
-   bug in `clawbio-bench`, not a valid outcome.
+   bug in `clawbio_bench`, not a valid outcome.
 2. **Offline only** — no network calls at runtime. Reference values are
    analytically pre-computed and embedded in ground truth files.
 3. **Chain of custody** — SHA-256 of every input, output, and ground
@@ -1304,7 +1327,7 @@ is hidden:
 
 ## Understanding Results (Exit Codes)
 
-`clawbio-bench` uses **advisory** exit codes. You can rely on them for
+`clawbio_bench` uses **advisory** exit codes. You can rely on them for
 CI gating:
 
 | Exit | Meaning | CI recommendation |
@@ -1324,7 +1347,7 @@ in your own workflow.
 
 ```bash
 # Unit tests — scoring, validators, parser, chain of custody, schemas, YAML
-pytest tests/ -k "not test_harness_smoke"           # 223 tests, <1s
+pytest tests/ -k "not test_harness_smoke"           # 245 tests, <1s
 
 # Type check
 mypy src/clawbio_bench/ --ignore-missing-imports    # 0 errors
@@ -1342,17 +1365,34 @@ python scripts/gen_schemas.py                       # writes schemas/*.schema.js
 
 ## Continuous Audit (GitHub Actions)
 
-`clawbio-bench` ships a reusable workflow so any downstream repository —
-primarily [ClawBio](https://github.com/ClawBio/ClawBio) itself — can run
-the suite on every PR and get a sticky comment summarising findings.
+Two repositories participate. Workflows are split by ownership:
 
-### Stub for the audited repository
+```
+biostochastics/clawbio_bench          ClawBio/ClawBio
+(this repo — the auditor)             (the audited target)
+─────────────────────────             ─────────────────────
+ ci.yml                                audit.yml  ← you add this
+ audit-reusable.yml  ◄── called by ──  (3-line stub, see below)
+ audit-baseline.yml
+ daily-audit.yml
+```
 
-Drop this into `.github/workflows/audit.yml` in ClawBio (or any repo
-being audited):
+### Workflows in `clawbio_bench` (this repo)
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | Push / PR to `clawbio_bench` | Lint, unit tests (3.11–3.13), smoke against pinned ClawBio ref |
+| `audit-reusable.yml` | Called by downstream repos | Reusable workflow: installs bench, runs smoke, posts PR comment |
+| `audit-baseline.yml` | Nightly (04:17 UTC) + push to `main` | Publishes rolling `aggregate_report.json` baseline as a release asset |
+| `daily-audit.yml` | Cron (08:00 UTC) + manual dispatch | Full daily audit against ClawBio HEAD (see below) |
+
+### Workflow in ClawBio (the audited repo)
+
+Drop this **3-line stub** into `.github/workflows/audit.yml` in ClawBio
+(or any repo being audited). It calls the reusable workflow hosted here:
 
 ```yaml
-name: clawbio-bench audit
+name: clawbio_bench audit
 on:
   pull_request:
     branches: [main]
@@ -1367,7 +1407,7 @@ jobs:
       pull-requests: write
 ```
 
-What you get on each PR:
+What ClawBio gets on each PR:
 
 - The full smoke suite (all harnesses, HEAD only) runs against the PR
   checkout.
@@ -1379,6 +1419,40 @@ What you get on each PR:
 - The same report written to the job summary, so fork PRs (where the
   token is read-only and no comment can be posted) still surface the
   result.
+
+### Daily automated audit (`daily-audit.yml` in clawbio_bench)
+
+A cron-scheduled workflow runs every morning at 8 AM UTC. It clones
+ClawBio HEAD and audits it:
+
+1. **Smoke suite** — all harnesses, HEAD only (~40 seconds).
+2. **Delta reports** — markdown and PDF (Typst) compared against a
+   rolling baseline committed to `baselines/latest_baseline.json`.
+3. **Baseline promotion** — if pass rate improved, the baseline is
+   updated and committed. Regressions keep the old baseline so the
+   delta stays visible.
+4. **Notification** — a one-paragraph digest posted to a webhook
+   (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
+   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
+   the findings, then Haiku 4.5 synthesizes a narrative digest with
+   number verification against the structured source.
+5. **Regression issue** — a deduplicated GitHub issue opens
+   automatically when findings are detected.
+6. **Per-commit attribution** — a secondary job runs
+   `--regression-window 5` for the last 5 ClawBio commits, so you
+   can see which specific commit introduced a regression.
+
+Secrets (configured in `clawbio_bench`, not ClawBio):
+`NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
+(optional, enables LLM swarm digest). The workflow also supports
+`workflow_dispatch` for manual triggering with two optional inputs:
+`clawbio_ref` audits a specific ClawBio commit/tag/branch instead of
+HEAD; `clawbio_baseline_ref` runs the bench against a baseline commit
+first and uses its aggregate for the delta report — producing a single
+workflow run with a proper before/after comparison (e.g.
+`clawbio_baseline_ref: 349fb98` = "April 2 vs today"). Historical
+runs suppress automatic issue creation. Both ref inputs are validated
+against a conservative character set before use.
 
 ### Behaviour and tuning
 
@@ -1426,39 +1500,6 @@ See [docs/baseline-schema.md](docs/baseline-schema.md) for the exact
 fields consumed during diffing, so downstream tooling can produce
 compatible baselines.
 
-### Daily automated audit
-
-A cron-scheduled workflow (`.github/workflows/daily-audit.yml`) runs
-every morning at 8 AM UTC against ClawBio HEAD:
-
-1. **Smoke suite** — all harnesses, HEAD only (~40 seconds).
-2. **Delta reports** — markdown and PDF (Typst) compared against a
-   rolling baseline committed to `baselines/latest_baseline.json`.
-3. **Baseline promotion** — if pass rate improved, the baseline is
-   updated and committed. Regressions keep the old baseline so the
-   delta stays visible.
-4. **Notification** — a one-paragraph digest posted to a webhook
-   (Slack/Discord). When `OPENROUTER_API_KEY` is set, a multi-model
-   LLM swarm (deepseek-v3.2-exp, minimax-m2.7, gpt-5-nano) independently analyzes
-   the findings, then Haiku 4.5 synthesizes a narrative digest with
-   number verification against the structured source.
-5. **Regression issue** — a deduplicated GitHub issue opens
-   automatically when findings are detected.
-6. **Per-commit attribution** — a secondary job runs
-   `--regression-window 5` for the last 5 ClawBio commits, so you
-   can see which specific commit introduced a regression.
-
-Secrets: `NOTIFICATION_WEBHOOK` (optional), `OPENROUTER_API_KEY`
-(optional, enables LLM swarm digest). The workflow also supports
-`workflow_dispatch` for manual triggering with two optional inputs:
-`clawbio_ref` audits a specific ClawBio commit/tag/branch instead of
-HEAD; `clawbio_baseline_ref` runs the bench against a baseline commit
-first and uses its aggregate for the delta report — producing a single
-workflow run with a proper before/after comparison (e.g.
-`clawbio_baseline_ref: 349fb98` = "April 2 vs today"). Historical
-runs suppress automatic issue creation. Both ref inputs are validated
-against a conservative character set before use.
-
 ---
 
 ## Confirmed Findings at ClawBio HEAD
@@ -1474,7 +1515,7 @@ from the corresponding test cases at `v0.1.0`.
 | M-3  | PharmGx / NutriGx / metagenomics unreachable via orchestrator | `kw_16-18`: `unroutable_handled` |
 | NEW  | NutriGx hom-ref `allele_mismatch` bug | `ng_09`: `score_incorrect` |
 | NEW  | Metagenomics `exit_suppressed` (`critical=False` default) | `mg_05`: `exit_suppressed` |
-| PGx  | 44% pass rate confirms prior CPIC compliance audit | 10/18 tests fail |
+| PGx  | CPIC compliance audit: expanded to 44 tests, 13 genes, CPIC Level A scope | Multiple findings |
 
 ---
 
@@ -1497,14 +1538,14 @@ from the corresponding test cases at `v0.1.0`.
 > of all planned harnesses, framework features, audit-framework
 > failure-class coverage, and ClawBio skill inventory.
 
-### What's done (v0.1.0–v0.1.2)
+### What's done (v0.1.0–v0.1.3)
 
-- 7 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
-  nutrigx, metagenomics, clinical-variant-reporter Phase 1, finemapping)
-  covering **140 test cases**.
+- 9 dedicated behavioral harnesses (orchestrator, pharmgx, equity,
+  nutrigx, metagenomics, clinical-variant-reporter Phase 1/2c/2a,
+  finemapping) covering **174 test cases**.
 - Dynamic skill inventory, `--skill NAME` force-routing, `--skills
   A,B,C` composition mode, prompt-injection regression pins.
-- CYP2D6 CNV/hybrid/*5, NUDT15, CYP2B6, G6PD, MT-RNR1 pharmgx tests.
+- CYP2D6 CNV/hybrid/*5/*10, NUDT15, CYP2B6, CYP1A2, CYP2C9, G6PD, MT-RNR1, HLA-A*31:01, HLA-B*58:01 pharmgx tests.
 - `scope_honest_indeterminate` category split, `--tagged-commits` mode,
   5-tier severity system, delta comparison in reports.
 
@@ -1512,7 +1553,7 @@ from the corresponding test cases at `v0.1.0`.
 
 | Harness | ClawBio skill | Tier |
 |---------|---------------|:----:|
-| `clinical-variant-reporter` Phase 2 | `clinical-variant-reporter` | 1 |
+| `clinical-variant-reporter` Phase 2c/2a | `clinical-variant-reporter` | 1 | **done** |
 | `variant-annotation` | `variant-annotation` | 1 |
 | `clinpgx` | `clinpgx` | 1 |
 | `gwas-prs` | `gwas-prs` | 1 |

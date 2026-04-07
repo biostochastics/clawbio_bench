@@ -1,0 +1,22 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_ABSENT_CRITERIA: PVS1
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PVS1 must NOT be applied when LoF is not the established disease
+#   mechanism (e.g., gain-of-function, dominant-negative genes). The ClinGen
+#   SVI PVS1 decision tree (Abou Tayoun 2018, PMID 30192042) requires
+#   mechanism verification BEFORE applying PVS1.
+#
+# Tool expectation (self-consistency):
+#   If tool correctly implements the PVS1 decision tree, it should NOT
+#   apply PVS1 for this variant. Tool and gold standard agree.
+#
+# FINDING: Phase 2a Gold — PVS1 must NOT be applied when LoF is not disease mechanism
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: PVS1 is the single most impactful pathogenic criterion (very strong). Misapplication to genes where LoF is NOT the established mechanism (e.g., gain-of-function genes, dominant-negative) is a critical classification error. The ClinGen SVI PVS1 decision tree (Abou Tayoun 2018, PMID 30192042) requires verification that LoF is the mechanism BEFORE applying PVS1.
+# REFERENCE: ABOU_TAYOUN_2018
+# EXPECTED_EXIT_CODE: 0

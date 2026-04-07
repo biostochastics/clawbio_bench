@@ -1,0 +1,21 @@
+# BENCHMARK: cvr-variant-identity v0.1.0
+# MODE: demo
+# CHECK_HGVS_SYNTAX: true
+# CHECK_TRANSCRIPT_VERSION: false
+# CHECK_MANE_SELECT: false
+# CHECK_NORMALIZATION: true
+# CHECK_ASSEMBLY_COORDS: false
+# EXPECTED_ASSEMBLY: any
+#
+# Gold standard (clinical correctness):
+#   HGVS range separator is underscore (c.76_83del). Hyphen denotes intronic
+#   offset (c.123-45G>A). Confusion creates systematic coordinate errors.
+#
+# Tool expectation (self-consistency):
+#   Demo mode should not produce hyphen-separated ranges. Happy path.
+#
+# FINDING: Phase 2c — indel range notation must use underscore separator, not hyphen
+# FINDING_CATEGORY: variant_identity_correct
+# HAZARD_METRIC: HGVS range separator is underscore (c.76_83del). Hyphen (c.76-83del) means intronic offset position. Confusion between these creates systematic coordinate errors in indel reporting that affect downstream variant matching and database lookups.
+# REFERENCE: HGVS_V21
+# EXPECTED_EXIT_CODE: 0

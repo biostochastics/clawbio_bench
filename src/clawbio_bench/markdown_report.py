@@ -243,48 +243,95 @@ def _category_breakdown(aggregate: dict[str, Any], harness_filter: str | None = 
     return lines
 
 
+# Canonical 5-tier severity ranks. Imported from ``core`` so the markdown
+# renderer cannot drift from the runtime tier numbering. The local alias
+# keeps existing call sites short.
+from clawbio_bench.core import TIER_RANKS as _TIER_RANKS  # noqa: E402
+from clawbio_bench.core import (  # noqa: E402
+    derive_tier_from_category_sets as _derive_tier,
+)
+
+
 def _build_severity_map(aggregate: dict[str, Any]) -> dict[str, int]:
-    """Derive severity tiers from the aggregate's pass/fail category lists.
+    """Resolve every category in the aggregate to a 5-tier severity rank.
 
-    Tier 0 = FAIL_CATEGORIES (red — correctness/safety failures)
-    Tier 1 = any non-pass, non-fail category that isn't harness_error (orange — warnings)
-    Tier 2 = harness_error (infrastructure)
-    Tier 3 = unknown/unclassified
+    Source precedence:
 
-    This replaces a hardcoded category-to-tier dict, ensuring new harnesses
-    and categories sort correctly without code changes.
+    1. Per-harness ``category_legend[cat]["tier"]`` echoed into the
+       aggregate by ``cli.run_single_harness``. Authoritative when present.
+    2. Algorithmic fallback derived from ``pass_categories`` /
+       ``fail_categories``: ``harness_error`` → infra, in pass → pass,
+       in fail → critical, anything else → warning.
+
+    The ranks returned match the unified five-tier system shared with the
+    Typst report generator (pass=0, advisory=1, warning=2, critical=3,
+    infra=4). Higher numbers are more severe. New harnesses automatically
+    contribute their tier annotations without any code change here.
     """
-    severity: dict[str, int] = {"harness_error": 2}
+    severity: dict[str, int] = {"harness_error": _TIER_RANKS["infra"]}
     harnesses = aggregate.get("harnesses") or {}
     for harness_data in harnesses.values():
         if not isinstance(harness_data, dict):
             continue
+        # Source 1 — explicit legend tiers (authoritative).
+        legend = harness_data.get("category_legend") or {}
+        for cat, entry in legend.items():
+            if not isinstance(entry, dict):
+                continue
+            tier_name = entry.get("tier")
+            if tier_name is None:
+                continue
+            rank = _TIER_RANKS.get(str(tier_name).strip().lower())
+            if rank is None:
+                continue
+            if cat not in severity or rank > severity[cat]:
+                severity[cat] = rank
+
+        # Source 2 — algorithmic fallback for any category we haven't
+        # resolved yet. Covers runtime-observed categories that lack a
+        # legend entry (e.g. a malformed harness module). Delegates to
+        # ``core.derive_tier_from_category_sets`` so this module and core
+        # cannot disagree on the fallback rule.
         fail_cats = set(harness_data.get("fail_categories") or [])
         pass_cats = set(harness_data.get("pass_categories") or [])
-        for cat in fail_cats:
-            severity.setdefault(cat, 0)
-        # When fail_categories is missing from the aggregate (e.g. older
-        # baselines or stripped JSON), infer critical tier from categories
-        # that appear in critical_failures.
-        if not fail_cats:
-            for cf in harness_data.get("critical_failures") or []:
-                cat = cf.get("category")
-                if cat and cat != "harness_error":
-                    severity.setdefault(cat, 0)
-        # Non-pass, non-fail categories that appear in the results are
-        # warnings (tier 1). We derive them from the actual category counts.
-        for cat in harness_data.get("categories") or {}:
-            if cat not in fail_cats and cat not in pass_cats and cat != "harness_error":
-                severity.setdefault(cat, 1)
+        seen: set[str] = set()
+        seen.update(harness_data.get("categories") or {})
+        for cf in harness_data.get("critical_failures") or []:
+            cat = cf.get("category")
+            if cat:
+                seen.add(str(cat))
+        for cat in seen:
+            if cat in severity:
+                continue
+            tier_name = _derive_tier(cat, pass_cats, fail_cats)
+            severity[cat] = _TIER_RANKS[tier_name]
     return severity
 
 
-# Severity tier indicator emojis for PR comments (GitHub renders these)
+# Severity tier indicator emojis for PR comments (GitHub renders these).
+# The markdown report collapses the 5-tier system into 4 visual buckets
+# (pass is filtered out before reaching here — the section only shows
+# non-passing findings). Order matches the unified tier rank numbering.
 _SEVERITY_EMOJI = {
-    0: "\U0001f534",  # red circle — critical
-    1: "\U0001f7e0",  # orange circle — warning
-    2: "\u26aa",  # white circle — infra
-    3: "\u2753",  # question mark — unknown
+    _TIER_RANKS["pass"]: "\U0001f7e2",  # green circle — pass (defensive)
+    _TIER_RANKS["advisory"]: "\U0001f7e1",  # yellow circle — advisory
+    _TIER_RANKS["warning"]: "\U0001f7e0",  # orange circle — warning
+    _TIER_RANKS["critical"]: "\U0001f534",  # red circle — critical
+    _TIER_RANKS["infra"]: "\u26aa",  # white circle — infrastructure
+}
+
+
+# Display order used when sorting findings for the PR comment — critical
+# first, then warning, advisory, infra. Pass tier is filtered out upstream
+# (only non-passing verdicts reach the detailed findings section). Mirrors
+# ``emit_findings_section`` in scripts/generate_report.py so the markdown
+# and Typst reports agree on ordering.
+_DISPLAY_ORDER: dict[int, int] = {
+    _TIER_RANKS["critical"]: 0,
+    _TIER_RANKS["warning"]: 1,
+    _TIER_RANKS["advisory"]: 2,
+    _TIER_RANKS["infra"]: 3,
+    _TIER_RANKS["pass"]: 4,  # defensive; pass findings shouldn't reach here
 }
 
 
@@ -292,8 +339,9 @@ def _severity_key(
     f: dict[str, str],
     severity_map: dict[str, int],
 ) -> tuple[int, str, str]:
+    tier = severity_map.get(f.get("category", ""), _TIER_RANKS["infra"])
     return (
-        severity_map.get(f.get("category", ""), 3),
+        _DISPLAY_ORDER.get(tier, 99),
         f.get("harness", ""),
         f.get("test", ""),
     )
@@ -308,7 +356,7 @@ def _render_detailed_finding(
     h = html.escape(f["harness"], quote=False)
     t = html.escape(f["test"], quote=False)
     c = html.escape(f["category"], quote=False)
-    tier = (severity_map or {}).get(f.get("category", ""), 3)
+    tier = (severity_map or {}).get(f.get("category", ""), _TIER_RANKS["infra"])
     emoji = _SEVERITY_EMOJI.get(tier, "")
     parts = [f"{emoji} **{index}. `{h}` / `{t}`** — `{c}`"]
     rationale = _sanitize_rationale(f.get("rationale", ""))

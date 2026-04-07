@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: BS1,BP1
+# EXPECTED_CLASSIFICATION: Likely Benign
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   Richards 2015 Table 5, Likely Benign rule #1: "1 Strong (BS1-BS4) and
+#   1 Supporting (BP1-BP7)." BS1 + BP1 = Likely Benign.
+#
+# Tool expectation (self-consistency):
+#   Demo panel should include a variant with BS1 + BP1 evidence. Tool
+#   should classify as Likely Benign per its own combination logic.
+# EXPECTED_TOOL_CLASSIFICATION: Likely Benign
+# EXPECTED_TOOL_CRITERIA: BS1,BP1
+#
+# FINDING: Phase 2a Gold — Richards Table 5 benign combination: BS + BP = Likely Benign
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: Richards 2015 Table 5 benign combination rules: one strong benign (BS1) plus one supporting benign (BP1) criterion yields "Likely Benign." This tests the benign pathway of the combination logic, complementing cvr_28 which tests the pathogenic pathway.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

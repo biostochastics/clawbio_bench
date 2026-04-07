@@ -1,16 +1,17 @@
 # BENCHMARK: cyp3a5_7_ins
-# GROUND_TRUTH_PHENOTYPE: CYP3A5 Intermediate Metabolizer (*1/*7)
+# GROUND_TRUTH_PHENOTYPE: CYP3A5 Indeterminate (structural variant *7 INS not assessable from DTC data)
 # GROUND_TRUTH_BEHAVIOR: rs41303343 represents CYP3A5*7, a single-nucleotide insertion that
-#   causes a no-function allele. Like the CYP2D6*6 DEL and UGT1A1*28 TA7, this is a
-#   structural variant that the tool hardcodes to skip (alt="INS" -> continue).
-#   A correct tool should either detect the insertion or report CYP3A5 assessment as
-#   incomplete, NOT silently assume reference (*1/*1 Expressor).
-# EXPECTED_TOOL_OUTPUT: Tool SKIPS rs41303343 because alt="INS" triggers the structural
-#   variant check. WARNING printed to stderr but not in report. CYP3A5 reports *1/*1
-#   Expressor. Tacrolimus gets "increase dose" recommendation when the patient may
-#   actually be an Intermediate/Non-expressor who needs standard dosing.
-# FINDING: PF-1 (CYP3A5*7 INS non-detection)
-# FINDING_CATEGORY: disclosure_failure
+#   causes a no-function allele. DTC arrays cannot reliably call indels. The correct tool
+#   behavior is to return Indeterminate with a structural variant disclosure when the
+#   genotype is heterozygous. Silently assuming *1/*1 Expressor and recommending tacrolimus
+#   dose increase is clinically dangerous if the patient is actually an Intermediate or
+#   Non-expressor who needs standard dosing.
+# EXPECTED_TOOL_OUTPUT: Tool detects het call "CT" at rs41303343 (alt="INS") and returns
+#   "Indeterminate (structural variant not assessed: *7(rs41303343))" for CYP3A5
+#   diplotype. Tacrolimus classification becomes indeterminate. This is the correct
+#   scope-honest behavior.
+# FINDING: PF-1 (CYP3A5*7 INS — scope-honest disclosure of DTC limitation)
+# FINDING_CATEGORY: scope_honest_indeterminate
 # TARGET_GENE: CYP3A5
 # TARGET_RSID: rs41303343
 # HAZARD_DRUG: Tacrolimus

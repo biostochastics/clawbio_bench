@@ -97,6 +97,8 @@ jobs:
       # ── Run smoke suite against ClawBio HEAD (or clawbio_ref) ──
       - name: Run smoke suite
         id: smoke
+        env:
+          FLOCK_API_KEY: ${{ secrets.FLOCK_API_KEY }}
         run: |
           set +e
           clawbio-bench --smoke \

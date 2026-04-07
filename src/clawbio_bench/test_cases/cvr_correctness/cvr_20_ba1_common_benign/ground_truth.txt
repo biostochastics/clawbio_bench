@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_CRITERIA: BA1
+# EXPECTED_CLASSIFICATION: Benign
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   BA1 (stand-alone benign) at gnomAD AF >5% per Richards 2015 Table 4.
+#   Classification must be Benign unless on BA1 exception list (Ghosh 2018).
+#
+# Tool expectation (self-consistency):
+#   Demo panel includes a common variant. Tool should apply BA1 and output
+#   Benign. If tool output differs, gap = benchmark finding.
+# EXPECTED_TOOL_CLASSIFICATION: Benign
+# EXPECTED_TOOL_CRITERIA: BA1
+#
+# FINDING: Phase 2a Gold — BA1 stand-alone benign for common variant
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: BA1 (stand-alone benign) triggers at gnomAD AF >5% per Richards 2015 Table 4 (gnomAD as successor to ExAC). A variant with 8% population frequency MUST be classified Benign unless on the ClinGen SVI BA1 exception list (Ghosh et al. 2018, PMID 30311383). Missing BA1 means the tool fails to recognize common polymorphisms, which is the most fundamental population frequency check.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: false
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_VCEP_SUPERSESSION: true
+# EXPECTED_VCEP: InSiGHT
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   MLH1, MSH2, MSH6, PMS2 have approved ClinGen VCEPs (InSiGHT). InSiGHT
+#   modifies functional assay interpretation (PS3), segregation requirements
+#   (PP1), and gene-specific population frequency thresholds. Generic ACMG
+#   rules must be superseded for Lynch syndrome genes.
+#
+# Tool expectation (self-consistency):
+#   If tool claims InSiGHT VCEP support, it should cite InSiGHT in output.
+#   If tool does NOT claim VCEP support, this test documents the gap.
+#
+# FINDING: Phase 2a — InSiGHT VCEP supersession for Lynch syndrome genes
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: MLH1, MSH2, MSH6, and PMS2 have approved ClinGen VCEPs (InSiGHT) with gene-specific modifications. Lynch syndrome VCEPs modify functional assay interpretation (PS3), segregation requirements (PP1), and specify gene-specific population frequency thresholds. Generic ACMG rules must be superseded for these genes.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

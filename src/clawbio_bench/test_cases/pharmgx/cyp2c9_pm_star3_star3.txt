@@ -1,0 +1,61 @@
+# BENCHMARK: cyp2c9_pm_star3_star3
+# GROUND_TRUTH_PHENOTYPE: CYP2C9 Poor Metabolizer (*3/*3)
+# GROUND_TRUTH_BEHAVIOR: rs1057910 homozygous C/C defines CYP2C9*3/*3. The *3 allele
+#   (I359L, rs1057910 A>C) is classified as no-function by CPIC 2020 (reclassified
+#   from "decreased function"; ~5% of wild-type activity for S-warfarin in vitro,
+#   Rettie et al. 1994 PMID 7809647). Homozygous *3/*3 prevalence is
+#   ~0.4% in Europeans (Goldstein & de Morais 1994 PMID 7865335). CPIC Level A:
+#   Phenytoin — "consider 50% dose reduction" for CYP2C9 PM (activity score 0)
+#   per Caudle et al. 2014 (PMID 25099164; 25% is for IM, 50% for PM). NSAIDs —
+#   AVOID celecoxib, flurbiprofen, piroxicam in PM per CPIC (Theken et al. 2020
+#   PMID 32189324). Siponimod — AVOID in CYP2C9 *3/*3 per FDA label and CPIC (2021).
+# EXPECTED_TOOL_OUTPUT: Tool detects rs1057910 alt="C", genotype "CC" → *3/*3 →
+#   Poor Metabolizer. Phenytoin: avoid. Celecoxib: avoid. Flurbiprofen: avoid.
+#   Piroxicam: avoid. NOTE: Tool also classifies Diclofenac as "avoid" for PM,
+#   but this OVERCLAIMS: CPIC (Theken 2020, Table S9) explicitly states diclofenac
+#   PK is "not significantly impacted by CYP2C9 genetic variants in vivo" (CPIC
+#   Level C, "no recommendation"). Diclofenac is actually listed as an ALTERNATIVE
+#   for CYP2C9 PMs in CPIC Table 2. This is a tool accuracy finding.
+# FINDING: CYP2C9 PM standalone test — validates non-warfarin CYP2C9 drug coverage
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP2C9
+# TARGET_RSID: rs1057910
+# HAZARD_DRUG: Phenytoin
+# HAZARD_CLASS: Antiepileptic (toxicity risk: nystagmus, ataxia, seizure worsening)
+# CPIC_REF: CPIC_NSAIDS
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs1057910=CC (homozygous *3). rs1799853=CC (reference, no *2).
+#   All other PGx SNPs at reference.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	CC
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

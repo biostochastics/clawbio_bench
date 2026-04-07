@@ -1,0 +1,51 @@
+# BENCHMARK: cyp1a2_normal
+# GROUND_TRUTH_PHENOTYPE: CYP1A2 Normal Metabolizer (*1/*1)
+# GROUND_TRUTH_BEHAVIOR: Both CYP1A2 SNPs at reference (rs762551 CC, rs2069514 GG).
+#   Tool should report *1/*1 Normal Metabolizer. Clozapine: STANDARD dosing.
+#   CYP1A2 metabolizes ~5% of clinically used drugs including clozapine (the only
+#   antipsychotic effective for treatment-resistant schizophrenia), caffeine,
+#   theophylline, and melatonin. DPWG has CYP1A2/clozapine guidance (Level B);
+#   CPIC does not yet have a full CYP1A2 guideline.
+# EXPECTED_TOOL_OUTPUT: Tool reports *1/*1 Normal Metabolizer. Clozapine: standard.
+# FINDING: CYP1A2 negative control — verifies baseline normal pathway
+# FINDING_CATEGORY: correct_determinate
+# TARGET_GENE: CYP1A2
+# TARGET_RSID: rs762551
+# HAZARD_DRUG: Clozapine
+# HAZARD_CLASS: Antipsychotic (agranulocytosis risk; only drug for treatment-resistant schizophrenia)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: rs762551=CC (reference, no *1F), rs2069514=GG (reference, no *1C).
+#   All other PGx SNPs at reference.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs28399504	10	96612495	CC
+rs3892097	22	42524947	CC
+rs5030655	22	42524244	TT
+rs16947	22	42523943	GG
+rs1065852	22	42526694	CC
+rs28371725	22	42524175	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs55886062	1	97573863	TT
+rs67376798	1	97981395	TT
+rs1800460	6	18130918	CC
+rs1142345	6	18139228	AA
+rs1800462	6	18130699	CC
+rs8175347	2	234668879	CC
+rs4148323	2	234669144	GG
+rs776746	7	99672916	CC
+rs10264272	7	99665212	CC
+rs41303343	7	99666950	CC
+rs3745274	19	41512841	GG
+rs28399499	19	41515263	TT
+rs116855232	13	48611703	CC
+rs147390019	13	48037825	GG
+rs762551	15	75041917	CC
+rs2069514	15	75044934	GG

@@ -1,0 +1,40 @@
+# BENCHMARK: hla_a3101_carbamazepine_indeterminate
+# GROUND_TRUTH_PHENOTYPE: HLA-A Indeterminate (not in ClawBio pharmgx SNP panel)
+# GROUND_TRUTH_BEHAVIOR: HLA-A*31:01 is a CPIC Level A pharmacogenomic marker for
+#   carbamazepine and oxcarbazepine hypersensitivity. The *31:01 allele confers risk
+#   of Stevens-Johnson syndrome (SJS), toxic epidermal necrolysis (TEN), and drug
+#   reaction with eosinophilia and systemic symptoms (DRESS). Carrier frequency is
+#   ~2-5% in Europeans, ~8-10% in Japanese (Ozeki et al. 2011 PMID 21428769).
+#   CPIC guideline: "If the patient is HLA-A*31:01 positive, do not use carbamazepine
+#   or oxcarbazepine" (Phillips et al. 2018, PMID 29392710, PMC5847474). This is
+#   distinct from the HLA-B*15:02/carbamazepine SJS risk in Southeast Asian ancestry.
+#   ClawBio's pharmgx_reporter does not include HLA-A loci in its SNP panel but now
+#   explicitly lists HLA-A*31:01 in the "Genes Not Assessed" section. The correct
+#   behavior is to report HLA-A as Indeterminate (not in panel).
+# EXPECTED_TOOL_OUTPUT: HLA-A appears in the gene profile table as "Indeterminate
+#   (not in panel)" with "Not assessed" diplotype. The "Genes Not Assessed" section
+#   should list HLA-A*31:01 with carbamazepine hypersensitivity.
+# FINDING: CPIC Level A scope honesty — HLA-A*31:01/carbamazepine disclosure
+# FINDING_CATEGORY: correct_indeterminate
+# TARGET_GENE: HLA-A
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Carbamazepine
+# HAZARD_CLASS: Antiepileptic (SJS/TEN/DRESS — potentially fatal hypersensitivity)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Standard 23andMe-style PGx panel with no HLA-A coverage. Tests whether
+#   the tool honestly reports HLA-A as not assessed rather than omitting the gene
+#   from the report entirely.
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs67376798	1	97981395	TT

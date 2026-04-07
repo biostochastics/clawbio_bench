@@ -1,0 +1,21 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: true
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   PP3 must be counted as ONE evidence unit regardless of how many in-silico
+#   tools agree per ClinGen SVI (Pejaver 2022, PMID 36413997, Table 4).
+#   Multiple tools predicting "damaging" = still ONE PP3 at one strength.
+#
+# Tool expectation (self-consistency):
+#   Tool should apply PP3 exactly once. If tool counts REVEL + CADD + SIFT
+#   as separate PP3 units, that is both a gold-standard violation and a
+#   self-consistency error (tool's own docs cite Pejaver 2022).
+#
+# FINDING: Phase 2a Gold — PP3 overcounting detection (multiple in-silico tools)
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: A tool that counts each in-silico predictor as a separate PP3 evidence unit violates ClinGen SVI (Pejaver 2022, PMID 36413997). Multiple tools all predicting "damaging" still count as ONE PP3 unit at one strength level. Overcounting PP3 artificially elevates variants from VUS to Likely Pathogenic — a systematic classification inflation error.
+# REFERENCE: PEJAVER_2022
+# EXPECTED_EXIT_CODE: 0

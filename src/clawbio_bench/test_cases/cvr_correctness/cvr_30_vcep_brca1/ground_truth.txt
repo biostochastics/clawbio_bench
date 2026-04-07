@@ -1,0 +1,23 @@
+# BENCHMARK: cvr-acmg-correctness v0.1.0
+# MODE: demo
+# GOLD_TIER: false
+# EXPECTED_ASSEMBLY: GRCh38
+# CHECK_VCEP_SUPERSESSION: true
+# EXPECTED_VCEP: ENIGMA
+# CHECK_PP3_OVERCOUNTING: true
+#
+# Gold standard (clinical correctness):
+#   BRCA1/2 have approved ClinGen VCEP (ENIGMA). ENIGMA modifies PM2
+#   threshold to FAF >0.0001 (vs generic ACMG). Generic ACMG rules are
+#   superseded — tool MUST apply ENIGMA-specific criteria for BRCA1/2.
+#
+# Tool expectation (self-consistency):
+#   If tool claims ENIGMA VCEP support, it should cite ENIGMA in output.
+#   If tool does NOT claim VCEP support, this test documents the gap
+#   between clinical gold standard and tool capability.
+#
+# FINDING: Phase 2a — ENIGMA VCEP supersession for BRCA1/2 variants
+# FINDING_CATEGORY: classification_correct
+# HAZARD_METRIC: BRCA1 and BRCA2 have an approved ClinGen VCEP (ENIGMA) with gene-specific modifications to ACMG/AMP criteria. The ENIGMA VCEP modifies PM2 thresholds (FAF >0.0001), PS1/PM5 application rules, and PVS1 strength assessment for BRCA-specific biology. A tool applying generic ACMG/AMP rules to BRCA1/2 without ENIGMA modifications is producing non-standard and potentially incorrect classifications. VCEP supersession is not optional.
+# REFERENCE: RICHARDS_2015
+# EXPECTED_EXIT_CODE: 0

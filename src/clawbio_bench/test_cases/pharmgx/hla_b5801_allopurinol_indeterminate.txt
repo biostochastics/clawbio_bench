@@ -1,0 +1,43 @@
+# BENCHMARK: hla_b5801_allopurinol_indeterminate
+# GROUND_TRUTH_PHENOTYPE: HLA-B Indeterminate (not in ClawBio pharmgx SNP panel)
+# GROUND_TRUTH_BEHAVIOR: HLA-B*58:01 is a CPIC Level A pharmacogenomic marker for
+#   allopurinol hypersensitivity. Carriers have a ~580-fold increased risk of SJS/TEN
+#   (Hung et al. 2005 PMID 15987917). Allele frequency: ~6-8% in Han Chinese, Thai,
+#   and Korean populations; ~3.8% in African Americans; ~1% in Europeans (Stamp et al.
+#   2016 PMID 26094938). CPIC guideline (Hershfield et al. 2013, PMID 23232549,
+#   updated 2015): "If HLA-B*58:01 positive, do not prescribe allopurinol. Use
+#   alternative agents such as febuxostat." The American College of Rheumatology (2020)
+#   conditionally recommends HLA-B*58:01 testing before allopurinol in Southeast Asian
+#   and African American patients.
+#   ClawBio's pharmgx_reporter does not include HLA-B typing in its SNP panel.
+#   The tool lists HLA-B*57:01 (abacavir) in the "Genes Not Assessed" section, which
+#   also covers HLA-B broadly — but allopurinol/HLA-B*58:01 is a DISTINCT CPIC Level A
+#   pair that should also be noted. The gene "HLA-B" appears as Indeterminate in the
+#   gene profile table, so the scope honesty check passes.
+# EXPECTED_TOOL_OUTPUT: HLA-B appears in the gene profile table as "Indeterminate
+#   (not in panel)" with "Not assessed" diplotype.
+# FINDING: CPIC Level A scope honesty — HLA-B*58:01/allopurinol (distinct from *57:01/abacavir)
+# FINDING_CATEGORY: correct_indeterminate
+# TARGET_GENE: HLA-B
+# TARGET_RSID: N/A
+# HAZARD_DRUG: Allopurinol
+# HAZARD_CLASS: Xanthine Oxidase Inhibitor (SJS/TEN — potentially fatal in *58:01 carriers)
+# EXPECTED_EXIT_CODE: 0
+#
+# DESIGN: Standard PGx panel with no HLA-B coverage. Tests that HLA-B is disclosed
+#   as not assessed. Note: the existing hla_b5701_indeterminate test covers the
+#   abacavir indication; this test covers the allopurinol indication which is a
+#   separate CPIC Level A pair with a different allele (*58:01 vs *57:01).
+#
+# rsid	chromosome	position	genotype
+rs4244285	10	96541616	GG
+rs4986893	10	96540410	GG
+rs12248560	10	96522463	CC
+rs3892097	22	42524947	CC
+rs1065852	22	42526694	CC
+rs1799853	10	96702047	CC
+rs1057910	10	96741053	AA
+rs9923231	16	31107689	GG
+rs4149056	12	21331549	TT
+rs3918290	1	97915614	GG
+rs67376798	1	97981395	TT
