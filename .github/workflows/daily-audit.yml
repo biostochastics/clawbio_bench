@@ -240,7 +240,7 @@ jobs:
       # ── Open issue on regression (skip for historical/custom ref runs) ──
       - name: Open issue on regression
         if: steps.smoke.outputs.exit_code == '1' && inputs.clawbio_ref == ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
