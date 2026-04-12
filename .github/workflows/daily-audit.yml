@@ -135,7 +135,7 @@ jobs:
 
       # ── Delta report (PDF via Typst) ──
       - name: Install Typst
-        uses: typst-community/setup-typst@v4
+        uses: typst-community/setup-typst@v5
 
       - name: Generate PDF report
         env:
