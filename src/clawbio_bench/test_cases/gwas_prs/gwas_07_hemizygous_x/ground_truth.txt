@@ -1,8 +1,0 @@
-# BENCHMARK: gwas-prs v0.1.0
-# PAYLOAD: input.txt
-# FINDING_CATEGORY: score_exact_match
-# PGS_ID: PGS000013
-# EXPECTED_PRS: 1.190000
-# EXPECTED_PERCENTILE: SKIP
-# EXPECTED_COVERAGE: 8/8
-# NOTES: All 8 PGS000013 variants present. rs10811661 has hemizygous genotype "T" (single character, dosage=1) instead of "TT" (dosage=2). All others heterozygous (dosage=1). PRS = 0.31+0.14+0.07+0.05+0.17+0.11+0.26+0.08 = 1.19. Tests hemizygous dosage counting.

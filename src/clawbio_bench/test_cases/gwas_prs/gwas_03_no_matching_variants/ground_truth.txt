@@ -3,4 +3,4 @@
 # FINDING_CATEGORY: coverage_correctly_flagged
 # PGS_ID: PGS000013
 # EXPECTED_COVERAGE: 0/8
-# NOTES: Input contains genotypes but NONE matching PGS000013 rsIDs. Tool should report 0/8 coverage and skip scoring.
+# NOTES: Input contains genotypes but NONE matching benchmark rsIDs. Tool should report 0/8 coverage and skip scoring.

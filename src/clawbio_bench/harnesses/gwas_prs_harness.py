@@ -22,8 +22,8 @@ Rubric (7 categories + harness_error):
 
 from __future__ import annotations
 
+import contextlib
 import json
-import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -63,14 +63,20 @@ FAIL_CATEGORIES = [
 
 GROUND_TRUTH_REFS = {
     "PGS_CATALOG": "PGS Catalog (https://www.pgscatalog.org), Lambert et al. 2021, Nat Genet",
-    "VASSY_T2D": "Vassy et al. (2014) Ann Intern Med — PGS000013 (Type 2 diabetes, 8 variants)",
+    "T2D_GWAS_VARIANTS": (
+        "Synthetic 8-variant T2D benchmark derived from DIAGRAM/GWAS Catalog "
+        "loci (TCF7L2, PPARG, KCNJ11, SLC30A8, CDKN2A/B, IGF2BP2, HHEX). "
+        "Betas are approximate ln(OR) from Morris et al. 2012 / Mahajan et al. 2018. "
+        "NOT a PGS Catalog entry — PGS000013 is GPS_CAD (Khera 2018, coronary artery "
+        "disease, 6.6M variants). Vassy et al. 2014 T2D scores are PGS000031 (62 var), "
+        "PGS000032 (20 var), PGS000033 (10 var)."
+    ),
     "STANDARD_ADDITIVE": (
         "Standard additive dosage model: PRS = SUM(dosage_i * beta_i), "
         "where dosage is the count of effect alleles (0, 1, or 2)"
     ),
     "PERCENTILE_METHOD": (
-        "Percentile via normal CDF: Z = (PRS - mean) / SD, "
-        "percentile = Phi(Z) * 100"
+        "Percentile via normal CDF: Z = (PRS - mean) / SD, percentile = Phi(Z) * 100"
     ),
 }
 
@@ -134,18 +140,14 @@ def parse_prs_results(results_json_path: Path) -> list[dict[str, Any]]:
     """Parse the PRS results JSON file produced by gwas_prs.py."""
     if not results_json_path.exists():
         return []
-    with open(results_json_path) as f:
-        return json.load(f)
-
-
-def parse_prs_variants(variants_csv_path: Path) -> list[dict[str, str]]:
-    """Parse per-variant CSV for detailed validation."""
-    if not variants_csv_path.exists():
+    try:
+        with open(results_json_path) as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return data
         return []
-    import csv
-
-    with open(variants_csv_path) as f:
-        return list(csv.DictReader(f))
+    except (json.JSONDecodeError, OSError):
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +158,6 @@ def parse_prs_variants(variants_csv_path: Path) -> list[dict[str, str]]:
 def score_prs_verdict(
     ground_truth: dict[str, Any],
     results: list[dict[str, Any]],
-    variants: list[dict[str, str]],
     exit_code: int,
 ) -> dict[str, Any]:
     """Score tool output against ground truth.
@@ -184,9 +185,9 @@ def score_prs_verdict(
         "expected_coverage": expected_coverage,
     }
 
-    if exit_code != 0 and finding_category not in (
-        "coverage_correctly_flagged",
-    ):
+    if exit_code != 0:
+        # Non-zero exit is always missing_output — even for coverage tests.
+        # A crash should never be mistaken for a deliberate low-coverage skip.
         return {
             "category": "missing_output",
             "rationale": f"Tool exited with code {exit_code}",
@@ -225,11 +226,21 @@ def score_prs_verdict(
             "details": details,
         }
 
-    observed_prs = target.get("raw_score")
-    observed_percentile = target.get("percentile")
+    raw_prs = target.get("raw_score")
+    raw_pct = target.get("percentile")
     observed_used = target.get("variants_used", 0)
     observed_total = target.get("variants_total", 0)
     observed_coverage = f"{observed_used}/{observed_total}"
+
+    # Coerce observed values to float — tool JSON may emit strings or ints
+    observed_prs: float | None = None
+    if raw_prs is not None:
+        with contextlib.suppress(TypeError, ValueError):
+            observed_prs = float(raw_prs)
+    observed_percentile: float | None = None
+    if raw_pct is not None:
+        with contextlib.suppress(TypeError, ValueError):
+            observed_percentile = float(raw_pct)
 
     details["observed_prs"] = observed_prs
     details["observed_percentile"] = observed_percentile
@@ -250,7 +261,7 @@ def score_prs_verdict(
         if observed_prs is None:
             return {
                 "category": "score_incorrect",
-                "rationale": "No raw_score in results",
+                "rationale": f"No numeric raw_score in results (got {raw_prs!r})",
                 "details": details,
             }
         if abs(observed_prs - exp) > tol:
@@ -287,13 +298,21 @@ def score_prs_verdict(
 
     if expected_coverage is not None and expected_coverage != "SKIP":
         if observed_coverage != expected_coverage:
-            details["coverage_mismatch"] = True
+            return {
+                "category": "score_incorrect",
+                "rationale": (
+                    f"Coverage mismatch: expected {expected_coverage}, got {observed_coverage}"
+                ),
+                "details": details,
+            }
 
+    prs_str = f"{observed_prs:.6f}" if observed_prs is not None else "N/A"
+    pct_str = f"{observed_percentile:.1f}%" if observed_percentile is not None else "N/A"
     return {
         "category": finding_category,
         "rationale": (
-            f"PRS={observed_prs:.6f} (expected {expected_prs}), "
-            f"percentile={observed_percentile}, "
+            f"PRS={prs_str} (expected {expected_prs}), "
+            f"percentile={pct_str}, "
             f"coverage={observed_coverage}"
         ),
         "details": details,
@@ -320,7 +339,7 @@ def run_single_gwas_prs(
     run_output_dir.mkdir(parents=True, exist_ok=True)
 
     input_path = payload_path or test_case_path
-    pgs_id = ground_truth.get("PGS_ID", "PGS000013")
+    pgs_id = ground_truth.get("PGS_ID", "unknown")
     report_dir = run_output_dir / "tool_output"
     report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -336,19 +355,21 @@ def run_single_gwas_prs(
 
     if tool_path is None:
         return harness_core.harness_error_verdict(
-            test_case_name=tc_name,
-            commit_meta=commit_meta,
+            tc_name,
+            commit_meta,
+            FileNotFoundError("gwas_prs.py not found in skills/ or skills 2/"),
             ground_truth=ground_truth,
-            error=FileNotFoundError("gwas_prs.py not found in skills/ or skills 2/"),
-            output_dir=run_output_dir,
         )
 
     cmd = [
         sys.executable,
         str(tool_path),
-        "--input", str(input_path),
-        "--pgs-id", pgs_id,
-        "--output", str(report_dir),
+        "--input",
+        str(input_path),
+        "--pgs-id",
+        pgs_id,
+        "--output",
+        str(report_dir),
     ]
 
     try:
@@ -359,11 +380,10 @@ def run_single_gwas_prs(
         )
     except Exception as exc:
         return harness_core.harness_error_verdict(
-            test_case_name=tc_name,
-            commit_meta=commit_meta,
+            tc_name,
+            commit_meta,
+            exc,
             ground_truth=ground_truth,
-            error=exc,
-            output_dir=run_output_dir,
         )
 
     harness_core.save_execution_logs(execution, run_output_dir)
@@ -372,11 +392,9 @@ def run_single_gwas_prs(
     variants_csv_path = report_dir / "prs_variants.csv"
 
     results = parse_prs_results(results_json_path)
-    variants = parse_prs_variants(variants_csv_path)
 
     report_analysis: dict[str, Any] = {
         "results_count": len(results),
-        "variants_count": len(variants),
         "exit_code": execution.exit_code,
     }
     if results:
@@ -387,7 +405,7 @@ def run_single_gwas_prs(
         report_analysis["variants_used"] = r.get("variants_used")
         report_analysis["variants_total"] = r.get("variants_total")
 
-    verdict = score_prs_verdict(ground_truth, results, variants, execution.exit_code)
+    verdict = score_prs_verdict(ground_truth, results, execution.exit_code)
 
     outputs = {
         "prs_results_json": harness_core.artifact_info(results_json_path),
@@ -406,7 +424,9 @@ def run_single_gwas_prs(
         outputs=outputs,
         report_analysis=report_analysis,
         verdict=verdict,
-        driver_path=test_case_path,
+        driver_path=(
+            test_case_path / "ground_truth.txt" if test_case_path.is_dir() else test_case_path
+        ),
         payload_path=input_path,
     )
 

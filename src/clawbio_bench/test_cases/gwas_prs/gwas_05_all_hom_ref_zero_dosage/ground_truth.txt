@@ -1,0 +1,7 @@
+# BENCHMARK: gwas-prs v0.1.0
+# PAYLOAD: input.txt
+# FINDING_CATEGORY: score_exact_match
+# PGS_ID: PGS000013
+# EXPECTED_PRS: 0.000000
+# EXPECTED_COVERAGE: 8/8
+# NOTES: All 8 benchmark T2D variants present but ALL genotypes are homozygous for the non-effect allele (dosage=0 for all). PRS = 0.0. Z=(0-1.12)/0.30=-3.733, percentile near 0%.

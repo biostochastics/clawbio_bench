@@ -5,4 +5,4 @@
 # EXPECTED_PRS: 1.190000
 # EXPECTED_PERCENTILE: 59.2
 # EXPECTED_COVERAGE: 8/8
-# NOTES: All 8 PGS000013 variants present, all heterozygous (dosage=1 each). PRS = 0.31+0.14+0.07+0.05+0.17+0.11+0.26+0.08 = 1.19. Z=(1.19-1.12)/0.30=0.2333, percentile=59.2%.
+# NOTES: All 8 benchmark T2D variants present, all heterozygous (dosage=1 each). PRS = 0.31+0.14+0.07+0.05+0.17+0.11+0.26+0.08 = 1.19. Z=(1.19-1.12)/0.30=0.2333, percentile=59.2%.

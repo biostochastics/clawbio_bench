@@ -3,4 +3,4 @@
 # FINDING_CATEGORY: coverage_correctly_flagged
 # PGS_ID: PGS000013
 # EXPECTED_COVERAGE: 3/8
-# NOTES: Only 3 of 8 PGS000013 variants present (37.5% coverage, below 50% threshold). Tool should skip scoring.
+# NOTES: Only 3 of 8 benchmark T2D variants present (37.5% coverage, below 50% threshold). Tool should skip scoring.
