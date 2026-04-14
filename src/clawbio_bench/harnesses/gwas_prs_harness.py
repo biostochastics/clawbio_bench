@@ -398,7 +398,8 @@ def run_single_gwas_prs(
         "exit_code": execution.exit_code,
     }
     if results:
-        r = results[0]
+        # Match the same pgs_id that scoring uses, fall back to first entry
+        r = next((item for item in results if item.get("pgs_id") == pgs_id), results[0])
         report_analysis["observed_prs"] = r.get("raw_score")
         report_analysis["observed_percentile"] = r.get("percentile")
         report_analysis["observed_category"] = r.get("risk_category")
