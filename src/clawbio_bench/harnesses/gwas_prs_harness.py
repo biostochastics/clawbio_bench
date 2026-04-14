@@ -136,18 +136,24 @@ PERCENTILE_TOLERANCE = 0.5  # percentage points
 # ---------------------------------------------------------------------------
 
 
-def parse_prs_results(results_json_path: Path) -> list[dict[str, Any]]:
-    """Parse the PRS results JSON file produced by gwas_prs.py."""
+def parse_prs_results(results_json_path: Path) -> list[dict[str, Any]] | None:
+    """Parse the PRS results JSON file produced by gwas_prs.py.
+
+    Returns a list of result dicts on success (may be empty ``[]`` if the tool
+    intentionally produced an empty array), or ``None`` when the file is
+    missing, unreadable, or not valid JSON — so callers can distinguish
+    "tool chose to emit no results" from "output is broken".
+    """
     if not results_json_path.exists():
-        return []
+        return None
     try:
         with open(results_json_path) as f:
             data = json.load(f)
         if isinstance(data, list):
             return data
-        return []
+        return None  # valid JSON but wrong schema
     except (json.JSONDecodeError, OSError):
-        return []
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -157,7 +163,7 @@ def parse_prs_results(results_json_path: Path) -> list[dict[str, Any]]:
 
 def score_prs_verdict(
     ground_truth: dict[str, Any],
-    results: list[dict[str, Any]],
+    results: list[dict[str, Any]] | None,
     exit_code: int,
 ) -> dict[str, Any]:
     """Score tool output against ground truth.
@@ -170,6 +176,10 @@ def score_prs_verdict(
         PGS_ID: str — which PGS score was tested
         FINDING_CATEGORY: str — expected verdict category
         SCORE_TOLERANCE: float (optional, default 1e-4)
+
+    ``results`` is ``None`` when the output file is missing/unreadable
+    (always ``missing_output``), or ``[]`` when the tool intentionally
+    produced an empty array (may be a valid low-coverage skip).
     """
     finding_category = ground_truth.get("FINDING_CATEGORY", "score_exact_match")
     expected_prs = ground_truth.get("EXPECTED_PRS")
@@ -194,6 +204,17 @@ def score_prs_verdict(
             "details": details,
         }
 
+    # None = file missing/unreadable/bad JSON — always an error, even for
+    # coverage tests (a parse failure is not a deliberate skip).
+    if results is None:
+        return {
+            "category": "missing_output",
+            "rationale": "PRS results JSON missing, unreadable, or invalid schema",
+            "details": details,
+        }
+
+    # Empty list = tool produced valid JSON with no entries.
+    # For coverage tests this is an intentional skip; otherwise it's an error.
     if not results:
         if finding_category == "coverage_correctly_flagged":
             return {
@@ -203,7 +224,7 @@ def score_prs_verdict(
             }
         return {
             "category": "missing_output",
-            "rationale": "No PRS results JSON found or empty",
+            "rationale": "PRS results JSON is an empty array",
             "details": details,
         }
 
@@ -394,11 +415,13 @@ def run_single_gwas_prs(
     results = parse_prs_results(results_json_path)
 
     report_analysis: dict[str, Any] = {
-        "results_count": len(results),
+        "results_count": len(results) if results is not None else 0,
+        "results_parse_ok": results is not None,
         "exit_code": execution.exit_code,
     }
     if results:
-        r = results[0]
+        # Match the same pgs_id that scoring uses, fall back to first entry
+        r = next((item for item in results if item.get("pgs_id") == pgs_id), results[0])
         report_analysis["observed_prs"] = r.get("raw_score")
         report_analysis["observed_percentile"] = r.get("percentile")
         report_analysis["observed_category"] = r.get("risk_category")
