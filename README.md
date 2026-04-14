@@ -799,8 +799,8 @@ field, which is the sole authoritative source.
 - Dedicated behavioral coverage: **6 / 37 executable ClawBio skills (~16%)**
 - Skills reachable via orchestrator auto-detection: **23 / 43**
 - Skills reachable via `--skill NAME` direct invocation: **43 / 43 (100%)** — five previously-unreachable clinical skills (`clinical-variant-reporter`, `variant-annotation`, `clinical-trial-finder`, `target-validation-scorer`, `methylation-clock`) now have dedicated force-routing tests
-- Total harnesses: **9** (6 ClawBio-skill audits + 1 fine-mapping + 2 CVR Phase 2)
-- Total test cases: **175** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 21 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness)
+- Total harnesses: **10** (7 ClawBio-skill audits + 1 fine-mapping + 2 CVR Phase 2)
+- Total test cases: **183** (54 orchestrator + 44 pharmgx + 15 equity + 10 nutrigx + 7 metagenomics + 21 fine-mapping + 5 CVR Phase 1 + 6 CVR Phase 2c identity + 13 CVR Phase 2a correctness + 8 gwas-prs)
 
 See [`docs/plans/GAP_ANALYSIS_2026-04-04.md`](docs/plans/GAP_ANALYSIS_2026-04-04.md)
 for the full audit-framework-aligned gap analysis, including the

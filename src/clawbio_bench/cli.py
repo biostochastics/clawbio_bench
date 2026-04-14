@@ -103,6 +103,13 @@ HARNESS_REGISTRY = {
             "nomenclature correctness (prerequisite for Phase 2a)"
         ),
     },
+    "gwas_prs": {
+        "module": "clawbio_bench.harnesses.gwas_prs_harness",
+        "run_fn": "run_single_gwas_prs",
+        "benchmark_name": "gwas-prs",
+        "default_inputs_dir": "gwas_prs",
+        "description": "GWAS-PRS polygenic risk score correctness + coverage handling",
+    },
     "cvr_correctness": {
         "module": "clawbio_bench.harnesses.cvr_correctness_harness",
         "run_fn": "run_single_cvr_correctness",

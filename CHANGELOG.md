@@ -5,6 +5,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **GWAS-PRS benchmark harness** (`gwas_prs_harness.py`, 8 test cases).
+  Validates the `gwas-prs` skill (polygenic risk score calculator) against
+  analytically derived ground truth using the standard additive dosage model.
+  7 verdict categories: `score_exact_match`, `percentile_correct`,
+  `coverage_correctly_flagged`, `score_incorrect`, `percentile_incorrect`,
+  `coverage_not_flagged`, `missing_output`. Tests cover full/partial/zero
+  coverage, homozygous/heterozygous dosages, hemizygous genotype parsing,
+  and percentile boundary validation. Total suite: 10 harnesses, 183 test
+  cases. (PR #19, Manuel Corpas)
+
+### Fixed (review of PR #19)
+
+- **`harness_error_verdict` called with wrong kwargs** — PR used `error=`
+  and `output_dir=` but core.py signature is `(test_case_name, commit_meta,
+  exception, ground_truth)`. Would have raised `TypeError` on every
+  infrastructure failure, violating the "never abort" contract.
+- **`driver_path` passed Model B directory to `sha256_file()`** — caused
+  `IsADirectoryError` on every successful verdict. Now passes
+  `ground_truth.txt` file per the cvr_identity pattern.
+- **PGS000013 citation was wrong** — PGS000013 is GPS_CAD (Khera 2018,
+  coronary artery disease, 6.6M variants), not T2D. Vassy et al. 2014 T2D
+  scores are PGS000031/32/33. `GROUND_TRUTH_REFS` now documents the
+  benchmark as a synthetic 8-variant T2D subset derived from DIAGRAM/GWAS
+  Catalog loci.
+- **Non-zero exit falsely passed coverage tests** — a tool crash on a
+  low-coverage input was classified as `coverage_correctly_flagged`.
+  Now always returns `missing_output` on non-zero exit.
+- **Coverage mismatch silently passed** — when `observed_coverage !=
+  expected_coverage`, the code only set a detail flag. Now returns
+  `score_incorrect`.
+- **`None` format crash in success rationale** — `f"PRS={observed_prs:.6f}"`
+  raised `TypeError` when `observed_prs` was `None`.
+- **Unused `import math`** removed (ruff F401).
+- **Misleading test case directory names** renamed:
+  `gwas_05_cad_partial_coverage` -> `gwas_05_all_hom_ref_zero_dosage`,
+  `gwas_07_hemizygous_x` -> `gwas_07_hemizygous_genotype`,
+  `gwas_08_all_ref_genotype` -> `gwas_08_single_variant_below_threshold`.
+- **Numeric coercion** for `observed_prs` and `observed_percentile` — tool
+  JSON may emit strings; now coerced via `float()` with
+  `contextlib.suppress`.
+- **JSON parse error handling** in `parse_prs_results` — malformed tool
+  output no longer raises `JSONDecodeError`.
+- **Removed unused `variants` parameter** from `score_prs_verdict` and
+  removed dead `parse_prs_variants` function.
+
 ## [0.1.4] — 2026-04-07
 
 ### Fixed (post-PDF-review batch)
