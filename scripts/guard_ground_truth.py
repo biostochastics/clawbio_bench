@@ -51,10 +51,10 @@ def is_protected(file_path: str) -> tuple[bool, str]:
 
     for pattern, reason in PROTECTED_PATTERNS:
         if pattern in rel_posix:
-            # ground_truth.txt guard only applies to that specific filename
-            if pattern == "test_cases/":
-                if resolved.name != "ground_truth.txt":
-                    continue
+            if pattern == "test_cases/" and resolved.name != "ground_truth.txt":
+                continue
+            if pattern == "schemas/" and resolved.suffix.lower() != ".json":
+                continue
             return True, reason
 
     return False, ""
@@ -64,16 +64,15 @@ def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(0)
 
-    file_path = sys.argv[1]
-    blocked, reason = is_protected(file_path)
-
-    if blocked:
-        print(
-            f"BLOCKED: {os.path.basename(file_path)} is a protected audit artifact.\n"
-            f"Reason: {reason}",
-            file=sys.stderr,
-        )
-        sys.exit(2)
+    for file_path in sys.argv[1:]:
+        blocked, reason = is_protected(file_path)
+        if blocked:
+            print(
+                f"BLOCKED: {os.path.basename(file_path)} is a protected audit artifact.\n"
+                f"Reason: {reason}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
 
 
 if __name__ == "__main__":
