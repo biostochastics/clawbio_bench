@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.5] — 2026-04-14
 
 ### Added
 
@@ -18,6 +18,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   coverage, homozygous/heterozygous dosages, hemizygous genotype parsing,
   and percentile boundary validation. Total suite: 10 harnesses, 183 test
   cases. (PR #19, Manuel Corpas)
+
+### Changed
+
+- **Softened daily report language.** All LLM system prompts now use
+  neutral, constructive phrasing: "areas for improvement" instead of
+  "worst performers", "clinical considerations" instead of "clinical
+  risks", "declined" instead of "regression", "recurring themes" instead
+  of "systemic issues". GitHub issue titles changed from "Regression
+  detected" to "Audit findings" with matching label rename.
+
+- **Investigation prompt scoped to coverage gaps only.** The
+  investigation section no longer re-analyzes per-harness pass rates
+  (already covered by the digest). It receives a compact category-only
+  summary instead of the full aggregate JSON, eliminating redundant LLM
+  analysis and reducing token consumption.
+
+- **Self-changelog is now incremental.** Tracks the last-summarized
+  clawbio-bench commit SHA in `baselines/log/state.json` and uses
+  `git log <last_sha>..HEAD` instead of a 7-day sliding window. Each
+  daily report now contains only new changes, eliminating the 6/7-day
+  content overlap between consecutive runs.
+
+- **ClawBio diff uses explicit commit ranges.** Tracks the last-audited
+  ClawBio commit in `baselines/log/state.json` and diffs against it
+  instead of using a rolling `HEAD~5` window. No more stale changes
+  reappearing in consecutive daily reports.
+
+- **Regression sweep gated on actual decline.** The `regression-sweep`
+  CI job now runs only when the daily audit detects a pass-rate drop
+  vs baseline, instead of running unconditionally on every daily run.
+
+- **Daily audit downloads rolling baseline.** `daily-audit.yml` now
+  downloads the `baseline-main` release asset (published by
+  `audit-baseline.yml` at 04:17 UTC) instead of relying solely on a
+  repo-committed baseline, ensuring consistent delta comparisons.
 
 ### Fixed (review of PR #19)
 
@@ -53,6 +88,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   output no longer raises `JSONDecodeError`.
 - **Removed unused `variants` parameter** from `score_prs_verdict` and
   removed dead `parse_prs_variants` function.
+
+### Fixed
+
+- **Polish pass verified against original aggregate.** `_verify_numbers`
+  in `write_daily_log` was passing an empty `{}` for the aggregate
+  parameter, allowing numbers fabricated by the LLM swarm to survive
+  the polish pass unchecked. Now passes the original `aggregate` dict
+  so all numbers are verified against ground truth.
 
 ## [0.1.4] — 2026-04-07
 

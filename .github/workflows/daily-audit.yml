@@ -24,6 +24,8 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    outputs:
+      has_regression: ${{ steps.delta.outputs.has_regression }}
     steps:
       - uses: actions/checkout@v4
 
@@ -62,6 +64,24 @@ jobs:
 
       - name: Install bench
         run: pip install -e ".[all,dev]"
+
+      # ── Download rolling baseline from audit-baseline.yml ──
+      # The baseline is published as a release asset at 04:17 UTC.
+      # Downloading it here avoids re-running the smoke suite twice
+      # against the same ClawBio HEAD.
+      - name: Download rolling baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p baselines
+          if gh release download baseline-main \
+              --pattern aggregate_report.json \
+              --output baselines/latest_baseline.json \
+              --clobber 2>/dev/null; then
+            echo "Downloaded baseline-main release asset."
+          else
+            echo "No baseline-main release found — first run or release missing."
+          fi
 
       # ── Run baseline audit (when comparing two commits) ──
       - name: Run baseline audit
@@ -115,6 +135,23 @@ jobs:
       - name: Verify artifacts generated
         run: |
           test -f results/today/aggregate_report.json
+
+      - name: Detect regression vs baseline
+        id: delta
+        run: |
+          has_regression=false
+          if [ -f baselines/latest_baseline.json ]; then
+            has_regression=$(python3 -c "
+          import json, sys
+          cur = json.load(open('results/today/aggregate_report.json'))
+          base = json.load(open('baselines/latest_baseline.json'))
+          cur_rate = (cur.get('overall') or {}).get('total_pass_rate', 0.0)
+          base_rate = (base.get('overall') or {}).get('total_pass_rate', 0.0)
+          print('true' if cur_rate < base_rate else 'false')
+          " 2>/dev/null || echo "false")
+          fi
+          echo "has_regression=$has_regression" >> "$GITHUB_OUTPUT"
+          echo "Regression detected: $has_regression"
 
       # ── Delta report (markdown) ──
       - name: Generate markdown delta report
@@ -250,11 +287,11 @@ jobs:
               const overall = agg.overall || {};
               const rate = overall.total_pass_rate || 0;
               const commit = agg.clawbio_commit || 'unknown';
-              const blocking = (overall.blocking_skills || []).join(', ') || 'none';
+              const withFindings = (overall.blocking_skills || []).join(', ') || 'none';
               body = [
                 `**Daily audit:** ${overall.total_pass || 0}/${overall.total_evaluated || 0} (${rate}%)`,
                 `**ClawBio commit:** \`${commit}\``,
-                `**Blocking harnesses:** ${blocking}`,
+                `**Harnesses with findings:** ${withFindings}`,
                 '',
                 `See [workflow run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) for full artifacts.`,
               ].join('\n');
@@ -267,7 +304,7 @@ jobs:
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              labels: 'regression,automated',
+              labels: 'audit-findings,automated',
               state: 'open',
             });
             const alreadyOpen = existing.data.some(i => i.title.includes(today));
@@ -279,15 +316,17 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Regression detected: ${today}`,
+              title: `Audit findings: ${today}`,
               body: body,
-              labels: ['regression', 'automated'],
+              labels: ['audit-findings', 'automated'],
             });
 
-  # ── Watch-commits mode: per-commit attribution on regression ──
+  # ── Watch-commits mode: per-commit attribution on actual regression ──
   regression-sweep:
     needs: [audit]
-    if: always() && (needs.audit.result == 'success' || needs.audit.result == 'failure')
+    if: >-
+      always()
+      && needs.audit.outputs.has_regression == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
