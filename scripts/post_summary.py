@@ -136,16 +136,16 @@ def build_digest(
         delta_parts.append(f"rate {direction} {abs(delta):.1f}pp")
         parts.append("Delta: " + ", ".join(delta_parts) + ".")
 
-        # Surface specific regressions by harness
-        regression_harnesses = []
+        # Surface per-harness declines
+        declined_harnesses = []
         baseline_harnesses = baseline.get("harnesses") or {}
         for hname in harnesses:
             cur_rate = (harnesses.get(hname) or {}).get("pass_rate", 0.0)
             base_rate = (baseline_harnesses.get(hname) or {}).get("pass_rate", 0.0)
             if cur_rate < base_rate:
-                regression_harnesses.append(f"{hname} regression")
-        if regression_harnesses:
-            parts.append(", ".join(regression_harnesses) + ".")
+                declined_harnesses.append(f"{hname} declined")
+        if declined_harnesses:
+            parts.append(", ".join(declined_harnesses) + ".")
 
     return " ".join(parts)
 
@@ -193,10 +193,10 @@ validity, or therapeutic recommendations. Framework issues \
 not clinically significant.
 
 Analyze the structured audit results using markdown bullets:
-- **Clinical risks**: Any patient-safety findings (pharmgx, CVR)?
-- **Worst performers**: Which harnesses have the lowest pass rates?
+- **Clinical considerations**: Any findings with clinical relevance (pharmgx, CVR)?
+- **Areas for improvement**: Which harnesses have the lowest pass rates?
 - **Patterns**: What do new/resolved findings reveal?
-- **Trajectory**: Is the overall pass rate improving or regressing?
+- **Trajectory**: Is the overall pass rate improving or declining?
 
 RULES:
 - Do NOT perform arithmetic. Use ONLY pre-calculated values from the data.
@@ -206,12 +206,12 @@ RULES:
 
 Example of a well-formed analysis:
 "- **Clinical**: pharmgx-reporter at 54.5% with 3 omission findings \
-(warfarin, DPYD, CYP2C19) — direct patient safety risk.
-- **Worst**: clawbio-finemapping at 25.0%, driven by pip_nan_silent \
+(warfarin, DPYD, CYP2C19) — clinically relevant coverage gaps.
+- **Lowest**: clawbio-finemapping at 25.0%, driven by pip_nan_silent \
 and susie_null_forced_signal.
 - **Pattern**: 8 findings resolved in equity-scorer after FST fix, \
 but 5 new fst_mislabeled findings appeared.
-- **Trajectory**: Overall down 5.7pp to 65.0% — net regression.\""""
+- **Trajectory**: Overall down 5.7pp to 65.0% — net decline.\""""
 )
 
 SYNTHESIZER_SYSTEM_PROMPT = """\
@@ -220,8 +220,8 @@ on a bioinformatics safety audit into a single concise narrative digest.
 
 You will receive the structured audit data and 2-3 independent analyst \
 interpretations. Produce a 3-5 sentence narrative summary:
-1. Lead with the most important change (regression or improvement).
-2. Name the worst-performing harnesses with their exact pass rates.
+1. Lead with the most notable change (decline or improvement).
+2. Name the lowest-scoring harnesses with their exact pass rates.
 3. Highlight clinically significant findings if any analysts flagged them.
 4. End with the overall trajectory.
 
@@ -475,7 +475,7 @@ net pass rate change in percentage points.
 - **Movers**: Which harness improved or regressed most, named with its \
 start and end pass rates.
 - **Findings delta**: Net new vs resolved findings for the week.
-- **Persistent patterns**: Any finding category appearing 3+ days in a row.
+- **Recurring patterns**: Any finding category appearing 3+ days in a row.
 
 RULES:
 - Use ONLY numbers from the provided daily entries.
@@ -488,16 +488,16 @@ MONTHLY_SYSTEM_PROMPT = """\
 You are a bioinformatics audit trend analyst for clawbio-bench. Given \
 daily and weekly audit digests from the past month, produce a \
 markdown-formatted monthly summary with these bullets:
-- **Range**: Best and worst pass rate days, named by date.
+- **Range**: Highest and lowest pass rate days, named by date.
 - **Harness trends**: Which harnesses improved or regressed, with rates.
 - **Findings delta**: Net new vs resolved findings for the month.
-- **Systemic issues**: Recurring patterns or persistent failures.
+- **Recurring themes**: Persistent patterns or ongoing findings.
 - **Assessment**: Overall audit target health trajectory (1-2 sentences).
 
 RULES:
 - Use ONLY numbers from the provided entries.
 - Do NOT perform arithmetic — use only pre-calculated values.
-- Name specific dates when citing best/worst days.
+- Name specific dates when citing highest/lowest days.
 - If data is insufficient, state "insufficient data" for that bullet.
 - You are authorized to acknowledge uncertainty."""
 
@@ -527,28 +527,59 @@ def _today_str() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
+# ---------------------------------------------------------------------------
+# Incremental state — tracks last-processed commits to avoid duplication
+# ---------------------------------------------------------------------------
+
+
+def _load_log_state(log_dir: Path) -> dict:
+    """Load the persistent log state (last processed SHAs, etc.)."""
+    state_path = log_dir / "state.json"
+    if state_path.exists():
+        try:
+            with open(state_path, encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_log_state(log_dir: Path, state: dict) -> None:
+    """Persist log state for the next run."""
+    state_path = log_dir / "state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(state_path, "w", encoding="utf-8") as f:
+        json.dump(state, f, indent=2)
+
+
 INVESTIGATION_SYSTEM_PROMPT = (
     """\
 You are a bioinformatics audit coverage analyst for clawbio-bench. \
 You are given:
-1. The current audit results (aggregate JSON with per-harness findings).
+1. A compact summary of current findings (category names only — the \
+   daily digest already covers per-harness pass rates and specifics).
 2. The project README describing current harness coverage.
 3. The project ROADMAP describing planned harnesses.
+
+Your job is ONLY to identify coverage gaps and forward-looking needs. \
+Do NOT restate per-harness pass rates, finding counts, or clinical \
+observations — those belong in the digest section, not here.
 
 First, reason step-by-step:
 a) List the ClawBio skills mentioned in the README.
 b) Map each to an existing harness (or note "no harness").
-c) Check the audit results for unexpected category patterns.
-d) Compare findings against ROADMAP priorities.
+c) Check for finding *categories* that suggest new test cases are needed.
+d) Compare ROADMAP priorities against current coverage.
 
 Then produce your analysis with these sections:
-- **Coverage gaps**: New ClawBio skills with no harness coverage.
+- **Coverage gaps**: ClawBio skills with no harness coverage.
 - **Test case updates needed**: Changed behavior suggesting updates.
-- **New patterns**: Finding categories suggesting new test cases.
-- **ROADMAP adjustments**: Priority changes based on current findings.
+- **New category patterns**: Finding categories suggesting new test cases.
+- **ROADMAP adjustments**: Priority changes based on current coverage.
 - **Action list** (max 5 items, prioritized).
 
 RULES:
+- Do NOT mention per-harness pass rates — that is the digest's job.
 - ONLY flag gaps for capabilities EXPLICITLY described in the provided \
 text. If sections are truncated (marked [...]), do NOT infer content.
 - Do NOT invent ClawBio skills or harness names.
@@ -656,34 +687,59 @@ def _llm_aggregate(
         return None
 
 
-def _get_clawbio_diff(clawbio_path: Path | None, days: int = 1) -> str | None:
-    """Get recent ClawBio git log + diff stat."""
+def _get_clawbio_diff(
+    clawbio_path: Path | None,
+    last_clawbio_commit: str | None = None,
+) -> str | None:
+    """Get ClawBio git log + diff stat since the last audited commit.
+
+    Uses an explicit commit range when ``last_clawbio_commit`` is known,
+    falling back to ``--since=1 days ago`` on the first run.
+    """
     if clawbio_path is None or not clawbio_path.exists():
         return None
     import subprocess
 
-    since = f"{days} days ago"
     try:
-        log_r = subprocess.run(
-            [
+        if last_clawbio_commit:
+            log_cmd = [
                 "git",
                 "-C",
                 str(clawbio_path),
                 "log",
-                f"--since={since}",
+                f"{last_clawbio_commit}..HEAD",
                 "--oneline",
                 "--no-merges",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        stat_r = subprocess.run(
-            ["git", "-C", str(clawbio_path), "diff", "--stat", "HEAD~5..HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
+            ]
+            stat_cmd = [
+                "git",
+                "-C",
+                str(clawbio_path),
+                "diff",
+                "--stat",
+                f"{last_clawbio_commit}..HEAD",
+            ]
+        else:
+            log_cmd = [
+                "git",
+                "-C",
+                str(clawbio_path),
+                "log",
+                "--since=1 days ago",
+                "--oneline",
+                "--no-merges",
+            ]
+            stat_cmd = [
+                "git",
+                "-C",
+                str(clawbio_path),
+                "diff",
+                "--stat",
+                "HEAD~1..HEAD",
+            ]
+
+        log_r = subprocess.run(log_cmd, capture_output=True, text=True, timeout=10)
+        stat_r = subprocess.run(stat_cmd, capture_output=True, text=True, timeout=10)
         parts = []
         if log_r.returncode == 0 and log_r.stdout.strip():
             parts.append(f"**Recent commits:**\n```\n{log_r.stdout.strip()}\n```")
@@ -741,6 +797,7 @@ def write_daily_log(
     clawbio_raw_diff: str | None = None,
     api_key: str | None = None,
     synthesizer: str | None = None,
+    aggregate: dict | None = None,
 ) -> Path:
     """Write a consolidated daily log file with all sections.
 
@@ -806,9 +863,9 @@ def write_daily_log(
                 api_key,
                 temperature=0.1,
             )
-            # Verify against the full draft (not just structured) since
-            # the polished text includes numbers from all sections.
-            if _verify_numbers(polished, draft, {}):
+            # Verify against original aggregate to prevent fabricated
+            # numbers from surviving the polish pass.
+            if _verify_numbers(polished, draft, aggregate or {}):
                 draft = polished
                 print("  Log: final polish applied.", file=sys.stderr)
             else:
@@ -920,9 +977,25 @@ def run_investigation(
     """
     synth_model = synthesizer or DEFAULT_SYNTHESIZER_MODEL
 
+    # Build a compact category-only summary — pass rates and finding
+    # details are covered by the digest, so we only send category names
+    # and harness names to avoid prompting the LLM to restate them.
+    compact: dict = {
+        "harnesses": {},
+    }
+    for hname, hdata in (aggregate.get("harnesses") or {}).items():
+        if not isinstance(hdata, dict):
+            continue
+        compact["harnesses"][hname] = {
+            "categories": hdata.get("categories"),
+            "finding_categories": sorted(
+                {cf.get("category", "?") for cf in (hdata.get("critical_failures") or [])}
+            ),
+        }
+
     context_parts = [
-        "=== CURRENT AUDIT RESULTS ===",
-        json.dumps(aggregate, indent=2, default=str),
+        "=== CURRENT COVERAGE (categories only — rates are in the digest) ===",
+        json.dumps(compact, indent=2, default=str),
     ]
 
     # Load README for coverage context
@@ -977,21 +1050,69 @@ def run_self_changelog(
     api_key: str,
     synthesizer: str | None = None,
     repo_root: Path | None = None,
-    days: int = 7,
-) -> str | None:
-    """Summarize recent changes to clawbio-bench itself.
+    last_bench_commit: str | None = None,
+) -> tuple[str | None, str | None]:
+    """Summarize recent changes to clawbio-bench itself (incremental).
 
-    Runs ``git log`` and ``git diff`` on the benchmark repo to capture
-    what changed in the suite, then uses an LLM to produce a narrative.
+    Uses ``last_bench_commit..HEAD`` when a prior SHA is known, falling
+    back to ``--since=1 days ago`` on the first run.  Returns
+    ``(narrative, current_head_sha)`` so the caller can persist state.
     """
     import subprocess
 
     root = repo_root or Path(__file__).resolve().parent.parent
-    since = f"{days} days ago"
 
     try:
+        # Get current HEAD SHA for state tracking
+        head_r = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        current_sha = head_r.stdout.strip() if head_r.returncode == 0 else None
+
+        if last_bench_commit:
+            log_cmd = [
+                "git",
+                "-C",
+                str(root),
+                "log",
+                f"{last_bench_commit}..HEAD",
+                "--oneline",
+                "--no-merges",
+            ]
+            diff_cmd = [
+                "git",
+                "-C",
+                str(root),
+                "diff",
+                "--stat",
+                f"{last_bench_commit}..HEAD",
+            ]
+            range_label = f"since {last_bench_commit[:10]}"
+        else:
+            log_cmd = [
+                "git",
+                "-C",
+                str(root),
+                "log",
+                "--since=1 days ago",
+                "--oneline",
+                "--no-merges",
+            ]
+            diff_cmd = [
+                "git",
+                "-C",
+                str(root),
+                "diff",
+                "--stat",
+                "HEAD~1..HEAD",
+            ]
+            range_label = "last 24 hours"
+
         log_result = subprocess.run(
-            ["git", "-C", str(root), "log", f"--since={since}", "--oneline", "--no-merges"],
+            log_cmd,
             capture_output=True,
             text=True,
             timeout=10,
@@ -999,7 +1120,7 @@ def run_self_changelog(
         git_log = log_result.stdout.strip() if log_result.returncode == 0 else ""
 
         diff_result = subprocess.run(
-            ["git", "-C", str(root), "diff", "--stat", "HEAD~20..HEAD"],
+            diff_cmd,
             capture_output=True,
             text=True,
             timeout=10,
@@ -1007,12 +1128,12 @@ def run_self_changelog(
         git_stat = diff_result.stdout.strip() if diff_result.returncode == 0 else ""
     except Exception as exc:
         print(f"  Self-changelog: git failed ({exc}).", file=sys.stderr)
-        return None
+        return None, None
 
     if not git_log:
-        return None
+        return None, current_sha
 
-    context = f"=== GIT LOG (last {days} days) ===\n{git_log}"
+    context = f"=== GIT LOG ({range_label}) ===\n{git_log}"
     if git_stat:
         context += f"\n\n=== DIFF STAT ===\n{git_stat}"
 
@@ -1024,7 +1145,7 @@ def run_self_changelog(
 
     synth_model = synthesizer or DEFAULT_SYNTHESIZER_MODEL
     try:
-        return _openrouter_call(
+        narrative = _openrouter_call(
             synth_model,
             SELF_CHANGELOG_SYSTEM_PROMPT,
             context,
@@ -1032,9 +1153,10 @@ def run_self_changelog(
             temperature=0.1,
             max_tokens=8192,
         )
+        return narrative, current_sha
     except Exception as exc:
         print(f"  Self-changelog: LLM failed ({exc}).", file=sys.stderr)
-        return None
+        return None, current_sha
 
 
 def write_self_changelog_log(
@@ -1250,11 +1372,19 @@ def main() -> int:
     clawbio_raw: str | None = None
     repo_root = Path(__file__).resolve().parent.parent
 
+    # Load incremental state (last-processed SHAs)
+    log_state: dict = {}
+    if args.log_dir:
+        log_state = _load_log_state(args.log_dir)
+
     if not args.dry_run and api_key:
         # ClawBio diff analysis (if --clawbio-repo provided)
         clawbio_repo = getattr(args, "clawbio_repo", None)
         if clawbio_repo:
-            clawbio_raw = _get_clawbio_diff(clawbio_repo)
+            clawbio_raw = _get_clawbio_diff(
+                clawbio_repo,
+                last_clawbio_commit=log_state.get("last_clawbio_commit"),
+            )
             if clawbio_raw:
                 try:
                     clawbio_diff_text = _openrouter_call(
@@ -1277,13 +1407,21 @@ def main() -> int:
                 roadmap_path=repo_root / "ROADMAP.md",
             )
 
-        # Self-changelog
+        # Self-changelog (incremental — only new commits since last run)
         if args.self_changelog:
-            self_cl_text = run_self_changelog(
+            self_cl_text, new_bench_sha = run_self_changelog(
                 api_key,
                 synthesizer=args.llm_synthesizer,
                 repo_root=repo_root,
+                last_bench_commit=log_state.get("last_bench_commit"),
             )
+            if new_bench_sha:
+                log_state["last_bench_commit"] = new_bench_sha
+
+    # Persist current ClawBio commit for next run's diff range
+    clawbio_commit = aggregate.get("clawbio_commit")
+    if clawbio_commit:
+        log_state["last_clawbio_commit"] = clawbio_commit
 
     # Write consolidated daily log
     if args.log_dir and not args.dry_run:
@@ -1298,6 +1436,7 @@ def main() -> int:
             clawbio_raw_diff=clawbio_raw,
             api_key=api_key or None,
             synthesizer=args.llm_synthesizer,
+            aggregate=aggregate,
         )
 
         if args.weekly:
@@ -1313,6 +1452,9 @@ def main() -> int:
                 api_key=api_key or None,
                 synthesizer=args.llm_synthesizer,
             )
+
+        # Persist incremental state for next run
+        _save_log_state(args.log_dir, log_state)
 
     # Webhook
     if args.webhook and not args.dry_run:
