@@ -1,12 +1,12 @@
 {
-  "benchmark_suite_version": "0.1.4",
-  "date": "2026-04-08",
-  "clawbio_commit": "e759014",
+  "benchmark_suite_version": "0.1.5",
+  "date": "2026-04-15",
+  "clawbio_commit": "61a7e12",
   "mode": "smoke",
-  "wall_clock_seconds": 143.9,
+  "wall_clock_seconds": 107.8,
   "environment": {
-    "python": "3.13.12",
-    "platform": "Linux-6.17.0-1008-azure-x86_64-with-glibc2.39"
+    "python": "3.12.13",
+    "platform": "Linux-6.17.0-1010-azure-x86_64-with-glibc2.39"
   },
   "harnesses": {
     "bio-orchestrator": {
@@ -66,9 +66,9 @@
         }
       },
       "categories": {
-        "routed_correct": 31,
+        "routed_correct": 32,
         "unroutable_handled": 13,
-        "stub_warned": 9,
+        "stub_warned": 8,
         "unroutable_crash": 1
       },
       "critical_failures": [
@@ -76,7 +76,7 @@
           "test": "inj_03_flock_routing_hijack",
           "category": "unroutable_crash",
           "rationale": "No skill detected (expected 'equity-scorer')",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         }
       ]
     },
@@ -311,7 +311,7 @@
           "test": "tpmt_compound_het",
           "category": "incorrect_indeterminate",
           "rationale": "Unnecessary indeterminate: Indeterminate (phase ambiguity: *3B(rs1800460) + *3C(rs1142345))",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         }
       ]
     },
@@ -505,7 +505,7 @@
           "test": "fm_20_susie_inf_est_tausq_activation",
           "category": "susie_inf_est_tausq_ignored",
           "rationale": "est_tausq=True silently ignored: tausq stayed at 0.0 (oracle estimates >1e-09) AND bump PIPs match the est_tausq=False regime (max error 0.1326 > tolerance 0.05). Two known failure modes produce this signature: (A) dead code where _mom_update is called with est_tausq=False hardcoded, OR run_susie_inf never exposes / propagates the est_tausq parameter; (B) a defensive threshold like `effective_tausq = tausq if tausq >= 1e-3 else 0.0` that zeros out the correctly-estimated tau^2 before applying it to the variance structure. Realistic gentropy-reference tau^2 estimates are in the 1e-5 to 1e-4 range on SuSiE-inf inputs, so any threshold above ~1e-4 nullifies activation across all geometries.",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         }
       ]
     },
@@ -592,7 +592,7 @@
           "test": "cvr_01_demo_structure",
           "category": "gene_disease_context_missing",
           "rationale": "Report contains P/LP/VUS/LB/B classifications with no disease / condition / inheritance context",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         }
       ]
     },
@@ -673,19 +673,135 @@
           "test": "cvr_10_hgvs_syntax_baseline",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         },
         {
           "test": "cvr_13_mane_select",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "e7590141"
+          "commit": "61a7e122"
         },
         {
           "test": "cvr_15_transcript_versioning",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "e7590141"
+          "commit": "61a7e122"
+        }
+      ]
+    },
+    "gwas-prs": {
+      "version": "0.1.0",
+      "pass": false,
+      "total_cases": 8,
+      "evaluated": 8,
+      "harness_errors": 0,
+      "pass_count": 0,
+      "fail_count": 8,
+      "pass_rate": 0.0,
+      "pass_categories": [
+        "score_exact_match",
+        "percentile_correct",
+        "coverage_correctly_flagged"
+      ],
+      "fail_categories": [
+        "score_incorrect",
+        "percentile_incorrect",
+        "coverage_not_flagged",
+        "missing_output"
+      ],
+      "category_legend": {
+        "score_exact_match": {
+          "color": "#22c55e",
+          "label": "PRS exact match",
+          "tier": "pass"
+        },
+        "percentile_correct": {
+          "color": "#86efac",
+          "label": "Percentile correct",
+          "tier": "pass"
+        },
+        "coverage_correctly_flagged": {
+          "color": "#a7f3d0",
+          "label": "Low coverage correctly flagged",
+          "tier": "pass"
+        },
+        "score_incorrect": {
+          "color": "#ef4444",
+          "label": "PRS WRONG",
+          "tier": "critical"
+        },
+        "percentile_incorrect": {
+          "color": "#fbbf24",
+          "label": "Percentile wrong",
+          "tier": "warning"
+        },
+        "coverage_not_flagged": {
+          "color": "#f97316",
+          "label": "Low coverage NOT flagged",
+          "tier": "warning"
+        },
+        "missing_output": {
+          "color": "#1e1b4b",
+          "label": "Output files missing",
+          "tier": "critical"
+        },
+        "harness_error": {
+          "color": "#6b7280",
+          "label": "Harness error (infra)",
+          "tier": "infra"
+        }
+      },
+      "categories": {
+        "missing_output": 8
+      },
+      "critical_failures": [
+        {
+          "test": "gwas_01_t2d_full_coverage",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_02_t2d_hom_alt",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_03_no_matching_variants",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_04_below_coverage_threshold",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_05_all_hom_ref_zero_dosage",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_06_percentile_boundary",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_07_hemizygous_genotype",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
+        },
+        {
+          "test": "gwas_08_single_variant_below_threshold",
+          "category": "missing_output",
+          "rationale": "Tool exited with code 1",
+          "commit": "61a7e122"
         }
       ]
     },
@@ -813,17 +929,18 @@
   },
   "overall": {
     "pass": false,
-    "total_cases": 175,
-    "total_evaluated": 174,
+    "total_cases": 183,
+    "total_evaluated": 182,
     "total_harness_errors": 1,
     "total_pass": 163,
-    "total_pass_rate": 93.7,
+    "total_pass_rate": 89.6,
     "blocking_skills": [
       "bio-orchestrator",
       "pharmgx-reporter",
       "clawbio-finemapping",
       "clinical-variant-reporter",
       "cvr-variant-identity",
+      "gwas-prs",
       "cvr-acmg-correctness"
     ]
   }
