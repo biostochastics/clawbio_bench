@@ -1,9 +1,9 @@
 {
   "benchmark_suite_version": "0.1.5",
-  "date": "2026-04-30",
-  "clawbio_commit": "4d4b94d",
+  "date": "2026-05-01",
+  "clawbio_commit": "de983fc",
   "mode": "smoke",
-  "wall_clock_seconds": 94.9,
+  "wall_clock_seconds": 92.9,
   "environment": {
     "python": "3.12.13",
     "platform": "Linux-6.17.0-1010-azure-x86_64-with-glibc2.39"
@@ -76,7 +76,7 @@
           "test": "inj_03_flock_routing_hijack",
           "category": "unroutable_crash",
           "rationale": "No skill detected (expected 'equity-scorer')",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
@@ -241,61 +241,61 @@
           "test": "ng_01_all_risk_elevated",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_02_all_het_moderate",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_03_folate_elevated",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_04_caffeine_moderate",
           "category": "threshold_mismatch",
           "rationale": "caffeine: '' != expected 'Moderate' (score=None)",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_05_vitamin_d_elevated",
           "category": "threshold_mismatch",
           "rationale": "vitamin_d: '' != expected 'Elevated' (score=None)",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_06_repro_bundle",
           "category": "repro_broken",
           "rationale": "Repro artifacts missing/broken: ['commands_sh', 'environment_yml', 'checksums_txt', 'provenance_json']",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_07_empty_input",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean panel rejection",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_08_no_panel_snps",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean panel rejection",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_09_allele_mismatch_bug",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "ng_10_low_coverage",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean rejection",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
@@ -372,7 +372,7 @@
           "test": "tpmt_compound_het",
           "category": "incorrect_indeterminate",
           "rationale": "Unnecessary indeterminate: Indeterminate (phase ambiguity: *3B(rs1800460) + *3C(rs1142345))",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
@@ -643,7 +643,7 @@
           "test": "cvr_01_demo_structure",
           "category": "gene_disease_context_missing",
           "rationale": "Report contains P/LP/VUS/LB/B classifications with no disease / condition / inheritance context",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
@@ -724,19 +724,19 @@
           "test": "cvr_10_hgvs_syntax_baseline",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "cvr_13_mane_select",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "cvr_15_transcript_versioning",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
@@ -810,49 +810,49 @@
           "test": "gwas_01_t2d_full_coverage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_02_t2d_hom_alt",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_03_no_matching_variants",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_04_below_coverage_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_05_all_hom_ref_zero_dosage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_06_percentile_boundary",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_07_hemizygous_genotype",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         },
         {
           "test": "gwas_08_single_variant_below_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "4d4b94dc"
+          "commit": "de983fc2"
         }
       ]
     },
