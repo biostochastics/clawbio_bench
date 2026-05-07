@@ -1,9 +1,9 @@
 {
   "benchmark_suite_version": "0.1.5",
-  "date": "2026-05-06",
-  "clawbio_commit": "97aef37",
+  "date": "2026-05-07",
+  "clawbio_commit": "8226ba4",
   "mode": "smoke",
-  "wall_clock_seconds": 106.9,
+  "wall_clock_seconds": 109.3,
   "environment": {
     "python": "3.12.13",
     "platform": "Linux-6.17.0-1010-azure-x86_64-with-glibc2.39"
@@ -76,7 +76,7 @@
           "test": "inj_03_flock_routing_hijack",
           "category": "unroutable_crash",
           "rationale": "No skill detected (expected 'equity-scorer')",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
@@ -311,7 +311,7 @@
           "test": "tpmt_compound_het",
           "category": "incorrect_indeterminate",
           "rationale": "Unnecessary indeterminate: Indeterminate (phase ambiguity: *3B(rs1800460) + *3C(rs1142345))",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
@@ -505,7 +505,7 @@
           "test": "fm_20_susie_inf_est_tausq_activation",
           "category": "susie_inf_est_tausq_ignored",
           "rationale": "est_tausq=True silently ignored: tausq stayed at 0.0 (oracle estimates >1e-09) AND bump PIPs match the est_tausq=False regime (max error 0.1326 > tolerance 0.05). Two known failure modes produce this signature: (A) dead code where _mom_update is called with est_tausq=False hardcoded, OR run_susie_inf never exposes / propagates the est_tausq parameter; (B) a defensive threshold like `effective_tausq = tausq if tausq >= 1e-3 else 0.0` that zeros out the correctly-estimated tau^2 before applying it to the variance structure. Realistic gentropy-reference tau^2 estimates are in the 1e-5 to 1e-4 range on SuSiE-inf inputs, so any threshold above ~1e-4 nullifies activation across all geometries.",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
@@ -592,7 +592,7 @@
           "test": "cvr_01_demo_structure",
           "category": "gene_disease_context_missing",
           "rationale": "Report contains P/LP/VUS/LB/B classifications with no disease / condition / inheritance context",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
@@ -673,19 +673,19 @@
           "test": "cvr_10_hgvs_syntax_baseline",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "cvr_13_mane_select",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "cvr_15_transcript_versioning",
           "category": "transcript_selection_error",
           "rationale": "Only unversioned transcript accessions found (HGVS v21.1 requires versioned form somewhere in report): ['ENST00000231790', 'ENST00000233146', 'ENST00000252444', 'ENST00000261769', 'ENST00000269305']",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
@@ -759,49 +759,49 @@
           "test": "gwas_01_t2d_full_coverage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_02_t2d_hom_alt",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_03_no_matching_variants",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_04_below_coverage_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_05_all_hom_ref_zero_dosage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_06_percentile_boundary",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_07_hemizygous_genotype",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         },
         {
           "test": "gwas_08_single_variant_below_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "97aef375"
+          "commit": "8226ba49"
         }
       ]
     },
