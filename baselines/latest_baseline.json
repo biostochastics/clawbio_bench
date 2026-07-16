@@ -1,12 +1,12 @@
 {
   "benchmark_suite_version": "0.1.5",
-  "date": "2026-07-15",
+  "date": "2026-07-16",
   "clawbio_commit": "bc320c4",
   "mode": "smoke",
-  "wall_clock_seconds": 56.4,
+  "wall_clock_seconds": 51.8,
   "environment": {
     "python": "3.12.13",
-    "platform": "Linux-6.17.0-1018-azure-x86_64-with-glibc2.39"
+    "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39"
   },
   "harnesses": {
     "bio-orchestrator": {
