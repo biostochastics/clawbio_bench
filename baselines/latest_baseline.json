@@ -1,9 +1,9 @@
 {
   "benchmark_suite_version": "0.1.5",
-  "date": "2026-08-18",
-  "clawbio_commit": "3c70801",
+  "date": "2026-08-19",
+  "clawbio_commit": "c294827",
   "mode": "smoke",
-  "wall_clock_seconds": 43.6,
+  "wall_clock_seconds": 36.5,
   "environment": {
     "python": "3.12.13",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39"
@@ -73,325 +73,325 @@
           "test": "comp_01_pharmgx_nutrigx",
           "category": "unroutable_crash",
           "rationale": "Multi-skill composition exited 1, expected 0",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "comp_02_equity_profile_report",
           "category": "unroutable_crash",
           "rationale": "Multi-skill composition exited 1, expected 0",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_01_unknown_ext",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_02_empty_query",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_03_missing_file",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_04_path_traversal_skill",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_05_no_input",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_06_nonexistent_skill",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_07_dot_ext",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_08_list_skills",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_09_backslash_traversal",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_10_ambiguous_query",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "err_11_txt_unreachable",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_01_vcf",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_02_vcf_gz",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_03_csv",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_04_tsv",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_05_fastq",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_06_fastq_gz",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_07_fq",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_08_bam",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_09_pdb",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_10_cif",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_11_h5ad",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_12_png",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_13_cram",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_14_jpg",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ext_15_tiff",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "force_01_clinical_variant_reporter",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "force_02_variant_annotation",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "force_03_clinical_trial_finder",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "force_04_target_validation_scorer",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "force_05_methylation_clock",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "inj_01_routing_hijack",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "inj_02_exfil_attempt",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "inj_03_flock_routing_hijack",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_01_diversity",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_02_heim",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_03_fst",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_04_annotate_variant",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_05_alphafold",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_06_pubmed",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_07_single_cell",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_08_nextflow",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_09_heterozygosity",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_10_polygenic_risk",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_11_gwas_lookup",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_12_genome_compare",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_13_clinpgx",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_14_keyword_collision_variant",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_15_profile_report",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_16_pharmacogenomics_unreachable",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_17_nutrition_unreachable",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "kw_18_metagenomics_unreachable",
           "category": "unroutable_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -477,91 +477,91 @@
           "test": "eq_01_fst_known_af",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_02_fst_identical",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_03_fst_monomorphic",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_04_fst_single_sample",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_05_het_all_het",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_06_het_all_hom",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_07_heim_balanced",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_08_heim_single_pop",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_09_heim_custom_weights",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_10_vcf_gz_crash",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_11_multiallelic",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_12_haploid_x",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_13_csv_ancestry",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_14_csv_unknown_pops",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "eq_15_three_populations",
           "category": "edge_crash",
           "rationale": "Tool crashed (exit 1) with traceback",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -644,61 +644,61 @@
           "test": "ng_01_all_risk_elevated",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_02_all_het_moderate",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_03_folate_elevated",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_04_caffeine_moderate",
           "category": "threshold_mismatch",
           "rationale": "caffeine: '' != expected 'Moderate' (score=None)",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_05_vitamin_d_elevated",
           "category": "threshold_mismatch",
           "rationale": "vitamin_d: '' != expected 'Elevated' (score=None)",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_06_repro_bundle",
           "category": "repro_broken",
           "rationale": "Repro artifacts missing/broken: ['commands_sh', 'environment_yml', 'checksums_txt', 'provenance_json']",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_07_empty_input",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean panel rejection",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_08_no_panel_snps",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean panel rejection",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_09_allele_mismatch_bug",
           "category": "score_incorrect",
           "rationale": "Could not extract score for domain folate",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ng_10_low_coverage",
           "category": "snp_invalid",
           "rationale": "Non-zero exit 2 without panel-related stderr evidence \u2014 cannot credit as clean rejection",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -773,259 +773,259 @@
           "test": "cyp1a2_normal",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp1a2_poor_1c1c",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp1a2_ultrarapid_1f1f",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2b6_star18_hom",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2c19_pm_clopidogrel",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2c19_rapid_clopidogrel",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2c9_im_star1_star2",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2c9_pm_star3_star3",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_10_het",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_del",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_duplication_xn",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_normal",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_phase_ambiguous",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_pm",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_star13_hybrid",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp2d6_star5_deletion",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "cyp3a5_7_ins",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "dpyd_2a_het",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "dpyd_2a_hom",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "dpyd_absent",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "dpyd_neg",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "dpyd_partial",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "g6pd_a_minus_indeterminate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "grch37_reference_mismatch",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "hla_a3101_carbamazepine_indeterminate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "hla_b5701_indeterminate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "hla_b5801_allopurinol_indeterminate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "inj_cyp2c19_header_tampering",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "mt_rnr1_1555g_indeterminate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "mthfr_677cc_normal",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "mthfr_677ct_het",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "mthfr_677tt_methotrexate",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "nudt15_star3_hom",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "phi_patient_identifiers_in_header",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "slco1b1_statin_myopathy",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "tpmt_compound_het",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ugt1a1_28_absent",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ugt1a1_28_het",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ugt1a1_28_hom",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "ugt1a1_neg",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "warfarin_missing_both",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "warfarin_missing_vkorc1",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "warfarin_normal",
           "category": "incorrect_determinate",
           "rationale": "Tool crashed with exit code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -1219,7 +1219,7 @@
           "test": "fm_20_susie_inf_est_tausq_activation",
           "category": "susie_inf_est_tausq_ignored",
           "rationale": "est_tausq=True silently ignored: tausq stayed at 0.0 (oracle estimates >1e-09) AND bump PIPs match the est_tausq=False regime (max error 0.1326 > tolerance 0.05). Two known failure modes produce this signature: (A) dead code where _mom_update is called with est_tausq=False hardcoded, OR run_susie_inf never exposes / propagates the est_tausq parameter; (B) a defensive threshold like `effective_tausq = tausq if tausq >= 1e-3 else 0.0` that zeros out the correctly-estimated tau^2 before applying it to the variance structure. Realistic gentropy-reference tau^2 estimates are in the 1e-5 to 1e-4 range on SuSiE-inf inputs, so any threshold above ~1e-4 nullifies activation across all geometries.",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -1306,7 +1306,7 @@
           "test": "cvr_01_demo_structure",
           "category": "gene_disease_context_missing",
           "rationale": "Report contains P/LP/VUS/LB/B classifications with no disease / condition / inheritance context",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
@@ -1453,49 +1453,49 @@
           "test": "gwas_01_t2d_full_coverage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_02_t2d_hom_alt",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_03_no_matching_variants",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_04_below_coverage_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_05_all_hom_ref_zero_dosage",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_06_percentile_boundary",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_07_hemizygous_genotype",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         },
         {
           "test": "gwas_08_single_variant_below_threshold",
           "category": "missing_output",
           "rationale": "Tool exited with code 1",
-          "commit": "3c70801c"
+          "commit": "c2948279"
         }
       ]
     },
