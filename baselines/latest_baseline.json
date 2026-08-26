@@ -1,9 +1,9 @@
 {
   "benchmark_suite_version": "0.1.5",
-  "date": "2026-08-25",
+  "date": "2026-08-26",
   "clawbio_commit": "4404881",
   "mode": "smoke",
-  "wall_clock_seconds": 55.8,
+  "wall_clock_seconds": 58.5,
   "environment": {
     "python": "3.12.14",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39"
