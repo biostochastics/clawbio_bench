@@ -27,7 +27,7 @@ jobs:
     outputs:
       has_regression: ${{ steps.delta.outputs.has_regression }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Validate clawbio_ref
         if: inputs.clawbio_ref != ''
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Checkout ClawBio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ClawBio/ClawBio
           ref: ${{ inputs.clawbio_ref || '' }}
@@ -329,10 +329,10 @@ jobs:
       && needs.audit.outputs.has_regression == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Checkout ClawBio (full history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ClawBio/ClawBio
           ref: ${{ inputs.clawbio_ref || '' }}
