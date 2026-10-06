@@ -136,6 +136,45 @@ The core install is deliberately minimal — every runtime dependency expands
 the trusted base of an audit tool, so each one has to justify itself
 (see [Core Capabilities](#core-capabilities)).
 
+### Skill bench manifests
+
+The NutriGx and fine-mapping harnesses can read a local per-skill
+`.bench-config.toml` from the audited ClawBio checkout instead of hardcoding
+renamed skill directories or internal package names. The file is optional;
+when it is missing, these harnesses keep their legacy fallback paths and
+known rename aliases so older commits remain auditable.
+
+```toml
+[bench]
+name = "fine-mapping"
+invoke_as = "driver"
+
+[bench.imports]
+package = "fine_mapping_core"
+```
+
+```toml
+[bench]
+name = "nutrigx-advisor"
+entrypoint = "nutrigx.py"
+invoke_as = "script"
+```
+
+Place the file in the skill directory. `bench.name` identifies the skill
+even when that directory has been renamed; it may be omitted if the
+directory or its `SKILL.md` frontmatter already identifies the skill.
+An explicit matching manifest takes precedence over a leftover legacy
+directory, and multiple matching manifests are an error. NutriGx supports
+`invoke_as = "script"`; fine-mapping supports `invoke_as = "driver"`.
+Other invocation modes are rejected rather than silently ignored.
+
+Manifest resolution is offline and local-only: the benchmark reads only files
+inside the checked-out target repository and rejects entrypoints that escape
+their skill directory. For fine-mapping, the manifest changes only the package
+name passed to the subprocess driver; ClawBio code still imports in that
+separate interpreter, preserving the process-isolation boundary described
+below.
+
 ## Quick Start
 
 The minimum path from clone to first result, assuming you already have a
