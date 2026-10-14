@@ -38,13 +38,52 @@ non-empty ``error`` payload.
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import sys
 import traceback
+from importlib.machinery import PathFinder
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 DRIVER_VERSION = "0.1.0"
+
+
+def _is_python_qualname(value: str) -> bool:
+    return bool(value) and all(part.isidentifier() for part in value.split("."))
+
+
+def _import_skill_module(name: str, skill_dir: Path) -> ModuleType:
+    """Load audited code only from the skill, never a same-named host package.
+
+    Resolve each package component against local search locations before
+    importing it. Checking only sys.path[0] is insufficient for missing or
+    namespace packages, which can fall through to PYTHONPATH/site-packages.
+    """
+    root = skill_dir.resolve()
+    search_path = [str(root)]
+    parts = name.split(".")
+    for i in range(len(parts)):
+        qualified_name = ".".join(parts[: i + 1])
+        spec = PathFinder.find_spec(qualified_name, search_path)
+        if spec is None:
+            raise ModuleNotFoundError(
+                f"No local skill module named {qualified_name!r}", name=qualified_name
+            )
+        locations = list(spec.submodule_search_locations or [])
+        origins = ([spec.origin] if spec.origin is not None else []) + locations
+        if not origins or any(not Path(path).resolve().is_relative_to(root) for path in origins):
+            raise ImportError(f"Skill module {qualified_name!r} resolves outside {root}")
+        search_path = locations
+
+    module = importlib.import_module(name)
+    # Imports can already be cached, or a package initializer can change its
+    # search path. Verify the actual loaded module as well as the preflight.
+    origin = getattr(module, "__file__", None)
+    if origin is None or not Path(origin).resolve().is_relative_to(root):
+        raise ImportError(f"Loaded skill module {name!r} is outside {root}")
+    return module
 
 
 def _emit(result: dict[str, Any], output_path: Path | None) -> None:
@@ -453,6 +492,7 @@ METHOD_RUNNERS = {
 def main() -> int:
     parser = argparse.ArgumentParser(description="ClawBio fine-mapping driver shim")
     parser.add_argument("--skill-dir", required=True, type=Path)
+    parser.add_argument("--imports-package", required=False, default="core")
     parser.add_argument("--inputs", required=True, type=Path)
     parser.add_argument("--output", required=False, type=Path, default=None)
     args = parser.parse_args()
@@ -514,25 +554,31 @@ def main() -> int:
         )
         return 2
 
-    # Munge sys.path so ``from core.abf import ...`` resolves against
-    # the target repo's skill directory. Insert at position 0 so the
-    # target's modules win over any local stubs.
+    if not _is_python_qualname(args.imports_package):
+        return _driver_error(
+            f"invalid imports package {args.imports_package!r}",
+            args.output,
+            exit_code=1,
+        )
+
+    # Munge sys.path so configured imports resolve against the target repo's
+    # skill directory. Insert at position 0 so the target's modules win over
+    # any local stubs.
     sys.path.insert(0, str(args.skill_dir.resolve()))
 
     try:
-        core_abf = __import__("core.abf", fromlist=["compute_abf"])
-        core_susie = __import__("core.susie", fromlist=["run_susie"])
-        core_credsets = __import__(
-            "core.credible_sets",
-            fromlist=["build_credible_sets_susie", "build_credible_set_abf"],
-        )
+        module_prefix = args.imports_package
+        core_abf = _import_skill_module(f"{module_prefix}.abf", args.skill_dir)
+        core_susie = _import_skill_module(f"{module_prefix}.susie", args.skill_dir)
+        core_credsets = _import_skill_module(f"{module_prefix}.credible_sets", args.skill_dir)
         # SuSiE-inf is optional — only present in ClawBio commits after PR #105.
         # If absent, susie_inf method calls will fail with import_error status.
         try:
-            core_susie_inf = __import__("core.susie_inf", fromlist=["run_susie_inf"])
-        except ImportError as ie:
-            # Only suppress if the module itself is absent (not a transitive dep failure).
-            if "core.susie_inf" in str(ie):
+            core_susie_inf = _import_skill_module(f"{module_prefix}.susie_inf", args.skill_dir)
+        except ModuleNotFoundError as ie:
+            # Only suppress if the optional module itself is absent. A missing
+            # transitive dependency inside susie_inf must stay visible.
+            if ie.name == f"{module_prefix}.susie_inf":
                 core_susie_inf = None
             else:
                 raise

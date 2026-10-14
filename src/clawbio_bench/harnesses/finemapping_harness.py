@@ -1069,7 +1069,19 @@ def run_single_finemapping(
             ground_truth=ground_truth,
         )
 
-    skill_dir = repo_path / "skills" / "fine-mapping"
+    try:
+        skill_config = harness_core.resolve_skill_bench_config(
+            repo_path,
+            skill_name="fine-mapping",
+            legacy_dir_name="fine-mapping",
+            legacy_imports_package="core",
+            legacy_imports_package_aliases=("fine_mapping_core",),
+            expected_invoke_as="driver",
+        )
+    except harness_core.BenchmarkConfigError as exc:
+        return harness_core.harness_error_verdict(tc_name, commit_meta, exc, ground_truth)
+    skill_dir = skill_config.skill_dir
+    imports_package = skill_config.imports_package or "core"
     timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     if not _DRIVER_PATH.exists():
@@ -1085,6 +1097,8 @@ def run_single_finemapping(
         str(_DRIVER_PATH),
         "--skill-dir",
         str(skill_dir),
+        "--imports-package",
+        imports_package,
         "--inputs",
         str(payload_path),
         "--output",
@@ -1127,6 +1141,9 @@ def run_single_finemapping(
         "driver_result": result,
         "driver_path": str(_DRIVER_PATH),
         "driver_sha256": driver_path_info.get("sha256"),
+        "skill_dir": str(skill_dir),
+        "skill_manifest_source": skill_config.source,
+        "imports_package": imports_package,
     }
 
     driver_path = (
