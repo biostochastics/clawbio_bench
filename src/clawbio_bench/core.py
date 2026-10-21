@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import time
+import tomllib
 import traceback
 from collections import Counter, defaultdict
 from collections.abc import Callable
@@ -72,6 +73,8 @@ __all__ = [
     "resolve_test_cases",
     "resolve_test_case",
     "parse_ground_truth",
+    "SkillBenchConfig",
+    "resolve_skill_bench_config",
     # Execution + verdicts
     "ExecutionResult",
     "capture_execution",
@@ -115,6 +118,294 @@ class DirtyRepoError(Exception):
 
 class VerdictSchemaError(Exception):
     """Raised when a verdict document fails schema validation."""
+
+
+@dataclass(frozen=True)
+class SkillBenchConfig:
+    """Resolved benchmark invocation metadata for a target skill."""
+
+    skill_dir: Path
+    entrypoint: Path | None
+    invoke_as: str
+    imports_package: str | None
+    source: str
+
+
+_VALID_INVOKE_AS = {"script", "driver"}
+_PYTHON_QUALNAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+
+
+def _path_within(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _validate_skill_relative_path(raw: Any, *, field: str, skill_dir: Path) -> Path:
+    if not isinstance(raw, str) or not raw.strip():
+        raise BenchmarkConfigError(f"{field} must be a non-empty string")
+    rel = Path(raw)
+    if rel.is_absolute() or ".." in rel.parts:
+        raise BenchmarkConfigError(f"{field} must stay inside the skill directory: {raw!r}")
+    resolved = skill_dir / rel
+    if not _path_within(resolved, skill_dir):
+        raise BenchmarkConfigError(f"{field} escapes skill directory: {raw!r}")
+    return resolved
+
+
+def _validate_import_package(raw: Any, *, field: str, skill_dir: Path | None = None) -> str:
+    if not isinstance(raw, str) or not _PYTHON_QUALNAME_RE.match(raw):
+        raise BenchmarkConfigError(f"{field} must be a valid Python package name")
+    if skill_dir is not None:
+        package_path = skill_dir.joinpath(*raw.split("."))
+        if not _path_within(package_path, skill_dir):
+            raise BenchmarkConfigError(f"{field} escapes skill directory: {raw!r}")
+        if not package_path.is_dir():
+            raise BenchmarkConfigError(f"{field} package is missing from skill directory: {raw!r}")
+    return raw
+
+
+def _read_skill_frontmatter_name(skill_md: Path, *, skill_dir: Path) -> str | None:
+    """Best-effort AgentSkills frontmatter name reader.
+
+    This intentionally recognizes only the simple ``name: value`` scalar used
+    by SKILL.md files. Bench invocation details live in ``.bench-config.toml``.
+    """
+    if skill_md.exists() and not _path_within(skill_md, skill_dir):
+        raise BenchmarkConfigError(f"SKILL.md escapes skill directory: {skill_md}")
+    try:
+        lines = skill_md.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        stripped = line.strip()
+        if stripped == "---":
+            return None
+        if stripped.startswith("name:"):
+            value = stripped.split(":", 1)[1].strip()
+            return value.strip("'\"") or None
+    return None
+
+
+def _load_skill_bench_manifest(skill_dir: Path) -> dict[str, Any] | None:
+    config_path = skill_dir / ".bench-config.toml"
+    if not config_path.exists():
+        return None
+    if not _path_within(config_path, skill_dir):
+        raise BenchmarkConfigError(f"Bench manifest escapes skill directory: {config_path}")
+    try:
+        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        raise BenchmarkConfigError(f"Invalid bench manifest {config_path}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise BenchmarkConfigError(f"Bench manifest {config_path} must be a TOML table")
+    bench = data.get("bench")
+    if not isinstance(bench, dict):
+        raise BenchmarkConfigError(f"Bench manifest {config_path} must define [bench]")
+    return bench
+
+
+def _manifest_name(skill_dir: Path, bench: dict[str, Any] | None) -> str | None:
+    if bench is not None:
+        raw = bench.get("name")
+        if raw is not None and not isinstance(raw, str):
+            raise BenchmarkConfigError("bench.name must be a string when present")
+        if raw:
+            return raw
+    return _read_skill_frontmatter_name(skill_dir / "SKILL.md", skill_dir=skill_dir)
+
+
+def _candidate_skill_dirs_by_mode(
+    repo_path: Path,
+    skill_names: set[str],
+    legacy_dir_name: str,
+) -> tuple[list[Path], list[Path]]:
+    repo_root = repo_path.resolve()
+    skills_root = repo_path / "skills"
+    if not skills_root.exists():
+        return [], []
+    if not _path_within(skills_root, repo_root):
+        raise BenchmarkConfigError(f"skills directory escapes repository: {skills_root}")
+
+    manifest_matches: list[Path] = []
+    fallback_matches: list[Path] = []
+    seen_manifest: set[Path] = set()
+    seen_fallback: set[Path] = set()
+
+    def add_manifest(path: Path) -> None:
+        resolved = path.resolve()
+        if resolved not in seen_manifest:
+            seen_manifest.add(resolved)
+            manifest_matches.append(path)
+
+    def add_fallback(path: Path) -> None:
+        resolved = path.resolve()
+        if resolved not in seen_fallback:
+            seen_fallback.add(resolved)
+            fallback_matches.append(path)
+
+    for child in sorted(skills_root.iterdir()):
+        if not child.is_dir():
+            continue
+        if not _path_within(child, repo_root):
+            if child.name in skill_names or child.name == legacy_dir_name:
+                raise BenchmarkConfigError(f"skill directory escapes repository: {child}")
+            continue
+
+        frontmatter_name = _read_skill_frontmatter_name(child / "SKILL.md", skill_dir=child)
+        name_matches = child.name in skill_names or frontmatter_name in skill_names
+        legacy_matches = child.name == legacy_dir_name
+        config_path = child / ".bench-config.toml"
+
+        bench = None
+        manifest_name = None
+        if config_path.exists():
+            try:
+                bench = _load_skill_bench_manifest(child)
+                manifest_name = _manifest_name(child, bench)
+            except BenchmarkConfigError:
+                if name_matches or legacy_matches:
+                    raise
+                continue
+            if manifest_name in skill_names or (
+                manifest_name is None and (name_matches or legacy_matches)
+            ):
+                add_manifest(child)
+                continue
+            if name_matches or legacy_matches:
+                raise BenchmarkConfigError(
+                    f"Bench manifest for {child.relative_to(repo_path)} declares "
+                    f"bench.name={manifest_name!r}, expected one of {sorted(skill_names)}"
+                )
+            continue
+
+        if name_matches or legacy_matches:
+            add_fallback(child)
+
+    return manifest_matches, fallback_matches
+
+
+def _first_existing_skill_path(skill_dir: Path, names: tuple[str, ...]) -> Path | None:
+    for name in names:
+        path = skill_dir / name
+        if (path.exists() or path.is_symlink()) and not _path_within(path, skill_dir):
+            raise BenchmarkConfigError(f"legacy entrypoint escapes skill directory: {name!r}")
+        if path.exists():
+            return path
+    return skill_dir / names[0] if names else None
+
+
+def _first_existing_import_package(skill_dir: Path, names: tuple[str, ...]) -> str | None:
+    for name in names:
+        package_path = skill_dir.joinpath(*name.split("."))
+        if (package_path.exists() or package_path.is_symlink()) and not _path_within(
+            package_path, skill_dir
+        ):
+            raise BenchmarkConfigError(f"legacy imports.package escapes skill directory: {name!r}")
+        if package_path.exists():
+            return name
+    return names[0] if names else None
+
+
+def resolve_skill_bench_config(
+    repo_path: Path,
+    *,
+    skill_name: str,
+    legacy_dir_name: str,
+    skill_aliases: tuple[str, ...] = (),
+    legacy_entrypoint: str | None = None,
+    legacy_entrypoint_aliases: tuple[str, ...] = (),
+    legacy_imports_package: str | None = None,
+    legacy_imports_package_aliases: tuple[str, ...] = (),
+    expected_invoke_as: str | None = None,
+) -> SkillBenchConfig:
+    """Resolve a skill's bench invocation contract.
+
+    Resolution order is deliberately backward-compatible:
+    1. scan ``skills/*`` for a matching ``.bench-config.toml`` ``bench.name``
+       or SKILL.md frontmatter ``name``;
+    2. fall back to the historical hardcoded directory and values.
+
+    Malformed or ambiguous manifests raise ``BenchmarkConfigError`` so the
+    matrix records a harness_error instead of silently scoring the wrong tool.
+    """
+    expected_invoke_as = expected_invoke_as or ("script" if legacy_entrypoint else "driver")
+    if expected_invoke_as not in _VALID_INVOKE_AS:
+        raise BenchmarkConfigError(f"expected_invoke_as must be one of {sorted(_VALID_INVOKE_AS)}")
+    skill_names = {skill_name, *skill_aliases}
+    manifest_candidates, fallback_candidates = _candidate_skill_dirs_by_mode(
+        repo_path, skill_names, legacy_dir_name
+    )
+    candidates = manifest_candidates or fallback_candidates
+    if len(candidates) > 1:
+        joined = ", ".join(str(path.relative_to(repo_path)) for path in candidates)
+        raise BenchmarkConfigError(f"Ambiguous skill bench config for {skill_name}: {joined}")
+
+    skill_dir = candidates[0] if candidates else repo_path / "skills" / legacy_dir_name
+    bench = _load_skill_bench_manifest(skill_dir) if skill_dir.is_dir() else None
+
+    if bench is None:
+        entrypoint_names: tuple[str, ...] = ()
+        if legacy_entrypoint:
+            entrypoint_names = (legacy_entrypoint, *legacy_entrypoint_aliases)
+        imports_package_names: tuple[str, ...] = ()
+        if legacy_imports_package:
+            imports_package_names = (legacy_imports_package, *legacy_imports_package_aliases)
+        return SkillBenchConfig(
+            skill_dir=skill_dir,
+            entrypoint=_first_existing_skill_path(skill_dir, entrypoint_names),
+            invoke_as=expected_invoke_as,
+            imports_package=_first_existing_import_package(skill_dir, imports_package_names),
+            source="legacy",
+        )
+
+    invoke_as = bench.get("invoke_as", expected_invoke_as)
+    if not isinstance(invoke_as, str) or invoke_as not in _VALID_INVOKE_AS:
+        raise BenchmarkConfigError(f"bench.invoke_as must be one of {sorted(_VALID_INVOKE_AS)}")
+    if invoke_as != expected_invoke_as:
+        raise BenchmarkConfigError(
+            f"bench.invoke_as={invoke_as!r} does not match harness contract {expected_invoke_as!r}"
+        )
+
+    entrypoint_raw = bench.get("entrypoint", legacy_entrypoint)
+    entrypoint = None
+    if entrypoint_raw is not None:
+        entrypoint = _validate_skill_relative_path(
+            entrypoint_raw,
+            field="bench.entrypoint",
+            skill_dir=skill_dir,
+        )
+
+    imports = bench.get("imports", {})
+    if imports is None:
+        imports = {}
+    if not isinstance(imports, dict):
+        raise BenchmarkConfigError("bench.imports must be a table when present")
+
+    imports_package = legacy_imports_package
+    if "package" in imports:
+        imports_package = _validate_import_package(
+            imports["package"], field="bench.imports.package", skill_dir=skill_dir
+        )
+    elif imports_package is not None:
+        imports_package = _validate_import_package(
+            imports_package, field="bench.imports.package", skill_dir=skill_dir
+        )
+
+    if entrypoint is not None and not _path_within(entrypoint, repo_path):
+        raise BenchmarkConfigError(f"bench.entrypoint escapes repository: {entrypoint}")
+
+    return SkillBenchConfig(
+        skill_dir=skill_dir,
+        entrypoint=entrypoint,
+        invoke_as=invoke_as,
+        imports_package=imports_package,
+        source=str(skill_dir / ".bench-config.toml"),
+    )
 
 
 # ---------------------------------------------------------------------------
