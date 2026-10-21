@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- PharmGx's GRCh37 negative control now accepts the correct rsID-based
+  CYP2D6 Poor Metabolizer call or an explicitly disclosed reference-genome
+  rejection. Unexplained indeterminate calls, wrong phenotypes, and ordinary
+  crashes still fail. Original genotype and coordinate rows are unchanged
+  (#139).
+
 ## [0.1.5] — 2026-04-14
 
 ### Added
