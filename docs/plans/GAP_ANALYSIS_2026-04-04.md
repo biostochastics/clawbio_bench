@@ -171,16 +171,16 @@ Per the ACMG/AMP 2015 framework and ClinGen SVI recommendations:
 
 ```python
 RUBRIC_CATEGORIES = [
-    "classification_correct",          # P/LP/VUS/LB/B matches curated label
-    "classification_downgraded",       # Correct direction but weaker class (VUS instead of LP)
-    "classification_upgraded",         # OVER-CALL (e.g., VUS classified as LP)
-    "pvs1_decision_tree_wrong",        # LoF assessment diverges from ClinGen SVI flowchart
-    "pp3_bp4_threshold_wrong",         # In silico predictor threshold diverges from ClinGen SVI
-    "sf_list_missed",                  # ACMG SF v3.2 secondary finding not flagged
-    "sf_list_overcalled",              # Non-SF variant flagged as SF
-    "evidence_audit_incomplete",       # Criterion triggered but source/version/threshold not logged
-    "disclaimer_missing",              # Report missing "not a medical device" disclaimer
-    "report_structure_incomplete",     # Missing methodology/limitations section per Rehm 2013
+    "classification_correct",  # P/LP/VUS/LB/B matches curated label
+    "classification_downgraded",  # Correct direction but weaker class (VUS instead of LP)
+    "classification_upgraded",  # OVER-CALL (e.g., VUS classified as LP)
+    "pvs1_decision_tree_wrong",  # LoF assessment diverges from ClinGen SVI flowchart
+    "pp3_bp4_threshold_wrong",  # In silico predictor threshold diverges from ClinGen SVI
+    "sf_list_missed",  # ACMG SF v3.2 secondary finding not flagged
+    "sf_list_overcalled",  # Non-SF variant flagged as SF
+    "evidence_audit_incomplete",  # Criterion triggered but source/version/threshold not logged
+    "disclaimer_missing",  # Report missing "not a medical device" disclaimer
+    "report_structure_incomplete",  # Missing methodology/limitations section per Rehm 2013
     "harness_error",
 ]
 ```

@@ -508,7 +508,19 @@ def run_single_nutrigx(
     tool_output_dir = run_output_dir / "tool_output"
     tool_output_dir.mkdir(parents=True, exist_ok=True)
 
-    tool_path = repo_path / "skills" / "nutrigx_advisor" / "nutrigx_advisor.py"
+    try:
+        skill_config = harness_core.resolve_skill_bench_config(
+            repo_path,
+            skill_name="nutrigx-advisor",
+            legacy_dir_name="nutrigx_advisor",
+            skill_aliases=("nutrigx",),
+            legacy_entrypoint="nutrigx_advisor.py",
+            legacy_entrypoint_aliases=("nutrigx.py",),
+            expected_invoke_as="script",
+        )
+    except harness_core.BenchmarkConfigError as exc:
+        return harness_core.harness_error_verdict(tc_name, commit_meta, exc, ground_truth)
+    tool_path = skill_config.entrypoint
     timeout = harness_core.validate_timeout(ground_truth.get("TIMEOUT", "60"))
 
     if not payload_path:
@@ -516,6 +528,13 @@ def run_single_nutrigx(
             tc_name,
             commit_meta,
             ValueError(f"NutriGx test case {tc_name} has no payload file"),
+            ground_truth=ground_truth,
+        )
+    if tool_path is None:
+        return harness_core.harness_error_verdict(
+            tc_name,
+            commit_meta,
+            ValueError("NutriGx bench manifest did not resolve a script entrypoint"),
             ground_truth=ground_truth,
         )
 
