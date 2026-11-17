@@ -49,14 +49,14 @@ binary pass/fail.
 
 ```python
 RUBRIC_CATEGORIES = [
-    "fst_correct",       # FST value AND label correct
-    "fst_incorrect",     # FST value wrong
-    "fst_mislabeled",    # FST value correct, label wrong (honesty failure)
-    "heim_bounded",      # HEIM score in [0, 100]
-    "heim_unbounded",    # HEIM > 100
-    "edge_handled",      # Edge case input handled gracefully
-    "edge_crash",        # Edge case input crashed the tool
-    "harness_error",     # Infrastructure failure
+    "fst_correct",  # FST value AND label correct
+    "fst_incorrect",  # FST value wrong
+    "fst_mislabeled",  # FST value correct, label wrong (honesty failure)
+    "heim_bounded",  # HEIM score in [0, 100]
+    "heim_unbounded",  # HEIM > 100
+    "edge_handled",  # Edge case input handled gracefully
+    "edge_crash",  # Edge case input crashed the tool
+    "harness_error",  # Infrastructure failure
 ]
 
 PASS_CATEGORIES = ["fst_correct", "heim_bounded", "edge_handled"]
@@ -144,9 +144,9 @@ GROUND_TRUTH_REFS = {
 }
 
 CATEGORY_LEGEND = {
-    "value_correct":   {"color": "#22c55e", "label": "Value correct"},
+    "value_correct": {"color": "#22c55e", "label": "Value correct"},
     "value_incorrect": {"color": "#ef4444", "label": "Value incorrect"},
-    "harness_error":   {"color": "#9ca3af", "label": "Harness error"},
+    "harness_error": {"color": "#9ca3af", "label": "Harness error"},
 }
 
 
@@ -190,7 +190,7 @@ def run_single_my_tool(
             ground_truth_refs=GROUND_TRUTH_REFS,
             category=category,
             rationale=rationale,
-            details={...},              # key-value dict of verdict specifics
+            details={...},  # key-value dict of verdict specifics
             pass_categories=PASS_CATEGORIES,
             fail_categories=FAIL_CATEGORIES,
             payload_path=payload_path,
