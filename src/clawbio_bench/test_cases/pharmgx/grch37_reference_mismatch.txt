@@ -1,7 +1,8 @@
 # BENCHMARK: grch37_reference_mismatch
-# GROUND_TRUTH_PHENOTYPE: CYP2D6 Indeterminate (reference genome mismatch)
+# GROUND_TRUTH_PHENOTYPE: CYP2D6 Poor Metabolizer (*4/*4)
+# ALLOW_REFERENCE_MISMATCH: true
 # GROUND_TRUTH_BEHAVIOR: Negative control for reference genome handling.
-#   This input uses GRCh37/hg19 coordinates for CYP2D6 variants. Specifically,
+#   This input declares GRCh37/hg19 but includes synthetic coordinates. Specifically,
 #   rs3892097 is at chr22:42128945 (GRCh38) vs chr22:42524947 (GRCh37) —
 #   a ~396kb shift between assemblies due to the chromosome 22 centromere
 #   model revision. If the tool expects GRCh38 coordinates but the header
@@ -15,6 +16,12 @@
 # EXPECTED_TOOL_OUTPUT: Tool either correctly processes rsids (ignoring position
 #   for coordinate-independent matching) OR warns/errors that input reference
 #   does not match expected reference genome.
+# DERIVATION: rs3892097 TT encodes homozygous CYP2D6 *4, as in cyp2d6_pm.txt;
+#   an rsID-based call therefore has the same Poor Metabolizer expectation.
+#   A coordinate-dependent tool may instead return Indeterminate with an
+#   explicit reference mismatch in the report, or reject the input with an
+#   explicit mismatch error. An unrelated crash or unexplained Indeterminate
+#   is not an acceptable alternative. See repository issue #139.
 # FINDING: S-4 (reference genome version validation — GRCh37/GRCh38 ambiguity)
 # FINDING_CATEGORY: correct_determinate
 # TARGET_GENE: CYP2D6
@@ -25,9 +32,11 @@
 # REFERENCE_GENOME: GRCh37
 # EXPECTED_EXIT_CODE: 0
 #
-# DESIGN: All positions are GRCh37/hg19 coordinates. rsids are stable across
-#   assemblies, so an rsid-based tool should produce the same calls regardless.
-#   A position-dependent tool would need to detect the mismatch.
+# DESIGN: The input is labeled GRCh37; positions are synthetic and are not a
+#   faithful GRCh37 reference panel. Genotypes and coordinates are preserved
+#   for historical comparability. rsids are stable across assemblies, so an
+#   rsid-based tool should produce the same calls regardless. A tool validating
+#   positions may instead detect the mismatch and explicitly withhold results.
 #
 # rsid	chromosome	position	genotype
 rs4244285	10	96522463	GG

@@ -144,12 +144,14 @@ def analyze_report(report_path: Path) -> dict[str, Any]:
         "disclaimer_present": False,
         "warfarin_present": False,
         "warfarin_classification": None,
+        "reference_mismatch_disclosed": False,
     }
     if not report_path.exists():
         analysis["report_exists"] = False
         return analysis
     analysis["report_exists"] = True
     text = report_path.read_text(errors="replace")
+    analysis["reference_mismatch_disclosed"] = _has_reference_mismatch(text)
 
     # Gene profiles table
     in_gene_table = False
@@ -383,8 +385,9 @@ def _substring_is_negated_in_context(needle: str, haystack: str) -> bool:
 
 
 def _phenotype_matches(observed: str, expected: str) -> bool:
-    obs = observed.lower().strip()
-    exp = expected.lower().strip()
+    # CPIC reports use both US and UK spellings of the same phenotype.
+    obs = re.sub(r"\bmetaboliser\b", "metabolizer", observed.lower().strip())
+    exp = re.sub(r"\bmetaboliser\b", "metabolizer", expected.lower().strip())
     if not obs or not exp:
         return False
     # Identity fast path. A tool that reports the exact expected phenotype
@@ -438,12 +441,36 @@ def _gene_relevant_warnings(stderr_warnings: list[str], target_gene: str) -> lis
     return [w for w in stderr_warnings if target_gene.lower() in w.lower()]
 
 
+def _has_reference_mismatch(text: str) -> bool:
+    """Recognize explicit build refusal, not a mere mention of an assembly.
+
+    In particular, ClawBio reports ``Indeterminate (unrecognised reference
+    genome)`` when coordinates match neither known build. Keep the patterns
+    narrow: a GRCh37 label or a normal rsID strategy note is not a refusal.
+    """
+    pattern = (
+        r"\b(?:(?:reference genome|genome build|assembly)[ -]mismatch"
+        r"|(?:unsupported|unrecogni[sz]ed|unknown) (?:reference genome|genome build|assembly)"
+        r"|coordinates match no known build)\b"
+    )
+    for line in text.splitlines():
+        for match in re.finditer(pattern, line, re.IGNORECASE):
+            if re.search(r"\b(?:no|not|without)\s+(?:a\s+)?$", line[: match.start()], re.I):
+                continue
+            if re.match(r"\s+(?:(?:was|is)\s+)?not\b", line[match.end() :], re.I):
+                continue
+            return True
+    return False
+
+
 def score_pgx_verdict(
     ground_truth: dict[str, Any],
     report_analysis: dict[str, Any],
     stderr_warnings: list[str],
     result_json_analysis: dict[str, Any],
     exit_code: int,
+    *,
+    stderr_text: str = "",
 ) -> dict[str, Any]:
     """Score a single (commit, input) pair against the 6-category rubric."""
     gt = ground_truth
@@ -471,6 +498,48 @@ def score_pgx_verdict(
         "stderr_warnings_total": len(stderr_warnings),
         "report_exists": ra.get("report_exists", False),
     }
+
+    # Only the reference-handling negative control permits a safe refusal
+    # instead of the genotype's determinate phenotype. Other cases retain
+    # their existing rubric, including the requirement to produce a report.
+    if (
+        str(gt.get("ALLOW_REFERENCE_MISMATCH", "false")).lower() == "true"
+        and expected_category == "correct_determinate"
+        and expected_exit == 0
+    ):
+        indeterminate = _phenotype_matches(observed_phenotype, "Indeterminate")
+        report_mismatch = bool(ra.get("reference_mismatch_disclosed"))
+        diagnostic_text = stderr_text or "\n".join(stderr_warnings)
+        stderr_mismatch = _has_reference_mismatch(diagnostic_text)
+        # Exit status alone never proves safe rejection. Require a specific
+        # mismatch diagnostic and exclude crashes, signals, and timeouts.
+        if (
+            exit_code in (1, 2)
+            and (observed_phenotype == "NOT_IN_REPORT" or indeterminate)
+            and (report_mismatch or stderr_mismatch)
+            and "Traceback (most recent call last)" not in diagnostic_text
+        ):
+            return {
+                "category": "correct_indeterminate",
+                "rationale": "Tool explicitly rejected an unsupported reference genome",
+                "details": details,
+            }
+        if exit_code == 0 and ra.get("report_exists") and indeterminate:
+            if report_mismatch:
+                return {
+                    "category": "correct_indeterminate",
+                    "rationale": "Report explicitly discloses a reference genome mismatch",
+                    "details": details,
+                }
+            return {
+                "category": "disclosure_failure" if stderr_mismatch else "incorrect_indeterminate",
+                "rationale": (
+                    "Reference genome mismatch is disclosed only on stderr"
+                    if stderr_mismatch
+                    else "Indeterminate without a disclosed reference genome mismatch"
+                ),
+                "details": details,
+            }
 
     if expected_exit != 0:
         if exit_code == expected_exit:
@@ -769,6 +838,7 @@ def run_single_pharmgx(
         stderr_warnings,
         result_json_analysis,
         execution.exit_code,
+        stderr_text=execution.stderr,
     )
 
     outputs = {
